@@ -1,0 +1,14 @@
+{
+  "name": "agent-browser-probe",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "dependencies": {
+    "agent-browser": "^0.41.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "agent-browser"
+    ]
+  }
+}
