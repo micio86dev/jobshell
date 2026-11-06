@@ -9,7 +9,7 @@ SHELL := /bin/bash
 ROOT  := $(shell pwd)
 OUT   ?= $(ROOT)/evidence/run/$(shell date -u +%Y%m%dT%H%M%SZ)
 
-.PHONY: test test-ts test-rs typecheck bench probe persistence chrome spike desktop phase0 clean
+.PHONY: test test-ts test-rs typecheck bench probe persistence crash chrome spike desktop phase0 clean
 
 test: test-ts test-rs typecheck
 
@@ -39,6 +39,10 @@ probe:
 	cd poc/api-probe && set -a && . ../../scripts/env.sh && set +a && \
 		node probe.ts "$(OUT)/api"
 
+crash:
+	cd poc/session-poc && set -a && . ../../scripts/env.sh && set +a && \
+		node crash-recovery.ts "$(OUT)/crash"
+
 persistence:
 	cd poc/session-poc && set -a && . ../../scripts/env.sh && set +a && \
 		node persistence.ts "$(OUT)/persistence"
@@ -63,5 +67,5 @@ desktop:
 	cd poc/session-poc/app && set -a && . ../../../scripts/env.sh && set +a && \
 		export PATH="$$HOME/.cargo/bin:$$PATH" && ../../../scripts/cargo.sh tauri build
 
-phase0: test bench probe persistence chrome spike desktop
+phase0: test bench probe persistence crash chrome spike desktop
 	@echo "Phase 0 evidence written to $(OUT)"

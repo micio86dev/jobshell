@@ -20,7 +20,7 @@ Why, from measurement:
 | Evidence | Number | Artifact |
 | --- | --- | --- |
 | Cold launch, headless | 3184 ms median of 3 | `evidence/summary/bench.json` |
-| Warm launch after first run | 872–1081 ms | `evidence/summary/bench.json` |
+| Launch spread across the three runs | 872–4203 ms | `evidence/summary/bench.json` |
 | Idle RSS | 270.5 MB | `evidence/summary/bench.json` |
 | Idle CPU | 0.3 % | `evidence/summary/bench.json` |
 | Accessibility-tree snapshot | 22 ms, 1270 chars | `evidence/summary/bench.json` |

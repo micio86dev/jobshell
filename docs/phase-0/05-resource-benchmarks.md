@@ -27,7 +27,7 @@ Artifact: `evidence/summary/bench.json`.
 
 **agent-browser is the most expensive resident.** 794 MB idle, 3.8 % idle CPU, 1090 MB peak. Its daemon-plus-browser model is what makes per-command latency low (60–240 ms warm), but the floor is high: a background poller on this runtime costs about three quarters of a gigabyte to sit still.
 
-**Spread is large and must be reported.** Playwright headless launch ranged 872–4352 ms across the three runs. The first run on a fresh profile is the slow one — a new browser profile on an external volume pays OS-level verification. A single-run benchmark would have been misleading in either direction, which is why every figure here is a median with its sample count.
+**Spread is large and must be reported.** Playwright headless launch ranged 872–4203 ms across the three runs, and agent-browser ranged 6744–23993 ms. The slow runs are the ones that create a fresh profile on the external volume, which pays OS-level verification of the browser bundle; the fast one reused a warm page cache. agent-browser's 24 s outlier is its daemon plus browser plus update check on a cold start. A single-run benchmark would have been misleading in either direction, which is why every figure here is a median with its sample count.
 
 **Sampler overhead is disclosed, not hidden.** Total sampler cost was 1.2–1.9 s across a run of roughly 20–40 s, i.e. under 5 % of wall time, spent in short synchronous `ps` calls. It affects the idle window least because sampling there has nothing else to contend with.
 

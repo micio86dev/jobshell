@@ -1,0 +1,35 @@
+{
+  "generated_at": "2026-11-06T17:59:22.957Z",
+  "protocol": "kill -9 the browser mid-task, then relaunch on the same profile",
+  "profile_dir": "evidence/run/crash-20261106T175913Z/profile-crash",
+  "expected_session_survives": false,
+  "steps": [
+    {
+      "step": "task running before the crash",
+      "ok": true,
+      "detail": "authenticated page rendered"
+    },
+    {
+      "step": "the automation handle notices the crash",
+      "ok": true,
+      "detail": "browser.isConnected() after SIGKILL: false"
+    },
+    {
+      "step": "the in-flight action fails instead of hanging",
+      "ok": true,
+      "detail": "action rejected after 1 ms"
+    },
+    {
+      "step": "the same profile is reusable after a hard crash",
+      "ok": true,
+      "detail": "relaunch on the same directory rendered a page: true"
+    },
+    {
+      "step": "session state after a hard crash matches the stated expectation",
+      "ok": true,
+      "detail": "expected session to survive: false; observed: false (the login in this script does not tick \"stay signed in\")"
+    }
+  ],
+  "passed": 5,
+  "failed": 0
+}

@@ -2,7 +2,7 @@
 
 Five candidates, evaluated against one protocol and one host. Cells marked **measured** come from `evidence/summary/bench.json`; cells marked **inspected** come from reading the cloned repository at the pinned commit in `evidence/summary/runtimes-raw.json`; cells marked **blocked** name the blocker instead of guessing.
 
-Host: macOS 26.5.2, Apple M1, 8 GiB. Protocol: launch → local login page → fill and submit → authenticated app page → accessibility snapshot → iframe read → download → upload → 3000-node page → 10 s idle → close. Three runs per adapter, median reported.
+Host: macOS 26.5.2, Apple M1, 8 GiB. Protocol: launch → local login page → fill and submit → authenticated app page → accessibility snapshot → iframe read → download → upload → 1500-row page → 10 s idle → close. Three runs per adapter, median reported.
 
 ## Headline table
 
@@ -23,7 +23,7 @@ Host: macOS 26.5.2, Apple M1, 8 GiB. Protocol: launch → local login page → f
 | Dynamic interaction | full DOM + frames | full | full | ref-based snapshot loop | agent-written helpers | model-driven action space | Playwright + LLM |
 | Download / upload | **69 ms / 10 ms** | 191 / 98 ms | 148 / 20 ms | 152 / 27 ms | blocked | blocked | blocked |
 | Iframe | **14 ms** via `frameLocator` | 53 ms | 14 ms | 9 ms via `eval` | blocked | blocked | blocked |
-| Crash recovery | process dies with the sidecar; supervisor restarts it | same | same | daemon can be re-attached | n/a | n/a | n/a |
+| Crash recovery | **measured**: SIGKILL detected, action rejects in 0 ms, same profile reusable | same | same | daemon re-attach, not measured | not measured | not measured | not measured |
 | Peak RSS | **308 MB** | 832 MB | 856 MB | 1090 MB | blocked | blocked | blocked |
 | Idle RSS / CPU | **270 MB / 0.3 %** | 508 MB / 2.2 % | 731 MB / 2.8 % | 794 MB / 3.8 % | blocked | blocked | blocked |
 | Cross-platform | macOS verified here; Windows/Linux documented only | same | same | ships win/linux/mac binaries | Python 3.11+ | Python 3.12+ | Node 22.18+ |

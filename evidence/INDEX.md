@@ -18,6 +18,7 @@ Regenerate with the commands in [`docs/phase-0/03-reproducible-poc.md`](../docs/
 | `summary/desktop-launch.json` | `scripts/check-desktop-launch.sh` | the shell staying alive at 114 MB, in `01`, `06`, `14` |
 | `summary/chrome-connect.json` | `poc/chrome-connect/connect.ts` | the three connection modes, the anonymous CDP endpoint and the extension finding, in `01`, `02`, `06`, `12` |
 | `summary/bundle.json` | `cargo tauri build` + capture | the 17 MB `.app` and the failing `.dmg`, in `01`, `06`, `14`, `15` |
+| `summary/crash-recovery.json` | `poc/session-poc/crash-recovery.ts` | the SIGKILL recovery table in `04` and the crash-recovery row in `02` |
 | `summary/api-probes.json` | `poc/api-probe/probe.ts` | every status, posting count and robots result in `09`, `11` |
 
 ## Claim → artifact
@@ -47,6 +48,7 @@ Regenerate with the commands in [`docs/phase-0/03-reproducible-poc.md`](../docs/
 | Workable answers 200 with an empty jobs array | `api-probes.json` | `results[id=workable].attempts` |
 | SmartRecruiters needs a verified tenant id | `api-probes.json` | `results[id=smartrecruiters].attempts` |
 | Recruitee robots.txt is per tenant origin | `api-probes.json` | `results[id=recruitee].robots` |
+| A SIGKILL'd browser is detected and its profile is reusable | `crash-recovery.json` | `steps` |
 
 ## Claims with no artifact, stated as unverified
 

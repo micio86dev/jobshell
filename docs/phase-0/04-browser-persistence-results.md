@@ -44,6 +44,20 @@ Run against the Rust core, not against the browser script, because these steps a
 
 The desktop shell itself launches and is still alive after 12 s at 114 MB RSS (`evidence/summary/desktop-launch.json`).
 
+## Crash recovery, measured separately
+
+`poc/session-poc/crash-recovery.ts` kills the browser's process subtree with `SIGKILL` mid-task and records what happens (`evidence/summary/crash-recovery.json`):
+
+| Step | Result |
+| --- | --- |
+| Task running before the crash | PASS — authenticated page rendered |
+| The automation handle notices the crash | PASS — `browser.isConnected()` is `false` after `SIGKILL` |
+| The in-flight action fails instead of hanging | PASS — rejected in 1 ms (single sample, not a benchmark) |
+| The same profile is reusable after a hard crash | PASS — relaunch on the same directory rendered a page |
+| Session state after a hard crash matches the stated expectation | PASS — the expectation (session lost) was stated before the run; this login does not tick "stay signed in", so the fixture issues a session cookie |
+
+So a browser crash is detectable and recoverable at the process level without corrupting the profile. What a crash costs is the in-flight task, which is exactly why the queue records `interrupted` rather than pretending the task never ran.
+
 ## Not tested, and why
 
 - **Session persistence on a real third-party service.** Requires a maintainer-provided account, URL and logged-in selector. The script supports it (`OPENJOB_REAL_LOGIN_URL`, `OPENJOB_REAL_LOGGED_IN_SELECTOR`) and deletes the resulting profile in a `finally` block, but no such account was used in this phase.
