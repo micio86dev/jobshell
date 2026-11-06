@@ -332,3 +332,5 @@ L3 — Findings that changed the architecture, each backed by `evidence/summary/
 - Five of six ATS job-board APIs answer without credentials; Workable answers 200 with an empty array; SmartRecruiters needs a verified tenant id.
 
 L4 — Blockers recorded, not hidden: LinkedIn and Indeed have no candidate-side job-search API; Adzuna, Jooble, InfoJobs and SEEK need credentials the maintainer has not supplied; Windows and Linux were not built; the `.dmg` bundle step fails; native messaging and real-service session persistence were deliberately not executed.
+
+L5 — Environment incident during closure: `diskutil verifyVolume` on the project volume failed ("sm_free_count is not valid", space verification failed, exit 8) and one `node_modules` file (`@types/node/util/types.d.ts`) was found NUL-filled, which broke `tsc` with bogus TS1127 errors. All 339 tracked and untracked text files were scanned for NUL bytes: none affected, and `git fsck` is clean. Dependencies are reproducible, so the repair was a reinstall. The heavy benchmark re-run was deferred until the volume is checked by the maintainer; every other experiment was re-run and re-verified afterwards.

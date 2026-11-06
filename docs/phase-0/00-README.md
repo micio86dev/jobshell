@@ -32,7 +32,8 @@ The claim-to-artifact map is [`../evidence/INDEX.md`](../evidence/INDEX.md).
 - A ten-step session protocol across two cookie-lifetime variants, with the browser cookie store never read.
 - A Rust core (SQLite via sqlx, keyring secrets, Node sidecar) with a two-process crash-recovery self-test.
 - A Tauri 2 desktop shell with a Vue 3 + TypeScript strict frontend, built and bundled as a macOS `.app` and a verified `.dmg`.
-- Live read-only probes of six public ATS job feeds, plus three Chrome connection modes.
+- Live read-only probes of six public ATS job feeds with robots.txt enforced before every content request, plus three Chrome connection modes.
+- A two-minute soak measurement and a SIGKILL crash-recovery experiment.
 
 ## What was deliberately not done
 
