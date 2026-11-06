@@ -20,7 +20,7 @@ The requirement is Windows, macOS and Linux. Only macOS arm64 was built and run 
 - Windows build, Windows installer, WebView2 behaviour, DPAPI credential storage.
 - Linux build, WebKitGTK rendering, `libsecret` availability, AppImage/deb packaging.
 - Whether the measured RAM and launch figures transfer to either platform.
-- CI. No workflow has been run; `.github/workflows/ci.yml` is the Phase 1 starting point, not evidence.
+- CI. `.github/workflows/ci.yml` exists and encodes the matrix (typescript and rust-core jobs on macOS/Windows/Linux, plus a Tauri shell build on ubuntu), but it has **never run**: the repository has no remote. It is intent, not evidence.
 
 ## Per-platform constraints the code must handle
 

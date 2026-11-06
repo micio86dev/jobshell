@@ -11,7 +11,7 @@ ROOT  := $(shell pwd)
 # scatter one run across several timestamped directories.
 OUT   := $(ROOT)/evidence/run/$(shell date -u +%Y%m%dT%H%M%SZ)
 
-.PHONY: test test-ts test-rs typecheck bench probe persistence crash chrome spike desktop dmg phase0 clean
+.PHONY: test test-ts test-rs typecheck bench probe persistence crash soak chrome spike desktop dmg phase0 clean
 
 test: test-ts test-rs typecheck
 
@@ -44,6 +44,10 @@ probe:
 crash:
 	cd poc/session-poc && set -a && . ../../scripts/env.sh && set +a && \
 		node crash-recovery.ts "$(OUT)/crash"
+
+soak:
+	cd poc/session-poc && set -a && . ../../scripts/env.sh && set +a && \
+		node soak.ts "$(OUT)/soak" --soak-ms 120000
 
 persistence:
 	cd poc/session-poc && set -a && . ../../scripts/env.sh && set +a && \
@@ -81,5 +85,5 @@ dmg: desktop
 		./scripts/make-dmg.sh "$$CARGO_TARGET_DIR/release/bundle/macos/openjob-phase0.app" \
 			"$(OUT)/openjob-phase0_0.0.0_aarch64.dmg" | tee "$(OUT)/dmg.json"
 
-phase0: test bench probe persistence crash chrome spike desktop
+phase0: test bench probe persistence crash soak chrome spike desktop
 	@echo "Phase 0 evidence written to $(OUT)"

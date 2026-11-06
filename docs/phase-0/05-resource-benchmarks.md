@@ -40,4 +40,4 @@ Same login, four different prices: 378 ms in Playwright headless (two `fill` cal
 - One host, one OS. Windows and Linux numbers do not exist yet (`docs/phase-0/06-cross-platform-limits.md`).
 - The fixture is local and deliberately small. A real job board page with third-party scripts will raise both RSS and CPU; the ratios between runtimes are more transferable than the absolute values.
 - Headed runs were measured with a window visible on a laptop screen. A minimised or off-screen window may change the compositor's cost, which was not tested.
-- No long-soak measurement: a two-hour idle browser may settle lower than a 10 s idle window shows.
+- No multi-hour soak. A two-minute soak was measured separately: 59 samples, RSS 264.9 MB → 236.7 MB (drift −10.6 %, it shrank as caches settled), peak 264.9 MB, mean CPU 0.2 %, and **zero processes left after close** (`evidence/summary/soak.json`). It is a single diagnostic run, not a benchmark: no median is claimed. It rules out a fast leak and a process leak; it does not rule out a slow one over hours.

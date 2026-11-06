@@ -1,0 +1,106 @@
+name: ci
+
+# Phase 1 milestone M0. This workflow has NEVER RUN: the repository has no remote
+# yet, so it is the encoded intent, not evidence. The commands below are the ones
+# verified locally on macOS arm64; what is unverified is the three runner images.
+#
+# Nothing in docs/phase-0/ claims Windows or Linux support until this is green.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RUST_TOOLCHAIN: "1.98.1"
+  CARGO_TERM_COLOR: always
+
+jobs:
+  typescript:
+    name: typescript (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: poc/runtime-bench/pnpm-lock.yaml
+      - name: Install benchmark dependencies
+        working-directory: poc/runtime-bench
+        run: pnpm install --frozen-lockfile
+      - name: Type-check and test
+        working-directory: poc/runtime-bench
+        run: |
+          ./node_modules/.bin/tsc --noEmit
+          node --test "test/*.test.ts"
+      - name: Install the remaining PoC projects
+        working-directory: poc
+        run: |
+          for project in api-probe session-poc chrome-connect; do
+            (cd "$project" && pnpm install --frozen-lockfile)
+          done
+      - name: Type-check every PoC project
+        working-directory: poc
+        run: |
+          for project in api-probe session-poc chrome-connect; do
+            (cd "$project" && ../runtime-bench/node_modules/.bin/tsc --noEmit)
+          done
+
+  rust:
+    name: rust-core (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+      - name: Build and test the core
+        working-directory: poc/session-poc/src-tauri
+        # The keyring test is #[ignore]d: a runner has no unlocked keychain.
+        run: cargo test --all-targets
+
+  desktop-linux:
+    name: tauri shell (ubuntu, unverified)
+    runs-on: ubuntu-latest
+    # The Tauri shell needs WebKitGTK and its dev headers. This job is the one
+    # most likely to need adjustment the first time it runs.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+      - name: Install Tauri system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev \
+            librsvg2-dev patchelf libsecret-1-dev
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Build the frontend
+        working-directory: poc/session-poc/ui
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+      - name: Build the shell
+        working-directory: poc/session-poc/app
+        run: cargo build --release

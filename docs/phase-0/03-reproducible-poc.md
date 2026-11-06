@@ -24,6 +24,7 @@ Two host quirks are handled by wrappers, and both are real findings:
 | `./scripts/capture-env.sh` | `evidence/run/<ts>/env.json` | host facts recorded |
 | `node poc/runtime-bench/src/harness.ts --runs 3 --idle-ms 10000` | `bench.json` | every adapter `ok` |
 | `node poc/session-poc/persistence.ts` | `persistence.json` | observations match the expectations stated before the run |
+| `make soak` | `soak.json` | two-minute idle, no drift, zero processes after close |
 | `node poc/chrome-connect/connect.ts` | `chrome-connect.json` | branded Chrome refuses the extension, Chrome for Testing accepts it |
 | `node poc/api-probe/probe.ts` | `api-probes.json` | six sources probed, statuses recorded |
 | `cargo build` then `session-poc-selftest --phase crash` / `--phase recover` | `phase1.json`, `phase2.json` | task recovered and audited |
@@ -39,7 +40,7 @@ cd poc/runtime-bench && ./node_modules/.bin/tsc --noEmit && node --test "test/*.
 cd poc/session-poc/src-tauri && ../../../scripts/cargo.sh test
 ```
 
-43 TypeScript tests and 5 Rust tests. They cover the pure logic that the evidence depends on: licence classification, pyproject parsing, package.json narrowing, the depth-limited file walk, HTTP probe pacing, CPU-time parsing, subtree summation, the median/aggregate path, and task-state recovery.
+65 TypeScript tests and 5 Rust tests. They cover the pure logic that the evidence depends on: licence classification, pyproject parsing, package.json narrowing, the depth-limited file walk, HTTP probe pacing, CPU-time parsing, subtree summation, the median/aggregate path, robots.txt parsing and RFC 9309 availability policy, and task-state recovery.
 
 The Rust keyring test is `#[ignore]`d because a CI runner has no unlocked keychain; the self-test exercises the same path explicitly.
 
