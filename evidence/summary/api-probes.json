@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-06T18:01:28.043Z",
-  "method": "read-only GET requests with a self-identifying user agent, 1200 ms between requests, 20 s timeout, no credentials and no keys",
+  "generated_at": "2026-11-06T23:01:07.878Z",
+  "method": "read-only GET requests with a self-identifying user agent, 1200 ms between requests, 20 s timeout, no credentials and no keys; robots.txt is fetched per origin first and disallowed paths are never requested",
   "results": [
     {
       "id": "greenhouse",
@@ -11,26 +11,32 @@
           "origin": "https://boards-api.greenhouse.io",
           "url": "https://boards-api.greenhouse.io/robots.txt",
           "status": 200,
+          "origin_allowed": true,
+          "policy_reason": "robots.txt returned 200",
+          "matched_group": "*",
+          "rules": 1,
+          "crawl_delay_seconds": null,
           "disallow": [
-            "Disallow: /embed/"
+            "/embed/"
           ]
         }
       ],
+      "skipped_by_robots": [],
       "attempts": [
         {
           "url": "https://boards-api.greenhouse.io/v1/boards/stripe/jobs?content=true",
           "status": 200,
           "ok": true,
-          "elapsed_ms": 3026,
+          "elapsed_ms": 555,
           "shape": "object(jobs,meta)",
-          "summary": "jobs=765",
+          "summary": "jobs=766",
           "error": null
         },
         {
           "url": "https://boards-api.greenhouse.io/v1/boards/figma/jobs?content=true",
           "status": 200,
           "ok": true,
-          "elapsed_ms": 227,
+          "elapsed_ms": 2945,
           "shape": "object(jobs,meta)",
           "summary": "jobs=145",
           "error": null
@@ -39,7 +45,7 @@
           "url": "https://boards-api.greenhouse.io/v1/boards/notion/jobs?content=true",
           "status": 404,
           "ok": false,
-          "elapsed_ms": 168,
+          "elapsed_ms": 163,
           "shape": "object(status,error)",
           "summary": "",
           "error": null
@@ -48,9 +54,9 @@
           "url": "https://boards-api.greenhouse.io/v1/boards/datadog/jobs?content=true",
           "status": 200,
           "ok": true,
-          "elapsed_ms": 490,
+          "elapsed_ms": 1279,
           "shape": "object(jobs,meta)",
-          "summary": "jobs=396",
+          "summary": "jobs=399",
           "error": null
         }
       ],
@@ -67,33 +73,39 @@
           "origin": "https://api.lever.co",
           "url": "https://api.lever.co/robots.txt",
           "status": 200,
+          "origin_allowed": true,
+          "policy_reason": "robots.txt returned 200",
+          "matched_group": "*",
+          "rules": 1,
+          "crawl_delay_seconds": 1,
           "disallow": []
         }
       ],
+      "skipped_by_robots": [],
       "attempts": [
         {
           "url": "https://api.lever.co/v0/postings/leverdemo?mode=json",
           "status": 200,
           "ok": true,
-          "elapsed_ms": 1979,
+          "elapsed_ms": 1158,
           "shape": "array(10)",
           "summary": "postings=10",
           "error": null
         },
         {
           "url": "https://api.lever.co/v0/postings/palantir?mode=json",
-          "status": null,
-          "ok": false,
-          "elapsed_ms": 20006,
-          "shape": "object",
-          "summary": "",
-          "error": "The operation was aborted due to timeout"
+          "status": 200,
+          "ok": true,
+          "elapsed_ms": 2421,
+          "shape": "array(305)",
+          "summary": "postings=305",
+          "error": null
         },
         {
           "url": "https://api.lever.co/v0/postings/plaid?mode=json",
           "status": 404,
           "ok": false,
-          "elapsed_ms": 1288,
+          "elapsed_ms": 232,
           "shape": "object(ok,error)",
           "summary": "",
           "error": null
@@ -102,7 +114,7 @@
           "url": "https://api.lever.co/v0/postings/mistral?mode=json",
           "status": 404,
           "ok": false,
-          "elapsed_ms": 1361,
+          "elapsed_ms": 453,
           "shape": "object(ok,error)",
           "summary": "",
           "error": null
@@ -121,26 +133,32 @@
           "origin": "https://api.ashbyhq.com",
           "url": "https://api.ashbyhq.com/robots.txt",
           "status": 401,
+          "origin_allowed": true,
+          "policy_reason": "robots.txt returned 401: no policy published, access allowed",
+          "matched_group": null,
+          "rules": 0,
+          "crawl_delay_seconds": null,
           "disallow": []
         }
       ],
+      "skipped_by_robots": [],
       "attempts": [
         {
           "url": "https://api.ashbyhq.com/posting-api/job-board/openai",
           "status": 200,
           "ok": true,
-          "elapsed_ms": 362,
+          "elapsed_ms": 9438,
           "shape": "object(jobs,apiVersion)",
-          "summary": "jobs=820",
+          "summary": "jobs=821",
           "error": null
         },
         {
           "url": "https://api.ashbyhq.com/posting-api/job-board/ramp",
           "status": 200,
           "ok": true,
-          "elapsed_ms": 96,
+          "elapsed_ms": 103,
           "shape": "object(jobs,apiVersion)",
-          "summary": "jobs=171",
+          "summary": "jobs=172",
           "error": null
         },
         {
@@ -156,7 +174,7 @@
           "url": "https://api.ashbyhq.com/posting-api/job-board/vanta",
           "status": 200,
           "ok": true,
-          "elapsed_ms": 66,
+          "elapsed_ms": 78,
           "shape": "object(jobs,apiVersion)",
           "summary": "jobs=84",
           "error": null
@@ -175,43 +193,25 @@
           "origin": "https://api.smartrecruiters.com",
           "url": "https://api.smartrecruiters.com/robots.txt",
           "status": 200,
+          "origin_allowed": true,
+          "policy_reason": "robots.txt returned 200",
+          "matched_group": "*",
+          "rules": 1,
+          "crawl_delay_seconds": null,
           "disallow": [
-            "Disallow: /"
+            "/"
           ]
         }
       ],
-      "attempts": [
-        {
-          "url": "https://api.smartrecruiters.com/v1/companies/DeliveryHero/postings",
-          "status": 200,
-          "ok": true,
-          "elapsed_ms": 283,
-          "shape": "object(offset,limit,totalFound,content)",
-          "summary": "content=100 totalFound=901",
-          "error": null
-        },
-        {
-          "url": "https://api.smartrecruiters.com/v1/companies/Ubisoft/postings",
-          "status": 200,
-          "ok": true,
-          "elapsed_ms": 128,
-          "shape": "object(offset,limit,totalFound,content)",
-          "summary": "content=0 totalFound=0",
-          "error": null
-        },
-        {
-          "url": "https://api.smartrecruiters.com/v1/companies/Visa/postings",
-          "status": 200,
-          "ok": true,
-          "elapsed_ms": 114,
-          "shape": "object(offset,limit,totalFound,content)",
-          "summary": "content=0 totalFound=0",
-          "error": null
-        }
+      "skipped_by_robots": [
+        "https://api.smartrecruiters.com/v1/companies/DeliveryHero/postings",
+        "https://api.smartrecruiters.com/v1/companies/Ubisoft/postings",
+        "https://api.smartrecruiters.com/v1/companies/Visa/postings"
       ],
+      "attempts": [],
       "note": null,
-      "usable_without_credentials": true,
-      "verdict": "public endpoint answered without credentials; reuse terms still govern storage and redistribution"
+      "usable_without_credentials": false,
+      "verdict": "no candidate token answered 200 without credentials"
     },
     {
       "id": "workable",
@@ -222,17 +222,21 @@
           "origin": "https://apply.workable.com",
           "url": "https://apply.workable.com/robots.txt",
           "status": 200,
-          "disallow": [
-            "Disallow:"
-          ]
+          "origin_allowed": true,
+          "policy_reason": "robots.txt returned 200",
+          "matched_group": "*",
+          "rules": 0,
+          "crawl_delay_seconds": null,
+          "disallow": []
         }
       ],
+      "skipped_by_robots": [],
       "attempts": [
         {
           "url": "https://apply.workable.com/api/v1/widget/accounts/revolut?details=true",
           "status": 200,
           "ok": true,
-          "elapsed_ms": 241,
+          "elapsed_ms": 179,
           "shape": "object(name,description,jobs)",
           "summary": "jobs=0",
           "error": null
@@ -241,7 +245,7 @@
           "url": "https://apply.workable.com/api/v1/widget/accounts/epilot?details=true",
           "status": 200,
           "ok": true,
-          "elapsed_ms": 159,
+          "elapsed_ms": 153,
           "shape": "object(name,description,jobs)",
           "summary": "jobs=0",
           "error": null
@@ -250,7 +254,7 @@
           "url": "https://apply.workable.com/api/v1/widget/accounts/aircall?details=true",
           "status": 200,
           "ok": true,
-          "elapsed_ms": 179,
+          "elapsed_ms": 172,
           "shape": "object(name,description,jobs)",
           "summary": "jobs=0",
           "error": null
@@ -269,29 +273,45 @@
           "origin": "https://weareplanet.recruitee.com",
           "url": "https://weareplanet.recruitee.com/robots.txt",
           "status": 200,
+          "origin_allowed": true,
+          "policy_reason": "robots.txt returned 200",
+          "matched_group": null,
+          "rules": 0,
+          "crawl_delay_seconds": null,
           "disallow": []
         },
         {
           "origin": "https://channable.recruitee.com",
           "url": "https://channable.recruitee.com/robots.txt",
           "status": 200,
+          "origin_allowed": true,
+          "policy_reason": "robots.txt returned 200",
+          "matched_group": "*",
+          "rules": 1,
+          "crawl_delay_seconds": null,
           "disallow": [
-            "Disallow: /v/"
+            "/v/"
           ]
         },
         {
           "origin": "https://sendcloud.recruitee.com",
           "url": "https://sendcloud.recruitee.com/robots.txt",
           "status": 200,
+          "origin_allowed": true,
+          "policy_reason": "robots.txt returned 200",
+          "matched_group": null,
+          "rules": 0,
+          "crawl_delay_seconds": null,
           "disallow": []
         }
       ],
+      "skipped_by_robots": [],
       "attempts": [
         {
           "url": "https://weareplanet.recruitee.com/api/offers/",
           "status": 404,
           "ok": false,
-          "elapsed_ms": 147,
+          "elapsed_ms": 126,
           "shape": "object(error)",
           "summary": "",
           "error": null
@@ -300,7 +320,7 @@
           "url": "https://channable.recruitee.com/api/offers/",
           "status": 200,
           "ok": true,
-          "elapsed_ms": 200,
+          "elapsed_ms": 196,
           "shape": "object(offers)",
           "summary": "offers=12",
           "error": null
@@ -309,7 +329,7 @@
           "url": "https://sendcloud.recruitee.com/api/offers/",
           "status": 404,
           "ok": false,
-          "elapsed_ms": 193,
+          "elapsed_ms": 146,
           "shape": "object(error)",
           "summary": "",
           "error": null

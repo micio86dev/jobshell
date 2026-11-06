@@ -22,9 +22,9 @@ Turn `sources.csv` into the runtime registry and ingest five ATS platforms.
 - One `ats_feed` adapter with a per-platform payload mapper (Greenhouse, Lever, Ashby, SmartRecruiters, Recruitee).
 - Tenant registry: verified ids only. `DeliveryHero` returned 901 postings while `Ubisoft` returned 0 — a guessed id must fail loudly, not silently return nothing.
 - Persist only when `reuse_policy` is not `unknown`; otherwise show transiently with a link-out.
-- Enforce a per-source rate limit and honour `robots.txt` `Disallow` for browser sources.
+- Enforce a per-source rate limit, and extend the robots enforcement that the probe already has (`poc/runtime-bench/src/lib/robots.ts`) to browser-driven sources.
 
-**Acceptance:** with a fixture tenant list of 5 employers across 5 platforms, one run stores ≥ 100 postings, every row carries `source_id`, `evidence_url` and `fetched_at`; a run against a source with `reuse_policy = unknown` stores zero rows; a bad tenant id produces a recorded error, not an empty success.
+**Acceptance:** with a fixture tenant list of 5 employers across 5 platforms, one run stores ≥ 100 postings, every row carries `source_id`, `evidence_url` and `fetched_at`; a run against a source with `reuse_policy = unknown` stores zero rows; a bad tenant id produces a recorded error, not an empty success; a source whose `robots.txt` disallows the path is skipped and the skip is recorded — SmartRecruiters is the fixture for that case.
 
 ## M2 — Browser supervisor and session persistence (3 weeks)
 

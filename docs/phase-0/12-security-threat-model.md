@@ -24,6 +24,7 @@ Scope: the desktop application described in `14-recommended-architecture.md`, as
 | T6 | Native messaging bridge | a host binary outside the sandbox | out of Phase 1 scope: the sidecar covers the same need with an auditable process boundary | **not implemented, deliberately** |
 | T7 | Credential leakage through logs | API keys in log lines | keys live in the keyring and are read at call time; log only the source id, never the header value | **partially**: no logging layer yet, so nothing is logged and nothing is redacted |
 | T8 | SQLite corruption or loss | crash during a write | WAL journal mode, migrations, explicit recovery of `running` tasks | **implemented and tested** across real process death |
+| T11 | Automated collection against a site's wishes | probe or browser workflow ignoring `robots.txt` | fetch and parse robots per origin before any content request; skip disallowed URLs and record the skip | **implemented** for the probe; the browser workflow does not exist yet |
 | T9 | Malicious or compromised ATS feed | hostile JSON from a third-party endpoint | validate at the boundary; never execute payload content; cap response size and item count | **partially**: probe parses as `unknown` and narrows; the ingestion path does not exist yet |
 | T10 | GDPR exposure from CV storage | local personal data, backups, crash dumps | local-only storage, no sync by default, export/delete on request, no telemetry | **not implemented** |
 
@@ -45,4 +46,4 @@ Two things, both measured rather than asserted:
 - Filesystem permissions on the profile directory, and whether to encrypt CV data at rest.
 - A logging layer with redaction, since currently there is no logging at all.
 - Prompt-injection containment design before any AI feature lands (T4).
-- A per-source rate limiter that is enforced, not documented: the probe records `robots.txt` `Disallow` lines but does not act on them (`poc/api-probe/probe.ts`).
+- A per-source rate limiter that is enforced, not documented. `robots.txt` enforcement is done: the probe fetches robots per origin first, parses it and never requests a disallowed URL (`poc/runtime-bench/src/lib/robots.ts`, 15 tests). Rate limiting itself is still only a fixed delay between requests.

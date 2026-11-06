@@ -2,16 +2,18 @@
 
 Read-only probes of the documented endpoints, run on 2026-11-06 with a self-identifying user agent (`openjob-phase0-probe`), 1200 ms between requests and a 20 s timeout. No credentials, no keys, no writes.
 
+`robots.txt` is fetched per origin **before** any content request, parsed (user-agent groups, `Allow`/`Disallow`, `*` and `$`, longest match wins), and a disallowed URL is never requested. The parser has 15 unit tests (`poc/runtime-bench/test/robots.test.ts`).
+
 Artifact: `evidence/summary/api-probes.json` (per-attempt URL, status, payload shape, posting counts, robots.txt status and `Disallow` lines).
 
 ## Result
 
 | Source | Endpoint (documented) | Status observed | Postings seen | Credentials? | Verdict |
 | --- | --- | --- | --- | --- | --- |
-| Greenhouse | `boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true` | 200 / 200 / 404 / 200 | 765, 145, 396 | none | **usable now** |
-| Lever | `api.lever.co/v0/postings/{token}?mode=json` | 200 / timeout / 404 / 404 | 10 | none | **usable now** |
-| Ashby | `api.ashbyhq.com/posting-api/job-board/{token}` | 200 ×4 | 820, 171, 32, 84 | none | **usable now** |
-| SmartRecruiters | `api.smartrecruiters.com/v1/companies/{token}/postings` | 200 ×3 | 901, 0, 0 | none | **usable now**, tenant id matters |
+| Greenhouse | `boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true` | 200 / 200 / 404 / 200 | 766, 145, 399 | none | **usable now** |
+| Lever | `api.lever.co/v0/postings/{token}?mode=json` | 200 / 200 / 404 / 404 | 10, 305 | none | **usable now** |
+| Ashby | `api.ashbyhq.com/posting-api/job-board/{token}` | 200 ×4 | 821, 172, 32, 84 | none | **usable now** |
+| SmartRecruiters | `api.smartrecruiters.com/v1/companies/{token}/postings` | skipped (robots) | 0 requested | none | **policy-disallowed**: answers 200, but `robots.txt` is `Disallow: /` |
 | Recruitee | `{tenant}.recruitee.com/api/offers/` | 404 / 200 / 404 | 12 | none | **usable now**, per-tenant origin |
 | Workable | `apply.workable.com/api/v1/widget/accounts/{token}?details=true` | 200 ×3 | 0, 0, 0 | none for the widget, but empty | **requires credentials** for real data |
 | Adzuna | documented app id + key | not attempted | — | app_id + app_key | **requires credentials** |
@@ -21,7 +23,9 @@ Artifact: `evidence/summary/api-probes.json` (per-attempt URL, status, payload s
 
 `404` rows are wrong tenant tokens, not broken endpoints: the same template returned 200 for a valid token in the same batch, and Lever's 404 body carries an explicit `{ok, error}` payload.
 
-One row is a **timeout, not a failure of the endpoint**: `api.lever.co/v0/postings/palantir` aborted at the 20 s limit in two independent runs, which is what a very large board looks like through this client. It is recorded as `ERR` with the error text in the artifact, and a production client needs a longer timeout or pagination for that tenant.
+**Posting counts are a point-in-time sample, not a market figure.** They move between runs — an earlier run saw 765 for the same Greenhouse board, and a Lever tenant aborted at the 20 s timeout in two runs and answered 305 postings in this one. The artifact is authoritative; the table is illustrative.
+
+**Crawl-delay is honoured.** When a source publishes one, the delay is `max(1200 ms, crawl_delay)` both between robots fetches and between content requests. RFC 9309 availability rules are applied: a 4xx `robots.txt` (Ashby returns 401) means no published policy and access is allowed; a 5xx or an unreachable `robots.txt` means the origin is treated as fully disallowed, never as permission by default.
 
 ## What each verdict means in practice
 
@@ -29,7 +33,9 @@ One row is a **timeout, not a failure of the endpoint**: `api.lever.co/v0/postin
 
 **Workable requires credentials** despite answering 200: every tried account returned `{"jobs":[]}`. The recorded payloads are the evidence; no authenticated endpoint was tested, and the report does not claim to know why the array is empty.
 
-**SmartRecruiters tenant ids matter**: `Ubisoft`, `Visa` and `Bosch` returned `totalFound: 0` while `DeliveryHero` returned 901. A tenant registry must store verified ids, never guess them.
+**SmartRecruiters is the counter-example that proves the rule.** The endpoint answers 200 with 901 postings and needs no credentials — and its `robots.txt` is `Disallow: /` for the whole API host. After robots enforcement was added, the probe skips all three URLs and records them under `skipped_by_robots`. Technically reachable, policy-disallowed: exactly the gap between "public" and "permitted" that this phase had to measure rather than assume.
+
+**SmartRecruiters tenant ids also matter**: `Ubisoft`, `Visa` and `Bosch` returned `totalFound: 0` while `DeliveryHero` returned 901. A tenant registry must store verified ids, never guess them.
 
 **Recruitee gives every tenant its own origin**, so `robots.txt` must be fetched per tenant; the probe does this and records each result.
 
@@ -49,7 +55,7 @@ One row is a **timeout, not a failure of the endpoint**: `api.lever.co/v0/postin
 | Lever, Ashby | low | one GET, bare array, stable schema |
 | Greenhouse | low | one GET, `content=true` gives the description |
 | Recruitee | low–medium | per-tenant subdomain, tenant discovery needed |
-| SmartRecruiters | medium | pagination, tenant id verification |
+| SmartRecruiters | blocked by policy | `robots.txt` disallows the API host; would need a written permission |
 | Workable | medium–high | authenticated API needed for real postings |
 | Adzuna, Jooble | medium | key required, quota management, aggregator dedupe |
 | InfoJobs | medium–high | OAuth2 client credentials, single-country scope |

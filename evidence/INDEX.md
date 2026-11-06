@@ -48,6 +48,9 @@ Regenerate with the commands in [`docs/phase-0/03-reproducible-poc.md`](../docs/
 | The DMG verifies and contains the app plus an Applications link | `dmg.json` | `verified`, `bytes` |
 | Greenhouse/Lever/Ashby/SmartRecruiters/Recruitee answer without credentials | `api-probes.json` | `results[].usable_without_credentials` |
 | Workable answers 200 with an empty jobs array | `api-probes.json` | `results[id=workable].attempts` |
+| SmartRecruiters is reachable but robots-disallowed | `api-probes.json` | `results[id=smartrecruiters].robots[0].disallow`, `skipped_by_robots` |
+| A 4xx robots.txt allows access, a 5xx or unreachable one does not | `poc/runtime-bench/test/robots.test.ts` | `robotsPolicyFor` cases |
+| Crawl-delay is honoured, never below the 1200 ms floor | `poc/api-probe/probe.ts` | `Math.max(1200, publishedDelayMs)` |
 | SmartRecruiters needs a verified tenant id | `api-probes.json` | `results[id=smartrecruiters].attempts` |
 | Recruitee robots.txt is per tenant origin | `api-probes.json` | `results[id=recruitee].robots` |
 | A SIGKILL'd browser is detected and its profile is reusable | `crash-recovery.json` | `steps` |

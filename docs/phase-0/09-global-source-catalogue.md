@@ -27,8 +27,8 @@ The machine-readable version is [`sources.csv`](sources.csv), which is the seed 
 | Adzuna | api | UK, DE, NL, FR, IT, ES, PL, AT, BE, BR, CA, AU, NZ, US, SG, IN / local | high — 16-country aggregator | documented (`developer.adzuna.com`), **requires app_id + key** | key, quota; reuse restricted | medium |
 | InfoJobs | api | Spain / es | high in Spain | documented (`developer.infojobs.net`), OAuth2 client credentials | requires credentials, Spain only | medium |
 | Jooble | api | 60+ countries / local | medium — aggregator | documented (`jooble.org/api/about`), **requires key** | key, quota | medium |
-| Greenhouse (EU tenants) | ats_feed | per employer / en, local | high — direct employer postings | **verified** 200, 765/145/396 postings | public feed, terms apply | low |
-| Lever (EU tenants) | ats_feed | per employer | high | **verified** 200, 10 postings; one large tenant timed out at 20 s | public feed, terms apply | low |
+| Greenhouse (EU tenants) | ats_feed | per employer / en, local | high — direct employer postings | **verified** 200, 766/145/399 postings | public feed, terms apply | low |
+| Lever (EU tenants) | ats_feed | per employer | high | **verified** 200, 10/305 postings | public feed, terms apply | low |
 | Workable | api | global tenants | medium | widget **verified** 200 but empty; real data needs credentials | restricted | medium–high |
 | Welcome to the Jungle | browser | France / fr, en | high in FR tech | none found | unknown | high |
 | Honeypot | browser | Germany / de, en | medium (tech) | none found | unknown | high |
@@ -42,8 +42,8 @@ The machine-readable version is [`sources.csv`](sources.csv), which is the seed 
 | --- | --- | --- | --- | --- | --- | --- |
 | Greenhouse (US tenants) | ats_feed | per employer / en | very high — the default US startup ATS | **verified** | public feed | low |
 | Lever (US tenants) | ats_feed | per employer / en | high | **verified** | public feed | low |
-| Ashby | ats_feed | per employer / en | high — modern startup ATS | **verified** 200, 820/171/32/84 | public feed | low |
-| SmartRecruiters | ats_feed | per employer / en, local | high — enterprise ATS | **verified** 200, 901 postings | public feed | medium |
+| Ashby | ats_feed | per employer / en | high — modern startup ATS | **verified** 200, 821/172/32/84 | public feed | low |
+| SmartRecruiters | ats_feed | per employer / en, local | high — enterprise ATS | **verified** 200, 901 postings, but `robots.txt` is `Disallow: /` | policy-disallowed | blocked |
 | Workday | browser | per employer / en | very high — enterprise | none public | restricted | high |
 | USAJOBS | api | US federal / en | medium (public sector tech) | documented (`developer.usajobs.gov`), free key | key, public domain | low–medium |
 | Dice | browser | US / en | medium (tech-specific) | partner only | restricted | high |
@@ -114,7 +114,7 @@ The single most under-rated finding: for technology roles, the highest-quality p
 
 ## Verification status
 
-Verified by probe: Greenhouse, Lever, Ashby, SmartRecruiters, Workable (empty), Recruitee.
+Verified by probe: Greenhouse, Lever, Ashby, SmartRecruiters (policy-disallowed), Workable (empty), Recruitee.
 
 Documented but not tested: Adzuna, Jooble, InfoJobs, SEEK, USAJOBS, Bundesagentur für Arbeit.
 

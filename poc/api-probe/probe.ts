@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { probeBatch, probeJson, type ProbeResult } from '../runtime-bench/src/lib/http.ts';
+import { isAllowed, robotsPolicyFor } from '../runtime-bench/src/lib/robots.ts';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '../..');
 
@@ -95,6 +96,7 @@ const robotsOrigins = (urls: string[]): string[] => [
   ...new Set(urls.map((url) => new URL(url).origin)),
 ];
 
+const USER_AGENT = 'openjob-phase0-probe';
 const outDir = path.resolve(process.argv[2] ?? path.join(REPO_ROOT, 'evidence/run', new Date().toISOString().replace(/[:.]/g, '-')));
 fs.mkdirSync(outDir, { recursive: true });
 
@@ -102,7 +104,18 @@ type SourceResult = {
   id: string;
   label: string;
   docs: string;
-  robots: Array<{ origin: string; url: string; status: number | null; disallow: string[] }>;
+  robots: Array<{
+    origin: string;
+    url: string;
+    status: number | null;
+    origin_allowed: boolean;
+    policy_reason: string;
+    matched_group: string | null;
+    rules: number;
+    crawl_delay_seconds: number | null;
+    disallow: string[];
+  }>;
+  skipped_by_robots: string[];
   attempts: Array<{
     url: string;
     status: number | null;
@@ -121,22 +134,50 @@ const results: SourceResult[] = [];
 
 for (const source of SOURCES) {
   const urls = source.candidates.map((token) => source.template.replace('{token}', token));
-  const probes: ProbeResult[] = await probeBatch(urls, { delayMs: 1200, timeoutMs: 20_000 });
 
+  // robots.txt is fetched and applied BEFORE any content request, so a disallowed
+  // path is never requested in the first place.
   const robots: SourceResult['robots'] = [];
+  const skipped: string[] = [];
+  const permitted: string[] = [];
+
   for (const origin of robotsOrigins(urls)) {
-    const url = `${origin}/robots.txt`;
-    const probe = await probeJson(url, { timeoutMs: 15_000 });
-    const disallow =
-      probe.ok && typeof probe.body === 'string'
-        ? probe.body
-            .split('\n')
-            .filter((line) => /^\s*Disallow:/i.test(line))
-            .map((line) => line.trim())
-        : [];
-    robots.push({ origin, url, status: probe.status, disallow });
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+    const robotsUrl = `${origin}/robots.txt`;
+    const probe = await probeJson(robotsUrl, { userAgent: USER_AGENT, timeoutMs: 15_000 });
+    const body = typeof probe.body === 'string' ? probe.body : '';
+    const policy = robotsPolicyFor(probe.status, body, USER_AGENT);
+    robots.push({
+      origin,
+      url: robotsUrl,
+      status: probe.status,
+      origin_allowed: policy.origin_allowed,
+      policy_reason: policy.reason,
+      matched_group: policy.rules.matched_group,
+      rules: policy.rules.rules.length,
+      crawl_delay_seconds: policy.rules.crawl_delay_seconds,
+      disallow: policy.rules.rules.filter((rule) => !rule.allow).map((rule) => rule.pattern),
+    });
+
+    for (const url of urls) {
+      if (new URL(url).origin !== origin) continue;
+      if (policy.origin_allowed && isAllowed(url, policy.rules)) permitted.push(url);
+      else skipped.push(url);
+    }
+
+    // Honour a published Crawl-delay, never go faster than the probe's own floor.
+    const crawlDelayMs = (policy.rules.crawl_delay_seconds ?? 0) * 1000;
+    await new Promise((resolve) => setTimeout(resolve, Math.max(1200, crawlDelayMs)));
   }
+
+  const publishedDelayMs = Math.max(
+    0,
+    ...robots.map((entry) => (entry.crawl_delay_seconds ?? 0) * 1000),
+  );
+  const probes: ProbeResult[] = await probeBatch(permitted, {
+    delayMs: Math.max(1200, publishedDelayMs),
+    timeoutMs: 20_000,
+    userAgent: USER_AGENT,
+  });
 
   const attempts = probes.map((probe) => ({
     url: probe.url,
@@ -154,6 +195,7 @@ for (const source of SOURCES) {
     label: source.label,
     docs: source.docs,
     robots,
+    skipped_by_robots: skipped,
     attempts,
     note: source.note ?? null,
     usable_without_credentials: usable,
@@ -163,14 +205,14 @@ for (const source of SOURCES) {
   });
 
   console.log(
-    `${source.id.padEnd(16)} ${attempts.map((a) => `${a.status ?? 'ERR'}${a.summary ? ` ${a.summary}` : ''}`).join(' | ')}  robots=${robots.map((r) => r.status ?? 'ERR').join('/')}`,
+    `${source.id.padEnd(16)} ${attempts.map((a) => `${a.status ?? 'ERR'}${a.summary ? ` ${a.summary}` : ''}`).join(' | ')}  robots=${robots.map((r) => `${r.status ?? 'ERR'}/${r.rules}rule(s)${r.origin_allowed ? '' : '!DISALLOWED'}`).join('/')}${skipped.length > 0 ? `  skipped-by-robots=${skipped.length}` : ''}`,
   );
 }
 
 const report = {
   generated_at: new Date().toISOString(),
   method:
-    'read-only GET requests with a self-identifying user agent, 1200 ms between requests, 20 s timeout, no credentials and no keys',
+    'read-only GET requests with a self-identifying user agent, 1200 ms between requests, 20 s timeout, no credentials and no keys; robots.txt is fetched per origin first and disallowed paths are never requested',
   results,
 };
 fs.writeFileSync(path.join(outDir, 'api-probes.json'), JSON.stringify(report, null, 2) + '\n');
