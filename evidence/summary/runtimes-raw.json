@@ -1,0 +1,223 @@
+[
+  {
+    "slug": "vercel-labs/agent-browser",
+    "dir": ".cache/repos/agent-browser",
+    "last_commit_date": "2026-11-05T13:14:16-08:00",
+    "last_commit_subject": "fix(cli): print page error text in errors output (#2427)",
+    "git_error": null,
+    "shallow_clone": true,
+    "license": {
+      "file": "LICENSE",
+      "spdx_guess": "Apache-2.0",
+      "first_line": "Apache License"
+    },
+    "has_rust_manifest": true,
+    "cargo_manifests": [
+      "agent-browser/cli/Cargo.toml"
+    ],
+    "has_python_manifest": false,
+    "python_requires": null,
+    "python_dependencies": null,
+    "node_package": {
+      "name": "agent-browser",
+      "version": "0.41.2",
+      "engines": {
+        "node": ">=22.0.0"
+      },
+      "bin": {
+        "agent-browser": "./bin/agent-browser.js"
+      },
+      "dependencies": []
+    },
+    "top_level_entries": [
+      "AGENTS.md",
+      "CHANGELOG.md",
+      "LICENSE",
+      "README.md",
+      "agent-browser.schema.json",
+      "benchmarks",
+      "bin",
+      "cli",
+      "docker",
+      "docs",
+      "evals",
+      "examples",
+      "package.json",
+      "packages",
+      "patches",
+      "pnpm-lock.yaml",
+      "pnpm-workspace.yaml",
+      "scripts",
+      "skill-data",
+      "skills",
+      "test"
+    ]
+  },
+  {
+    "slug": "browser-use/browser-harness",
+    "dir": ".cache/repos/browser-harness",
+    "last_commit_date": "2026-11-05T15:53:19-08:00",
+    "last_commit_subject": "Merge pull request #975 from browser-use/skills/batch-1105",
+    "git_error": null,
+    "shallow_clone": true,
+    "license": {
+      "file": "LICENSE",
+      "spdx_guess": "MIT",
+      "first_line": "MIT License"
+    },
+    "has_rust_manifest": false,
+    "cargo_manifests": [],
+    "has_python_manifest": true,
+    "python_requires": ">=3.11",
+    "python_dependencies": "\"cdp-use==1.4.5\", \"fetch-use==0.4.0\", \"pillow==12.3.0\", \"websockets==15.0.1\",",
+    "node_package": null,
+    "top_level_entries": [
+      "AGENTS.md",
+      "CONTRIBUTING.md",
+      "LICENSE",
+      "README.md",
+      "SKILL.md",
+      "agent-workspace",
+      "browser-harness",
+      "docs",
+      "install.md",
+      "interaction-skills",
+      "pyproject.toml",
+      "skills",
+      "src",
+      "tests"
+    ]
+  },
+  {
+    "slug": "browser-use/jev-ultrafast",
+    "dir": ".cache/repos/jev-ultrafast",
+    "last_commit_date": "2026-10-31T10:35:44-07:00",
+    "last_commit_subject": "docs: replace the Cloud waitlist callout with BU Ultrafast GA (#238)",
+    "git_error": null,
+    "shallow_clone": true,
+    "license": {
+      "file": "LICENSE",
+      "spdx_guess": "MIT",
+      "first_line": "MIT License"
+    },
+    "has_rust_manifest": false,
+    "cargo_manifests": [],
+    "has_python_manifest": true,
+    "python_requires": ">=3.12",
+    "python_dependencies": "\"browser-harness==0.1.13\", \"httpx[http2",
+    "node_package": null,
+    "top_level_entries": [
+      "AGENTS.md",
+      "LICENSE",
+      "README.md",
+      "docs",
+      "examples",
+      "jev_ultrafast",
+      "pyproject.toml",
+      "scripts",
+      "tests",
+      "uv.lock"
+    ]
+  },
+  {
+    "slug": "browserbase/stagehand",
+    "dir": ".cache/repos/stagehand",
+    "last_commit_date": "2026-11-05T12:24:24-08:00",
+    "last_commit_subject": "chore(integrations): require stagehand-middleware 0.1.2 in deepagents (#3351)",
+    "git_error": null,
+    "shallow_clone": true,
+    "license": {
+      "file": "LICENSE",
+      "spdx_guess": "MIT",
+      "first_line": "MIT License"
+    },
+    "has_rust_manifest": false,
+    "cargo_manifests": [],
+    "has_python_manifest": true,
+    "python_requires": null,
+    "python_dependencies": null,
+    "node_package": {
+      "name": "stagehand-workspace",
+      "version": "4.0.0",
+      "engines": {
+        "node": ">=22.18.0"
+      },
+      "bin": null,
+      "dependencies": []
+    },
+    "top_level_entries": [
+      "AGENTS.md",
+      "CHANGELOG.md",
+      "CONTRIBUTING.md",
+      "LICENSE",
+      "README.md",
+      "SECURITY.md",
+      "cubic.yaml",
+      "justfile",
+      "media",
+      "oxlint.config.ts",
+      "package.json",
+      "packages",
+      "pnpm-lock.yaml",
+      "pnpm-workspace.yaml",
+      "pyproject.toml",
+      "rules",
+      "scripts",
+      "tests",
+      "tsconfig.json",
+      "tsconfig.tooling.json",
+      "turbo.json",
+      "uv.lock",
+      "vitest.config.ts",
+      "vitest.integration.config.ts"
+    ]
+  },
+  {
+    "slug": "microsoft/playwright",
+    "dir": ".cache/repos/playwright",
+    "last_commit_date": "2026-11-06T08:34:16-08:00",
+    "last_commit_subject": "feat(webkit): roll to r2391 (#43963)",
+    "git_error": null,
+    "shallow_clone": true,
+    "license": {
+      "file": "LICENSE",
+      "spdx_guess": "Apache-2.0",
+      "first_line": "Apache License"
+    },
+    "has_rust_manifest": false,
+    "cargo_manifests": [],
+    "has_python_manifest": false,
+    "python_requires": null,
+    "python_dependencies": null,
+    "node_package": {
+      "name": "playwright-internal",
+      "version": "1.66.0-next",
+      "engines": {
+        "node": ">=20"
+      },
+      "bin": null,
+      "dependencies": []
+    },
+    "top_level_entries": [
+      "AGENTS.md",
+      "CODE_OF_CONDUCT.md",
+      "CONTRIBUTING.md",
+      "FILING_ISSUES.md",
+      "LICENSE",
+      "NOTICE",
+      "README.md",
+      "SECURITY.md",
+      "SUPPORT.md",
+      "browser_patches",
+      "docs",
+      "eslint.config.mjs",
+      "examples",
+      "package-lock.json",
+      "package.json",
+      "packages",
+      "tests",
+      "tsconfig.json",
+      "utils"
+    ]
+  }
+]

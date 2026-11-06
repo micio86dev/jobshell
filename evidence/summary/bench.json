@@ -1,0 +1,905 @@
+{
+  "generated_at": "2026-11-06T17:10:05.841Z",
+  "host": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "node": "v24.18.0",
+    "cpus": 8,
+    "total_memory_gb": 8
+  },
+  "protocol": {
+    "runs_per_adapter": 3,
+    "idle_sample_ms": 10000,
+    "fixture": "local 127.0.0.1 fixture server (login, app, iframe, download, upload, heavy DOM)",
+    "resource_sampling": "process subtree matched by unique profile path, sampled every 500 ms; CPU from cumulative CPU-time delta; the sampler's own synchronous ps cost is reported per adapter as sampler_overhead_ms"
+  },
+  "skipped": [],
+  "aggregate": [
+    {
+      "adapter": "playwright-headless",
+      "mode": "headless",
+      "runs_ok": 3,
+      "runs_failed": 0,
+      "launch_ms": {
+        "median": 3184,
+        "n": 3,
+        "values": [
+          4203,
+          872,
+          3184
+        ]
+      },
+      "snapshot_ms": {
+        "median": 22,
+        "n": 3,
+        "values": [
+          23,
+          15,
+          22
+        ]
+      },
+      "form_submit_ms": {
+        "median": 378,
+        "n": 3,
+        "values": [
+          378,
+          148,
+          808
+        ]
+      },
+      "app_ready_ms": {
+        "median": 15,
+        "n": 3,
+        "values": [
+          14,
+          15,
+          20
+        ]
+      },
+      "iframe_ms": {
+        "median": 14,
+        "n": 3,
+        "values": [
+          14,
+          13,
+          28
+        ]
+      },
+      "download_ms": {
+        "median": 69,
+        "n": 3,
+        "values": [
+          69,
+          18,
+          104
+        ]
+      },
+      "upload_ms": {
+        "median": 10,
+        "n": 3,
+        "values": [
+          10,
+          6,
+          22
+        ]
+      },
+      "heavy_nav_ms": {
+        "median": 42,
+        "n": 3,
+        "values": [
+          35,
+          42,
+          67
+        ]
+      },
+      "close_ms": {
+        "median": 371,
+        "n": 3,
+        "values": [
+          371,
+          1788,
+          259
+        ]
+      },
+      "peak_rss_mb": {
+        "median": 308.4,
+        "n": 3,
+        "values": [
+          319.2,
+          306.5,
+          308.4
+        ]
+      },
+      "idle_mean_rss_mb": {
+        "median": 270.5,
+        "n": 3,
+        "values": [
+          280.2,
+          187.9,
+          270.5
+        ]
+      },
+      "idle_mean_cpu_pct": {
+        "median": 0.3,
+        "n": 3,
+        "values": [
+          0.8,
+          0.3,
+          0.1
+        ]
+      },
+      "sampler_overhead_ms": {
+        "median": 1242.5,
+        "n": 3,
+        "values": [
+          1464.6,
+          1220.6,
+          1242.5
+        ]
+      },
+      "errors": [],
+      "notes": []
+    },
+    {
+      "adapter": "playwright-headed",
+      "mode": "headed",
+      "runs_ok": 3,
+      "runs_failed": 0,
+      "launch_ms": {
+        "median": 8886,
+        "n": 3,
+        "values": [
+          8886,
+          9803,
+          7417
+        ]
+      },
+      "snapshot_ms": {
+        "median": 90,
+        "n": 3,
+        "values": [
+          30,
+          90,
+          152
+        ]
+      },
+      "form_submit_ms": {
+        "median": 1647,
+        "n": 3,
+        "values": [
+          1580,
+          4800,
+          1647
+        ]
+      },
+      "app_ready_ms": {
+        "median": 159,
+        "n": 3,
+        "values": [
+          159,
+          1112,
+          138
+        ]
+      },
+      "iframe_ms": {
+        "median": 53,
+        "n": 3,
+        "values": [
+          53,
+          106,
+          25
+        ]
+      },
+      "download_ms": {
+        "median": 191,
+        "n": 3,
+        "values": [
+          191,
+          1321,
+          139
+        ]
+      },
+      "upload_ms": {
+        "median": 98,
+        "n": 3,
+        "values": [
+          98,
+          504,
+          73
+        ]
+      },
+      "heavy_nav_ms": {
+        "median": 62,
+        "n": 3,
+        "values": [
+          62,
+          95,
+          50
+        ]
+      },
+      "close_ms": {
+        "median": 2867,
+        "n": 3,
+        "values": [
+          1542,
+          2867,
+          3324
+        ]
+      },
+      "peak_rss_mb": {
+        "median": 832.1,
+        "n": 3,
+        "values": [
+          867.3,
+          784.1,
+          832.1
+        ]
+      },
+      "idle_mean_rss_mb": {
+        "median": 508.5,
+        "n": 3,
+        "values": [
+          738.3,
+          508.5,
+          453.9
+        ]
+      },
+      "idle_mean_cpu_pct": {
+        "median": 2.2,
+        "n": 3,
+        "values": [
+          2.2,
+          5.8,
+          2.1
+        ]
+      },
+      "sampler_overhead_ms": {
+        "median": 1859.2,
+        "n": 3,
+        "values": [
+          1859.2,
+          3773.5,
+          1513
+        ]
+      },
+      "errors": [],
+      "notes": []
+    },
+    {
+      "adapter": "playwright-chrome-headed",
+      "mode": "headed",
+      "runs_ok": 3,
+      "runs_failed": 0,
+      "launch_ms": {
+        "median": 1477,
+        "n": 3,
+        "values": [
+          3152,
+          1477,
+          1226
+        ]
+      },
+      "snapshot_ms": {
+        "median": 18,
+        "n": 3,
+        "values": [
+          18,
+          16,
+          24
+        ]
+      },
+      "form_submit_ms": {
+        "median": 251,
+        "n": 3,
+        "values": [
+          323,
+          251,
+          185
+        ]
+      },
+      "app_ready_ms": {
+        "median": 56,
+        "n": 3,
+        "values": [
+          61,
+          17,
+          56
+        ]
+      },
+      "iframe_ms": {
+        "median": 14,
+        "n": 3,
+        "values": [
+          14,
+          14,
+          23
+        ]
+      },
+      "download_ms": {
+        "median": 148,
+        "n": 3,
+        "values": [
+          182,
+          148,
+          114
+        ]
+      },
+      "upload_ms": {
+        "median": 20,
+        "n": 3,
+        "values": [
+          20,
+          11,
+          64
+        ]
+      },
+      "heavy_nav_ms": {
+        "median": 36,
+        "n": 3,
+        "values": [
+          36,
+          34,
+          46
+        ]
+      },
+      "close_ms": {
+        "median": 1178,
+        "n": 3,
+        "values": [
+          2797,
+          1178,
+          1131
+        ]
+      },
+      "peak_rss_mb": {
+        "median": 856.4,
+        "n": 3,
+        "values": [
+          830,
+          879.9,
+          856.4
+        ]
+      },
+      "idle_mean_rss_mb": {
+        "median": 731.5,
+        "n": 3,
+        "values": [
+          605.3,
+          733.9,
+          731.5
+        ]
+      },
+      "idle_mean_cpu_pct": {
+        "median": 2.8,
+        "n": 3,
+        "values": [
+          2.8,
+          1.9,
+          3.4
+        ]
+      },
+      "sampler_overhead_ms": {
+        "median": 1319.7,
+        "n": 3,
+        "values": [
+          1619.7,
+          1319.7,
+          1057
+        ]
+      },
+      "errors": [],
+      "notes": []
+    },
+    {
+      "adapter": "agent-browser-headed",
+      "mode": "headed",
+      "runs_ok": 3,
+      "runs_failed": 0,
+      "launch_ms": {
+        "median": 13452,
+        "n": 3,
+        "values": [
+          13452,
+          6744,
+          23993
+        ]
+      },
+      "snapshot_ms": {
+        "median": 256,
+        "n": 3,
+        "values": [
+          695,
+          214,
+          256
+        ]
+      },
+      "form_submit_ms": {
+        "median": 593,
+        "n": 3,
+        "values": [
+          593,
+          532,
+          639
+        ]
+      },
+      "app_ready_ms": {
+        "median": null,
+        "n": 0,
+        "values": []
+      },
+      "iframe_ms": {
+        "median": 9,
+        "n": 3,
+        "values": [
+          8,
+          9,
+          13
+        ]
+      },
+      "download_ms": {
+        "median": 152,
+        "n": 3,
+        "values": [
+          247,
+          117,
+          152
+        ]
+      },
+      "upload_ms": {
+        "median": 27,
+        "n": 3,
+        "values": [
+          34,
+          27,
+          18
+        ]
+      },
+      "heavy_nav_ms": {
+        "median": 66,
+        "n": 3,
+        "values": [
+          89,
+          61,
+          66
+        ]
+      },
+      "close_ms": {
+        "median": 2235,
+        "n": 3,
+        "values": [
+          2235,
+          5274,
+          1935
+        ]
+      },
+      "peak_rss_mb": {
+        "median": 1090.1,
+        "n": 3,
+        "values": [
+          1036.3,
+          1142.4,
+          1090.1
+        ]
+      },
+      "idle_mean_rss_mb": {
+        "median": 794,
+        "n": 3,
+        "values": [
+          794,
+          770.9,
+          856.6
+        ]
+      },
+      "idle_mean_cpu_pct": {
+        "median": 3.8,
+        "n": 3,
+        "values": [
+          3.4,
+          5.5,
+          3.8
+        ]
+      },
+      "sampler_overhead_ms": {
+        "median": 1882.2,
+        "n": 3,
+        "values": [
+          1882.2,
+          1592.4,
+          2452.9
+        ]
+      },
+      "errors": [],
+      "notes": [
+        "login sequence is 4 separate CLI invocations: 128ms, 121ms, 143ms, 201ms",
+        "13 CLI invocations, 17484ms of CLI wall time in total",
+        "login sequence is 4 separate CLI invocations: 131ms, 161ms, 178ms, 63ms",
+        "13 CLI invocations, 12989ms of CLI wall time in total",
+        "login sequence is 4 separate CLI invocations: 194ms, 164ms, 208ms, 74ms",
+        "13 CLI invocations, 27106ms of CLI wall time in total"
+      ]
+    }
+  ],
+  "raw": [
+    {
+      "adapter": "playwright-headless",
+      "mode": "headless",
+      "ok": true,
+      "timings": {
+        "launch_ms": 4203,
+        "login_nav_ms": 351,
+        "form_submit_ms": 378,
+        "app_ready_ms": 14,
+        "snapshot_ms": 23,
+        "snapshot_chars": 1270,
+        "iframe_ms": 14,
+        "iframe_text": "Inside the iframe",
+        "download_ms": 69,
+        "download_bytes": 25,
+        "upload_ms": 10,
+        "heavy_nav_ms": 35,
+        "idle_ms": 10003,
+        "close_ms": 371
+      },
+      "resources": {
+        "peak_rss_mb": 319.2,
+        "idle_mean_rss_mb": 280.2,
+        "idle_mean_cpu_pct": 0.8,
+        "samples": 30,
+        "processes_peak": 4,
+        "sampler_overhead_ms": 1464.6,
+        "sampler_max_sample_ms": 257.3
+      },
+      "notes": []
+    },
+    {
+      "adapter": "playwright-headless",
+      "mode": "headless",
+      "ok": true,
+      "timings": {
+        "launch_ms": 872,
+        "login_nav_ms": 299,
+        "form_submit_ms": 148,
+        "app_ready_ms": 15,
+        "snapshot_ms": 15,
+        "snapshot_chars": 1270,
+        "iframe_ms": 13,
+        "iframe_text": "Inside the iframe",
+        "download_ms": 18,
+        "download_bytes": 25,
+        "upload_ms": 6,
+        "heavy_nav_ms": 42,
+        "idle_ms": 10007,
+        "close_ms": 1788
+      },
+      "resources": {
+        "peak_rss_mb": 306.5,
+        "idle_mean_rss_mb": 187.9,
+        "idle_mean_cpu_pct": 0.3,
+        "samples": 26,
+        "processes_peak": 4,
+        "sampler_overhead_ms": 1220.6,
+        "sampler_max_sample_ms": 144
+      },
+      "notes": []
+    },
+    {
+      "adapter": "playwright-headless",
+      "mode": "headless",
+      "ok": true,
+      "timings": {
+        "launch_ms": 3184,
+        "login_nav_ms": 551,
+        "form_submit_ms": 808,
+        "app_ready_ms": 20,
+        "snapshot_ms": 22,
+        "snapshot_chars": 1285,
+        "iframe_ms": 28,
+        "iframe_text": "Inside the iframe",
+        "download_ms": 104,
+        "download_bytes": 25,
+        "upload_ms": 22,
+        "heavy_nav_ms": 67,
+        "idle_ms": 10002,
+        "close_ms": 259
+      },
+      "resources": {
+        "peak_rss_mb": 308.4,
+        "idle_mean_rss_mb": 270.5,
+        "idle_mean_cpu_pct": 0.1,
+        "samples": 30,
+        "processes_peak": 4,
+        "sampler_overhead_ms": 1242.5,
+        "sampler_max_sample_ms": 75.2
+      },
+      "notes": []
+    },
+    {
+      "adapter": "playwright-headed",
+      "mode": "headed",
+      "ok": true,
+      "timings": {
+        "launch_ms": 8886,
+        "login_nav_ms": 580,
+        "form_submit_ms": 1580,
+        "app_ready_ms": 159,
+        "snapshot_ms": 30,
+        "snapshot_chars": 1285,
+        "iframe_ms": 53,
+        "iframe_text": "Inside the iframe",
+        "download_ms": 191,
+        "download_bytes": 25,
+        "upload_ms": 98,
+        "heavy_nav_ms": 62,
+        "idle_ms": 10002,
+        "close_ms": 1542
+      },
+      "resources": {
+        "peak_rss_mb": 867.3,
+        "idle_mean_rss_mb": 738.3,
+        "idle_mean_cpu_pct": 2.2,
+        "samples": 46,
+        "processes_peak": 8,
+        "sampler_overhead_ms": 1859.2,
+        "sampler_max_sample_ms": 87.4
+      },
+      "notes": []
+    },
+    {
+      "adapter": "playwright-headed",
+      "mode": "headed",
+      "ok": true,
+      "timings": {
+        "launch_ms": 9803,
+        "login_nav_ms": 1266,
+        "form_submit_ms": 4800,
+        "app_ready_ms": 1112,
+        "snapshot_ms": 90,
+        "snapshot_chars": 1286,
+        "iframe_ms": 106,
+        "iframe_text": "Inside the iframe",
+        "download_ms": 1321,
+        "download_bytes": 25,
+        "upload_ms": 504,
+        "heavy_nav_ms": 95,
+        "idle_ms": 10002,
+        "close_ms": 2867
+      },
+      "resources": {
+        "peak_rss_mb": 784.1,
+        "idle_mean_rss_mb": 508.5,
+        "idle_mean_cpu_pct": 5.8,
+        "samples": 62,
+        "processes_peak": 8,
+        "sampler_overhead_ms": 3773.5,
+        "sampler_max_sample_ms": 926.3
+      },
+      "notes": []
+    },
+    {
+      "adapter": "playwright-headed",
+      "mode": "headed",
+      "ok": true,
+      "timings": {
+        "launch_ms": 7417,
+        "login_nav_ms": 210,
+        "form_submit_ms": 1647,
+        "app_ready_ms": 138,
+        "snapshot_ms": 152,
+        "snapshot_chars": 1285,
+        "iframe_ms": 25,
+        "iframe_text": "Inside the iframe",
+        "download_ms": 139,
+        "download_bytes": 25,
+        "upload_ms": 73,
+        "heavy_nav_ms": 50,
+        "idle_ms": 10004,
+        "close_ms": 3324
+      },
+      "resources": {
+        "peak_rss_mb": 832.1,
+        "idle_mean_rss_mb": 453.9,
+        "idle_mean_cpu_pct": 2.1,
+        "samples": 46,
+        "processes_peak": 8,
+        "sampler_overhead_ms": 1513,
+        "sampler_max_sample_ms": 63
+      },
+      "notes": []
+    },
+    {
+      "adapter": "playwright-chrome-headed",
+      "mode": "headed",
+      "ok": true,
+      "timings": {
+        "launch_ms": 3152,
+        "login_nav_ms": 3827,
+        "form_submit_ms": 323,
+        "app_ready_ms": 61,
+        "snapshot_ms": 18,
+        "snapshot_chars": 1270,
+        "iframe_ms": 14,
+        "iframe_text": "Inside the iframe",
+        "download_ms": 182,
+        "download_bytes": 25,
+        "upload_ms": 20,
+        "heavy_nav_ms": 36,
+        "idle_ms": 10002,
+        "close_ms": 2797
+      },
+      "resources": {
+        "peak_rss_mb": 830,
+        "idle_mean_rss_mb": 605.3,
+        "idle_mean_cpu_pct": 2.8,
+        "samples": 40,
+        "processes_peak": 8,
+        "sampler_overhead_ms": 1619.7,
+        "sampler_max_sample_ms": 131.8
+      },
+      "notes": []
+    },
+    {
+      "adapter": "playwright-chrome-headed",
+      "mode": "headed",
+      "ok": true,
+      "timings": {
+        "launch_ms": 1477,
+        "login_nav_ms": 1618,
+        "form_submit_ms": 251,
+        "app_ready_ms": 17,
+        "snapshot_ms": 16,
+        "snapshot_chars": 1270,
+        "iframe_ms": 14,
+        "iframe_text": "Inside the iframe",
+        "download_ms": 148,
+        "download_bytes": 25,
+        "upload_ms": 11,
+        "heavy_nav_ms": 34,
+        "idle_ms": 10001,
+        "close_ms": 1178
+      },
+      "resources": {
+        "peak_rss_mb": 879.9,
+        "idle_mean_rss_mb": 733.9,
+        "idle_mean_cpu_pct": 1.9,
+        "samples": 29,
+        "processes_peak": 7,
+        "sampler_overhead_ms": 1319.7,
+        "sampler_max_sample_ms": 216.6
+      },
+      "notes": []
+    },
+    {
+      "adapter": "playwright-chrome-headed",
+      "mode": "headed",
+      "ok": true,
+      "timings": {
+        "launch_ms": 1226,
+        "login_nav_ms": 1644,
+        "form_submit_ms": 185,
+        "app_ready_ms": 56,
+        "snapshot_ms": 24,
+        "snapshot_chars": 1270,
+        "iframe_ms": 23,
+        "iframe_text": "Inside the iframe",
+        "download_ms": 114,
+        "download_bytes": 25,
+        "upload_ms": 64,
+        "heavy_nav_ms": 46,
+        "idle_ms": 10002,
+        "close_ms": 1131
+      },
+      "resources": {
+        "peak_rss_mb": 856.4,
+        "idle_mean_rss_mb": 731.5,
+        "idle_mean_cpu_pct": 3.4,
+        "samples": 28,
+        "processes_peak": 8,
+        "sampler_overhead_ms": 1057,
+        "sampler_max_sample_ms": 136.7
+      },
+      "notes": []
+    },
+    {
+      "adapter": "agent-browser-headed",
+      "mode": "headed",
+      "ok": true,
+      "timings": {
+        "launch_ms": 13452,
+        "login_nav_ms": null,
+        "form_submit_ms": 593,
+        "app_ready_ms": null,
+        "snapshot_ms": 695,
+        "snapshot_chars": 3398,
+        "iframe_ms": 8,
+        "iframe_text": "\"Inside the iframe\"",
+        "download_ms": 247,
+        "download_bytes": 25,
+        "upload_ms": 34,
+        "heavy_nav_ms": 89,
+        "idle_ms": 10001,
+        "close_ms": 2235
+      },
+      "resources": {
+        "peak_rss_mb": 1036.3,
+        "idle_mean_rss_mb": 794,
+        "idle_mean_cpu_pct": 3.4,
+        "samples": 54,
+        "processes_peak": 12,
+        "sampler_overhead_ms": 1882.2,
+        "sampler_max_sample_ms": 81.2
+      },
+      "notes": [
+        "login sequence is 4 separate CLI invocations: 128ms, 121ms, 143ms, 201ms",
+        "13 CLI invocations, 17484ms of CLI wall time in total"
+      ]
+    },
+    {
+      "adapter": "agent-browser-headed",
+      "mode": "headed",
+      "ok": true,
+      "timings": {
+        "launch_ms": 6744,
+        "login_nav_ms": null,
+        "form_submit_ms": 532,
+        "app_ready_ms": null,
+        "snapshot_ms": 214,
+        "snapshot_chars": 3398,
+        "iframe_ms": 9,
+        "iframe_text": "\"Inside the iframe\"",
+        "download_ms": 117,
+        "download_bytes": 25,
+        "upload_ms": 27,
+        "heavy_nav_ms": 61,
+        "idle_ms": 10001,
+        "close_ms": 5274
+      },
+      "resources": {
+        "peak_rss_mb": 1142.4,
+        "idle_mean_rss_mb": 770.9,
+        "idle_mean_cpu_pct": 5.5,
+        "samples": 45,
+        "processes_peak": 12,
+        "sampler_overhead_ms": 1592.4,
+        "sampler_max_sample_ms": 87.1
+      },
+      "notes": [
+        "login sequence is 4 separate CLI invocations: 131ms, 161ms, 178ms, 63ms",
+        "13 CLI invocations, 12989ms of CLI wall time in total"
+      ]
+    },
+    {
+      "adapter": "agent-browser-headed",
+      "mode": "headed",
+      "ok": true,
+      "timings": {
+        "launch_ms": 23993,
+        "login_nav_ms": null,
+        "form_submit_ms": 639,
+        "app_ready_ms": null,
+        "snapshot_ms": 256,
+        "snapshot_chars": 3398,
+        "iframe_ms": 13,
+        "iframe_text": "\"Inside the iframe\"",
+        "download_ms": 152,
+        "download_bytes": 25,
+        "upload_ms": 18,
+        "heavy_nav_ms": 66,
+        "idle_ms": 10001,
+        "close_ms": 1935
+      },
+      "resources": {
+        "peak_rss_mb": 1090.1,
+        "idle_mean_rss_mb": 856.6,
+        "idle_mean_cpu_pct": 3.8,
+        "samples": 74,
+        "processes_peak": 12,
+        "sampler_overhead_ms": 2452.9,
+        "sampler_max_sample_ms": 291.3
+      },
+      "notes": [
+        "login sequence is 4 separate CLI invocations: 194ms, 164ms, 208ms, 74ms",
+        "13 CLI invocations, 27106ms of CLI wall time in total"
+      ]
+    }
+  ]
+}

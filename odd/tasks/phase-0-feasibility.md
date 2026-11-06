@@ -49,22 +49,22 @@ S20 — Constraint: "Do not copy cookies or extract browser credentials." and "D
 
 | ID | Spec | Route | Commit |
 | --- | --- | --- | --- |
-| T1 | S3 | inline: scaffold, tracking, artifact placement | pending |
-| T2 | S2, S13 | inline: runtime evidence collection | pending |
-| T3 | S2, S5 | inline: benchmark harness + baseline | pending |
-| T4 | S2, S5, S3 | inline: competitor measurement | pending |
-| T5 | S4, S17 | inline: persistent session + restart recovery | pending |
-| T6 | S12 | inline: Chrome connection modes and their security implications | pending |
-| T7 | S11, S16 | inline: API probes batch A | pending |
-| T8 | S11, S19 | inline: API probes batch B (credential-gated) | pending |
-| T9 | S7 | inline: LinkedIn research | pending |
-| T10 | S8 | inline: Indeed research | pending |
-| T11 | S9 | inline: global source catalogue + registry schema | pending |
-| T12 | S10 | inline: social channel feasibility | pending |
-| T13 | S14 | inline: architecture spike | pending |
-| T14 | S6, S18 | inline: cross-platform constraints | pending |
-| T15 | S12, S13, S1, S14, S15 | inline: threat model, licensing, ADR, roadmap | pending |
-| T16 | S16-S20 | inline: evidence index and clean re-run | pending |
+| T1 | S3 | inline: scaffold, tracking, artifact placement | 139278e, d22df3f |
+| T2 | S2, S13 | inline: runtime evidence collection | b9bc9d5 |
+| T3 | S2, S5 | inline: benchmark harness + baseline | 5f6f9e1 |
+| T4 | S2, S5, S3 | inline: competitor measurement | 5f6f9e1 |
+| T5 | S4, S17 | inline: persistent session + restart recovery | 5f6f9e1, 02e3f9e |
+| T6 | S12 | inline: Chrome connection modes and their security implications | d5888d0 |
+| T7 | S11, S16 | inline: API probes batch A | b9bc9d5, d5888d0 |
+| T8 | S11, S19 | inline: API probes batch B (credential-gated) | blocked: docs/phase-0/11 |
+| T9 | S7 | inline: LinkedIn research | docs commit |
+| T10 | S8 | inline: Indeed research | docs commit |
+| T11 | S9 | inline: global source catalogue + registry schema | docs commit |
+| T12 | S10 | inline: social channel feasibility | docs commit |
+| T13 | S14 | inline: architecture spike | 02e3f9e, d5888d0 |
+| T14 | S6, S18 | inline: cross-platform constraints | docs commit |
+| T15 | S12, S13, S1, S14, S15 | inline: threat model, licensing, ADR, roadmap | docs commit |
+| T16 | S16-S20 | inline: evidence index and clean re-run | docs commit |
 
 ## Log
 
@@ -322,3 +322,13 @@ L1 — Original request, verbatim:
 > Start immediately and complete the experiments.
 
 L2 — Execution mode note: the plan was produced in plan mode (read-only), so no experiment ran before build mode. Environment probe findings (macOS arm64, Xcode CLT present, Node 24.18.0, cargo 1.89.0 + tauri-cli 2.10.1, Playwright browsers already cached, Google Chrome installed, system volume 5.3 GiB free vs project volume 47 GiB free) are recorded in `evidence/run/<ts>/env.json` and constrain artifact placement to `.cache/` on the project volume.
+
+L3 — Findings that changed the architecture, each backed by `evidence/summary/`:
+
+- A persistent cookie survives a browser restart; a plain session cookie does not. "Persistent authenticated profile" therefore requires a resident browser supervisor for sites that issue session cookies.
+- Branded Google Chrome 156 ignores `--load-extension`; the bundled Chrome for Testing 156 loads the same MV3 extension. The product must ship its own browser if it needs extensions.
+- A CDP endpoint on loopback is unauthenticated and lists every target to any local process.
+- Playwright headless costs 308 MB peak and 0.3 % idle CPU; agent-browser costs 1090 MB peak and 3.8 % idle CPU on the same protocol.
+- Five of six ATS job-board APIs answer without credentials; Workable answers 200 with an empty array; SmartRecruiters needs a verified tenant id.
+
+L4 — Blockers recorded, not hidden: LinkedIn and Indeed have no candidate-side job-search API; Adzuna, Jooble, InfoJobs and SEEK need credentials the maintainer has not supplied; Windows and Linux were not built; the `.dmg` bundle step fails; native messaging and real-service session persistence were deliberately not executed.

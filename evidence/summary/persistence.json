@@ -1,0 +1,127 @@
+{
+  "generated_at": "2026-11-06T17:12:13.150Z",
+  "protocol": "browser-session experiment steps 1-6",
+  "deterministic_variants": [
+    {
+      "variant": "persistent-cookie",
+      "login_sets_persistent_cookie": true,
+      "profile_dir": "evidence/run/persistence-20261106T171201Z/profile-persistent-cookie",
+      "steps": [
+        {
+          "step": 1,
+          "name": "launch dedicated profile",
+          "ok": true,
+          "detail": "page evaluates in the new context: true; browser created its profile: true; profile at evidence/run/persistence-20261106T171201Z/profile-persistent-cookie",
+          "elapsed_ms": 5854
+        },
+        {
+          "step": 2,
+          "name": "open login page",
+          "ok": true,
+          "detail": "form visible at http://127.0.0.1:65318/login",
+          "elapsed_ms": 708
+        },
+        {
+          "step": 3,
+          "name": "authenticate on the permitted fixture service",
+          "ok": true,
+          "detail": "authenticated app page rendered; login requested a persistent cookie: true",
+          "elapsed_ms": 405
+        },
+        {
+          "step": 4,
+          "name": "close the browser",
+          "ok": true,
+          "detail": "profile directory survives close: true",
+          "elapsed_ms": 371
+        },
+        {
+          "step": 5,
+          "name": "restart the browser",
+          "ok": true,
+          "detail": "relaunched with the same user data directory and rendered a page",
+          "elapsed_ms": 158
+        },
+        {
+          "step": 6,
+          "name": "verify the session persists",
+          "ok": true,
+          "detail": "app page rendered without re-login: true; server reports authenticated=true",
+          "elapsed_ms": 52
+        }
+      ],
+      "passed": 6,
+      "failed": 0,
+      "expected_persist": true,
+      "observed_persist": true,
+      "matches_expectation": true
+    },
+    {
+      "variant": "session-cookie",
+      "login_sets_persistent_cookie": false,
+      "profile_dir": "evidence/run/persistence-20261106T171201Z/profile-session-cookie",
+      "steps": [
+        {
+          "step": 1,
+          "name": "launch dedicated profile",
+          "ok": true,
+          "detail": "page evaluates in the new context: true; browser created its profile: true; profile at evidence/run/persistence-20261106T171201Z/profile-session-cookie",
+          "elapsed_ms": 153
+        },
+        {
+          "step": 2,
+          "name": "open login page",
+          "ok": true,
+          "detail": "form visible at http://127.0.0.1:65318/login",
+          "elapsed_ms": 2222
+        },
+        {
+          "step": 3,
+          "name": "authenticate on the permitted fixture service",
+          "ok": true,
+          "detail": "authenticated app page rendered; login requested a persistent cookie: false",
+          "elapsed_ms": 274
+        },
+        {
+          "step": 4,
+          "name": "close the browser",
+          "ok": true,
+          "detail": "profile directory survives close: true",
+          "elapsed_ms": 241
+        },
+        {
+          "step": 5,
+          "name": "restart the browser",
+          "ok": true,
+          "detail": "relaunched with the same user data directory and rendered a page",
+          "elapsed_ms": 157
+        },
+        {
+          "step": 6,
+          "name": "verify the session persists",
+          "ok": false,
+          "detail": "app page rendered without re-login: false; server reports authenticated=false",
+          "elapsed_ms": 28
+        }
+      ],
+      "passed": 5,
+      "failed": 1,
+      "expected_persist": false,
+      "observed_persist": false,
+      "matches_expectation": true
+    }
+  ],
+  "summary": {
+    "persistent_cookie_persists": true,
+    "session_cookie_persists": false
+  },
+  "real_service_variant": {
+    "ran": false,
+    "reason": "skipped: OPENJOB_REAL_LOGIN_URL and OPENJOB_REAL_LOGGED_IN_SELECTOR are not both set, so no third-party account was used",
+    "result": null
+  },
+  "not_tested": [
+    "session persistence on a third-party service with a real account (requires a maintainer-provided account, URL and logged-in selector)",
+    "the browser cookie store is never read, copied or exported — by design, so cookie-level assertions do not exist"
+  ]
+}

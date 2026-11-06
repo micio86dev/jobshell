@@ -1,0 +1,46 @@
+id,label,kind,regions,languages,auth_mode,reuse_policy,rate_limit,evidence_url,last_verified_at,note
+adzuna,Adzuna,api,EU;NA;APAC;LATAM,en;local,api_key,restricted,unknown,https://developer.adzuna.com/,,"documented, credentials required"
+infojobs,InfoJobs,api,EU,es,oauth2,restricted,unknown,https://developer.infojobs.net/,,"documented, credentials required, Spain only"
+jooble,Jooble,api,EU;NA;APAC;LATAM;MEA;AF,local,api_key,restricted,unknown,https://jooble.org/api/about,,"documented, credentials required"
+greenhouse,Greenhouse Job Board,ats_feed,EU;NA;APAC;LATAM;MEA;AF,en;local,none,restricted,unknown,https://developers.greenhouse.io/job-board.html,2026-11-06,"verified 200, 766/145/396 postings"
+lever,Lever Postings,ats_feed,EU;NA;APAC;LATAM;MEA;AF,en;local,none,restricted,unknown,https://github.com/lever/postings-api,2026-11-06,"verified 200, 10/305 postings"
+ashby,Ashby Job Postings,ats_feed,EU;NA;APAC;LATAM,en,none,restricted,unknown,https://developers.ashbyhq.com/docs/public-job-posting-api,2026-11-06,"verified 200, 822/171/32/84 postings"
+smartrecruiters,SmartRecruiters Postings,ats_feed,EU;NA;APAC;LATAM,en;local,none,restricted,unknown,https://developers.smartrecruiters.com/docs/posting-api,2026-11-06,"verified 200, 902 postings, tenant id matters"
+workable,Workable,api,EU;NA;APAC,en;local,api_key,restricted,unknown,https://workable.readme.io/reference/jobs,2026-11-06,widget 200 but empty; real data needs credentials
+recruitee,Recruitee Offers,ats_feed,EU;NA,en;local,none,restricted,unknown,https://docs.recruitee.com/reference/intro,2026-11-06,"verified 200, 12 offers, per-tenant origin"
+seek,SEEK,api,APAC,en,partner,restricted,unknown,https://developer.seek.com.au/,,"documented, approval required"
+usajobs,USAJOBS,api,NA,en,api_key,open,unknown,https://developer.usajobs.gov/,,"documented, free key"
+bundesagentur,Bundesagentur fuer Arbeit Jobsuche,api,EU,de,api_key,unknown,unknown,https://github.com/bundesAPI/jobsuche-api,,"community-documented official API, unverified"
+linkedin,LinkedIn,browser,EU;NA;APAC;LATAM;MEA;AF,en;local,user_session,restricted,unknown,https://learn.microsoft.com/en-us/linkedin/,2026-11-06,candidate-side job search not currently available
+indeed,Indeed,browser,EU;NA;APAC;LATAM;MEA;AF,en;local,user_session,restricted,unknown,https://docs.indeed.com/,2026-11-06,candidate-side job search not currently available
+welcometothejungle,Welcome to the Jungle,browser,EU,fr;en,user_session,unknown,unknown,https://www.welcometothejungle.com/,,no public API found
+honeypot,Honeypot,browser,EU,de;en,user_session,unknown,unknown,https://www.honeypot.io/,,no public API found
+stepstone,StepStone,browser,EU,de,user_session,restricted,unknown,https://www.stepstone.de/,,no public API found
+computrabajo,Computrabajo,browser,LATAM,es,user_session,restricted,unknown,https://www.computrabajo.com/,,no public API found
+bumeran,Bumeran,browser,LATAM,es,user_session,restricted,unknown,https://www.bumeran.com/,,no public API found
+catho,Catho,browser,LATAM,pt-BR,user_session,restricted,unknown,https://www.catho.com.br/,,no public API found
+getonboard,GetOnBoard,browser,LATAM,es;en,user_session,restricted,unknown,https://www.getonbrd.com/,,no public API found
+torre,Torre,browser,LATAM;NA,es;en,user_session,restricted,unknown,https://torre.ai/,,no public API found
+workday,Workday,browser,NA;EU,en;local,user_session,restricted,unknown,https://www.workday.com/,,no public API found
+dice,Dice,browser,NA,en,partner,restricted,unknown,https://www.dice.com/,,partner only
+wellfound,Wellfound,browser,NA;EU,en,user_session,restricted,unknown,https://wellfound.com/,,no public API found
+jobstreet,Jobstreet (SEEK Asia),browser,APAC,local,user_session,restricted,unknown,https://www.jobstreet.com/,,no public API found
+jobsdb,JobsDB,browser,APAC,local,user_session,restricted,unknown,https://www.jobsdb.com/,,no public API found
+naukri,Naukri,browser,APAC,en,user_session,restricted,unknown,https://www.naukri.com/,,no public API found
+instahyre,Instahyre,browser,APAC,en,user_session,restricted,unknown,https://www.instahyre.com/,,no public API found
+wantedly,Wantedly,browser,APAC,ja,user_session,restricted,unknown,https://www.wantedly.com/,,no public API found
+daijob,Daijob,browser,APAC,ja;en,user_session,restricted,unknown,https://www.daijob.com/,,no public API found
+saramin,Saramin,browser,APAC,ko,user_session,restricted,unknown,https://www.saramin.co.kr/,,no public API found
+zhaopin,Zhaopin,browser,APAC,zh,user_session,restricted,unknown,https://www.zhaopin.com/,,no public API found
+bayt,Bayt,browser,MEA,en;ar,user_session,restricted,unknown,https://www.bayt.com/,,no public API found
+gulftalent,GulfTalent,browser,MEA,en,user_session,restricted,unknown,https://www.gulftalent.com/,,no public API found
+dubizzle,Dubizzle Jobs,browser,MEA,en;ar,user_session,restricted,unknown,https://dubai.dubizzle.com/jobs/,,no public API found
+tanqeeb,Tanqeeb,browser,MEA,ar;en,user_session,restricted,unknown,https://tanqeeb.com/,,no public API found
+pnet,PNet,browser,AF,en,user_session,restricted,unknown,https://www.pnet.co.za/,,no public API found
+careerjunction,CareerJunction,browser,AF,en,user_session,restricted,unknown,https://www.careerjunction.co.za/,,no public API found
+offerzen,OfferZen,browser,AF;EU,en,user_session,restricted,unknown,https://www.offerzen.com/,,no public API found
+jobberman,Jobberman,browser,AF,en,user_session,restricted,unknown,https://www.jobberman.com/,,no public API found
+brightermonday,BrighterMonday,browser,AF,en,user_session,restricted,unknown,https://www.brightermonday.co.ke/,,no public API found
+myjobmag,MyJobMag,browser,AF,en,user_session,restricted,unknown,https://www.myjobmag.com/,,no public API found
+hn-whoishiring,Hacker News Who is Hiring,community,global,en,none,open,unknown,https://news.ycombinator.com/,,"public monthly thread, no API beyond the HN API"
+github-jobs,GitHub repository job posts,community,global,en,api_key,open,documented,https://docs.github.com/en/rest,,"GitHub REST API, search rate limits apply"

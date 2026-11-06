@@ -1,0 +1,323 @@
+{
+  "generated_at": "2026-11-06T17:13:18.471Z",
+  "method": "read-only GET requests with a self-identifying user agent, 1200 ms between requests, 20 s timeout, no credentials and no keys",
+  "results": [
+    {
+      "id": "greenhouse",
+      "label": "Greenhouse Job Board API",
+      "docs": "https://developers.greenhouse.io/job-board.html",
+      "robots": [
+        {
+          "origin": "https://boards-api.greenhouse.io",
+          "url": "https://boards-api.greenhouse.io/robots.txt",
+          "status": 200,
+          "disallow": [
+            "Disallow: /embed/"
+          ]
+        }
+      ],
+      "attempts": [
+        {
+          "url": "https://boards-api.greenhouse.io/v1/boards/stripe/jobs?content=true",
+          "status": 200,
+          "ok": true,
+          "elapsed_ms": 2956,
+          "shape": "object(jobs,meta)",
+          "summary": "jobs=766",
+          "error": null
+        },
+        {
+          "url": "https://boards-api.greenhouse.io/v1/boards/figma/jobs?content=true",
+          "status": 200,
+          "ok": true,
+          "elapsed_ms": 232,
+          "shape": "object(jobs,meta)",
+          "summary": "jobs=145",
+          "error": null
+        },
+        {
+          "url": "https://boards-api.greenhouse.io/v1/boards/notion/jobs?content=true",
+          "status": 404,
+          "ok": false,
+          "elapsed_ms": 153,
+          "shape": "object(status,error)",
+          "summary": "",
+          "error": null
+        },
+        {
+          "url": "https://boards-api.greenhouse.io/v1/boards/datadog/jobs?content=true",
+          "status": 200,
+          "ok": true,
+          "elapsed_ms": 867,
+          "shape": "object(jobs,meta)",
+          "summary": "jobs=396",
+          "error": null
+        }
+      ],
+      "note": null,
+      "usable_without_credentials": true,
+      "verdict": "public endpoint answered without credentials; reuse terms still govern storage and redistribution"
+    },
+    {
+      "id": "lever",
+      "label": "Lever Postings API",
+      "docs": "https://github.com/lever/postings-api",
+      "robots": [
+        {
+          "origin": "https://api.lever.co",
+          "url": "https://api.lever.co/robots.txt",
+          "status": 200,
+          "disallow": []
+        }
+      ],
+      "attempts": [
+        {
+          "url": "https://api.lever.co/v0/postings/leverdemo?mode=json",
+          "status": 200,
+          "ok": true,
+          "elapsed_ms": 1421,
+          "shape": "array(10)",
+          "summary": "postings=10",
+          "error": null
+        },
+        {
+          "url": "https://api.lever.co/v0/postings/palantir?mode=json",
+          "status": null,
+          "ok": false,
+          "elapsed_ms": 20004,
+          "shape": "object",
+          "summary": "",
+          "error": "The operation was aborted due to timeout"
+        },
+        {
+          "url": "https://api.lever.co/v0/postings/plaid?mode=json",
+          "status": 404,
+          "ok": false,
+          "elapsed_ms": 923,
+          "shape": "object(ok,error)",
+          "summary": "",
+          "error": null
+        },
+        {
+          "url": "https://api.lever.co/v0/postings/mistral?mode=json",
+          "status": 404,
+          "ok": false,
+          "elapsed_ms": 237,
+          "shape": "object(ok,error)",
+          "summary": "",
+          "error": null
+        }
+      ],
+      "note": null,
+      "usable_without_credentials": true,
+      "verdict": "public endpoint answered without credentials; reuse terms still govern storage and redistribution"
+    },
+    {
+      "id": "ashby",
+      "label": "Ashby Job Postings API",
+      "docs": "https://developers.ashbyhq.com/docs/public-job-posting-api",
+      "robots": [
+        {
+          "origin": "https://api.ashbyhq.com",
+          "url": "https://api.ashbyhq.com/robots.txt",
+          "status": 401,
+          "disallow": []
+        }
+      ],
+      "attempts": [
+        {
+          "url": "https://api.ashbyhq.com/posting-api/job-board/openai",
+          "status": 200,
+          "ok": true,
+          "elapsed_ms": 378,
+          "shape": "object(jobs,apiVersion)",
+          "summary": "jobs=822",
+          "error": null
+        },
+        {
+          "url": "https://api.ashbyhq.com/posting-api/job-board/ramp",
+          "status": 200,
+          "ok": true,
+          "elapsed_ms": 181,
+          "shape": "object(jobs,apiVersion)",
+          "summary": "jobs=171",
+          "error": null
+        },
+        {
+          "url": "https://api.ashbyhq.com/posting-api/job-board/linear",
+          "status": 200,
+          "ok": true,
+          "elapsed_ms": 164,
+          "shape": "object(jobs,apiVersion)",
+          "summary": "jobs=32",
+          "error": null
+        },
+        {
+          "url": "https://api.ashbyhq.com/posting-api/job-board/vanta",
+          "status": 200,
+          "ok": true,
+          "elapsed_ms": 183,
+          "shape": "object(jobs,apiVersion)",
+          "summary": "jobs=84",
+          "error": null
+        }
+      ],
+      "note": null,
+      "usable_without_credentials": true,
+      "verdict": "public endpoint answered without credentials; reuse terms still govern storage and redistribution"
+    },
+    {
+      "id": "smartrecruiters",
+      "label": "SmartRecruiters Posting API",
+      "docs": "https://developers.smartrecruiters.com/docs/posting-api",
+      "robots": [
+        {
+          "origin": "https://api.smartrecruiters.com",
+          "url": "https://api.smartrecruiters.com/robots.txt",
+          "status": 200,
+          "disallow": [
+            "Disallow: /"
+          ]
+        }
+      ],
+      "attempts": [
+        {
+          "url": "https://api.smartrecruiters.com/v1/companies/DeliveryHero/postings",
+          "status": 200,
+          "ok": true,
+          "elapsed_ms": 377,
+          "shape": "object(offset,limit,totalFound,content)",
+          "summary": "content=100 totalFound=902",
+          "error": null
+        },
+        {
+          "url": "https://api.smartrecruiters.com/v1/companies/Ubisoft/postings",
+          "status": 200,
+          "ok": true,
+          "elapsed_ms": 103,
+          "shape": "object(offset,limit,totalFound,content)",
+          "summary": "content=0 totalFound=0",
+          "error": null
+        },
+        {
+          "url": "https://api.smartrecruiters.com/v1/companies/Visa/postings",
+          "status": 200,
+          "ok": true,
+          "elapsed_ms": 109,
+          "shape": "object(offset,limit,totalFound,content)",
+          "summary": "content=0 totalFound=0",
+          "error": null
+        }
+      ],
+      "note": null,
+      "usable_without_credentials": true,
+      "verdict": "public endpoint answered without credentials; reuse terms still govern storage and redistribution"
+    },
+    {
+      "id": "workable",
+      "label": "Workable public widget API",
+      "docs": "https://workable.readme.io/reference/jobs",
+      "robots": [
+        {
+          "origin": "https://apply.workable.com",
+          "url": "https://apply.workable.com/robots.txt",
+          "status": 200,
+          "disallow": [
+            "Disallow:"
+          ]
+        }
+      ],
+      "attempts": [
+        {
+          "url": "https://apply.workable.com/api/v1/widget/accounts/revolut?details=true",
+          "status": 200,
+          "ok": true,
+          "elapsed_ms": 281,
+          "shape": "object(name,description,jobs)",
+          "summary": "jobs=0",
+          "error": null
+        },
+        {
+          "url": "https://apply.workable.com/api/v1/widget/accounts/epilot?details=true",
+          "status": 200,
+          "ok": true,
+          "elapsed_ms": 160,
+          "shape": "object(name,description,jobs)",
+          "summary": "jobs=0",
+          "error": null
+        },
+        {
+          "url": "https://apply.workable.com/api/v1/widget/accounts/aircall?details=true",
+          "status": 200,
+          "ok": true,
+          "elapsed_ms": 170,
+          "shape": "object(name,description,jobs)",
+          "summary": "jobs=0",
+          "error": null
+        }
+      ],
+      "note": "every tried account answered 200 with an empty jobs array; the recorded payloads in api-probes.json are the evidence, and no authenticated endpoint was tested",
+      "usable_without_credentials": true,
+      "verdict": "public endpoint answered without credentials; reuse terms still govern storage and redistribution"
+    },
+    {
+      "id": "recruitee",
+      "label": "Recruitee public offers API",
+      "docs": "https://docs.recruitee.com/reference/intro",
+      "robots": [
+        {
+          "origin": "https://weareplanet.recruitee.com",
+          "url": "https://weareplanet.recruitee.com/robots.txt",
+          "status": 200,
+          "disallow": []
+        },
+        {
+          "origin": "https://channable.recruitee.com",
+          "url": "https://channable.recruitee.com/robots.txt",
+          "status": 200,
+          "disallow": [
+            "Disallow: /v/"
+          ]
+        },
+        {
+          "origin": "https://sendcloud.recruitee.com",
+          "url": "https://sendcloud.recruitee.com/robots.txt",
+          "status": 200,
+          "disallow": []
+        }
+      ],
+      "attempts": [
+        {
+          "url": "https://weareplanet.recruitee.com/api/offers/",
+          "status": 404,
+          "ok": false,
+          "elapsed_ms": 137,
+          "shape": "object(error)",
+          "summary": "",
+          "error": null
+        },
+        {
+          "url": "https://channable.recruitee.com/api/offers/",
+          "status": 200,
+          "ok": true,
+          "elapsed_ms": 202,
+          "shape": "object(offers)",
+          "summary": "offers=12",
+          "error": null
+        },
+        {
+          "url": "https://sendcloud.recruitee.com/api/offers/",
+          "status": 404,
+          "ok": false,
+          "elapsed_ms": 148,
+          "shape": "object(error)",
+          "summary": "",
+          "error": null
+        }
+      ],
+      "note": null,
+      "usable_without_credentials": true,
+      "verdict": "public endpoint answered without credentials; reuse terms still govern storage and redistribution"
+    }
+  ]
+}

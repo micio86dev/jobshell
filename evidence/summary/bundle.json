@@ -1,0 +1,21 @@
+{
+  "app_path": "<repo>/.cache/target/release/bundle/macos/openjob-phase0.app",
+  "is_directory": true,
+  "size_bytes": 18337792,
+  "contents": [
+    "Info.plist",
+    "MacOS",
+    "Resources"
+  ],
+  "macos_binaries": [
+    "openjob-spike"
+  ],
+  "info_plist_has_identifier": true,
+  "info_plist_has_bundle_name": true,
+  "release_binary_bytes": 18312992,
+  "dmg": {
+    "attempted": true,
+    "produced_file": false,
+    "error": "error running bundle_dmg.sh: failed to run <repo>/.cache/target/release/bundle/dmg/bundle_dmg.sh"
+  }
+}

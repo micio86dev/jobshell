@@ -1,0 +1,72 @@
+{
+  "generated_at": "2026-11-06T17:48:43.829Z",
+  "chrome_binary": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "chrome_for_testing_binary": "<repo>/.cache/pw-browsers/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
+  "modes": [
+    {
+      "mode": "playwright-channel-chrome",
+      "ok": true,
+      "detail": "rendered in installed Chrome 156.0.8078.81 with a dedicated profile",
+      "elapsed_ms": 1363
+    },
+    {
+      "mode": "connect-over-cdp",
+      "ok": true,
+      "detail": "attached to the Chrome this run spawned on port 62631 (from DevToolsActivePort); 4 target(s) listed anonymously on that port",
+      "elapsed_ms": 890
+    },
+    {
+      "mode": "unpacked-mv3-extension-branded-chrome",
+      "ok": false,
+      "detail": "no MV3 service worker started: this browser ignores --load-extension",
+      "elapsed_ms": 16278
+    },
+    {
+      "mode": "unpacked-mv3-extension-chrome-for-testing",
+      "ok": true,
+      "detail": "MV3 service worker running: chrome-extension://ckbbgaknjnpbijnmnoifliaaklinamna/background.js",
+      "elapsed_ms": 12088
+    }
+  ],
+  "native_messaging": {
+    "executed": false,
+    "reason": "registering a native messaging host writes into the user’s real Chrome installation and needs the published extension id, so it is documented rather than executed",
+    "unverified_requirements": [
+      "a host manifest JSON with name, description, path, type \"stdio\" and allowed_origins listing chrome-extension://<id>/",
+      "macOS location: ~/Library/Application Support/Google/Chrome/NativeMessagingHosts/<name>.json (user scope)",
+      "Linux location: ~/.config/google-chrome/NativeMessagingHosts/<name>.json",
+      "Windows: a registry key under HKCU\\Software\\Google\\Chrome\\NativeMessagingHosts\\<name> pointing at the manifest",
+      "the host binary must speak length-prefixed JSON on stdin/stdout and must not write anything else to stdout"
+    ],
+    "note": "these requirements come from platform documentation, not from a run; they are unverified in this phase"
+  },
+  "security_analysis": {
+    "label": "analysis, not measurement",
+    "observations": [
+      {
+        "mode": "connect-over-cdp",
+        "finding": "the DevTools endpoint answered an anonymous HTTP request on loopback and listed targets, so any local process can control that profile",
+        "consequence": "a debugging port must never be opened on a profile that holds real sessions"
+      },
+      {
+        "mode": "playwright-channel-chrome",
+        "finding": "the installed binary runs with its own update channel and enterprise policies, while the profile is separate",
+        "consequence": "sessions stay isolated, but browser updates are outside the app’s control"
+      },
+      {
+        "mode": "unpacked-mv3-extension-*",
+        "finding": "an extension runs with whatever its manifest requests and can read or modify every page in the profile",
+        "consequence": "extensions are a supply-chain surface: bundle and pin them, never fetch at runtime"
+      },
+      {
+        "mode": "native-messaging",
+        "finding": "a host bridges browser JavaScript to a native binary outside the sandbox, restricted only by allowed_origins",
+        "consequence": "privilege-escalation boundary; out of Phase 1 scope because the sidecar covers the same need with an auditable boundary"
+      }
+    ]
+  },
+  "not_tested": [
+    "connecting to the maintainer’s everyday Chrome profile (deliberately excluded: it would expose real sessions)",
+    "native messaging host registration (needs a published extension id and writes into the real Chrome installation)"
+  ]
+}
