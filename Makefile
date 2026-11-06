@@ -7,9 +7,11 @@
 
 SHELL := /bin/bash
 ROOT  := $(shell pwd)
-OUT   ?= $(ROOT)/evidence/run/$(shell date -u +%Y%m%dT%H%M%SZ)
+# Immediate expansion: a recursive variable would call date once per target and
+# scatter one run across several timestamped directories.
+OUT   := $(ROOT)/evidence/run/$(shell date -u +%Y%m%dT%H%M%SZ)
 
-.PHONY: test test-ts test-rs typecheck bench probe persistence crash chrome spike desktop phase0 clean
+.PHONY: test test-ts test-rs typecheck bench probe persistence crash chrome spike desktop dmg phase0 clean
 
 test: test-ts test-rs typecheck
 
@@ -62,10 +64,17 @@ spike:
 			--node "$$(which node)" --sidecar "$(ROOT)/poc/session-poc/sidecar/browser-agent.mjs" \
 			--url https://example.com > "$(OUT)/spike/phase2.json"
 
+# The .app bundle builds. The .dmg step fails in bundle_dmg.sh on this host
+# (evidence/summary/bundle.json), so it is a separate target that is expected to
+# fail until that is fixed; phase0 must not hide the failure behind a green build.
 desktop:
 	cd poc/session-poc/ui && set -a && . ../../../scripts/env.sh && set +a && npm run build
 	cd poc/session-poc/app && set -a && . ../../../scripts/env.sh && set +a && \
-		export PATH="$$HOME/.cargo/bin:$$PATH" && ../../../scripts/cargo.sh tauri build
+		export PATH="$$HOME/.cargo/bin:$$PATH" && ../../../scripts/cargo.sh tauri build --bundles app
+
+dmg:
+	cd poc/session-poc/app && set -a && . ../../../scripts/env.sh && set +a && \
+		export PATH="$$HOME/.cargo/bin:$$PATH" && ../../../scripts/cargo.sh tauri build --bundles dmg
 
 phase0: test bench probe persistence crash chrome spike desktop
 	@echo "Phase 0 evidence written to $(OUT)"

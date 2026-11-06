@@ -28,7 +28,9 @@ Two host quirks are handled by wrappers, and both are real findings:
 | `node poc/api-probe/probe.ts` | `api-probes.json` | six sources probed, statuses recorded |
 | `cargo build` then `session-poc-selftest --phase crash` / `--phase recover` | `phase1.json`, `phase2.json` | task recovered and audited |
 | `scripts/check-desktop-launch.sh <binary> <dir>` | `desktop-launch.json` | shell alive after 12 s |
-| `cargo tauri build` in `poc/session-poc/app` | `.app` bundle | bundle created (DMG step currently fails) |
+| `make desktop` | `.app` bundle | bundle created |
+| `make dmg` | `.dmg` | **expected to fail** until `bundle_dmg.sh` is fixed (`evidence/summary/bundle.json`) |
+| `make phase0` | all of the above except `dmg` | every target green |
 
 ## Tests
 
@@ -60,6 +62,12 @@ Phase 1 output: `{"phase":"crash","state":"running","task_id":1}`. Phase 2 outpu
 ## Fixtures
 
 `poc/runtime-bench/src/fixtures/server.ts` serves a deterministic site on `127.0.0.1`: a login form that sets an HttpOnly cookie (`?remember=1` adds `Max-Age`), an authenticated page with an iframe, a dynamic region, a download link, a file input, and a 1500-row page. No test and no benchmark touches a third-party service.
+
+## One run, one directory
+
+`make phase0` writes every artifact under a single `evidence/run/<timestamp>/` directory. That required a fix during Phase 0: the `OUT` variable was recursive (`?=`), so `$(shell date …)` was re-evaluated for every target and one run scattered across five timestamped directories. It is now immediate (`:=`).
+
+The DMG step is deliberately excluded from `phase0`. It fails on this host, and hiding that behind a green build would be exactly the kind of silent failure these documents are supposed to prevent.
 
 ## What a re-run will not reproduce exactly
 

@@ -119,6 +119,9 @@ async fn record_event(
     Ok(())
 }
 
+/// Apply a state change and audit it. Used by the tests today and by the
+/// Phase 1 scheduler tomorrow; kept in the core so both share one code path.
+#[cfg_attr(not(test), allow(dead_code))]
 async fn transition(
     pool: &Pool<Sqlite>,
     task: &Task,
