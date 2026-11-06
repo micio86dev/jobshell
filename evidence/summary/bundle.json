@@ -21,7 +21,7 @@
     "produced_file": true,
     "method": "scripts/make-dmg.sh: hdiutil UDZO from a staged folder, no Finder automation",
     "verified": true,
-    "bytes": 4845601,
+    "bytes": 4845599,
     "contains": [
       "openjob-phase0.app",
       "Applications symlink"

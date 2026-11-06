@@ -30,7 +30,7 @@ Two host quirks are handled by wrappers, and both are real findings:
 | `cargo build` then `session-poc-selftest --phase crash` / `--phase recover` | `phase1.json`, `phase2.json` | task recovered and audited |
 | `scripts/check-desktop-launch.sh <binary> <dir>` | `desktop-launch.json` | shell alive after 12 s |
 | `make desktop` | `.app` bundle | bundle created |
-| `make dmg` | verified `.dmg` (4.8 MB, `hdiutil verify` VALID) | DMG produced and mounted |
+| `make dmg` | verified `.dmg` (4.8 MB, `hdiutil verify` VALID) | DMG produced, verified and mounted |
 | `make phase0` | all of the above except `dmg` | every target green |
 
 ## Tests
