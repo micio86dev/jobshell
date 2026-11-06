@@ -19,10 +19,10 @@ Why, from measurement:
 
 | Evidence | Number | Artifact |
 | --- | --- | --- |
-| Cold launch, headless | 3184 ms median of 3 | `evidence/summary/bench.json` |
-| Launch spread across the three runs | 872–4203 ms | `evidence/summary/bench.json` |
-| Idle RSS | 270.5 MB | `evidence/summary/bench.json` |
-| Idle CPU | 0.3 % | `evidence/summary/bench.json` |
+| Launch, headless, two sessions | 3184 ms cold-cache / 599 ms warm-cache (median of 3 each) | `bench.json`, `bench-run2.json` |
+| Launch spread within a session | 872–4203 ms | `bench.json` |
+| Idle RSS | 271 MB / 315 MB across two sessions | `bench.json`, `bench-run2.json` |
+| Idle CPU | 0.3 % / 1.9 % | `bench.json`, `bench-run2.json` |
 | Accessibility-tree snapshot | 22 ms, 1270 chars | `evidence/summary/bench.json` |
 | Protocol steps completed | all: login, form, iframe, download, upload, heavy DOM | `evidence/summary/bench.json` |
 | Licence | Apache-2.0 | `evidence/summary/runtimes-raw.json` |

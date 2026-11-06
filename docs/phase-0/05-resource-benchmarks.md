@@ -8,9 +8,26 @@ Method first, because the numbers are meaningless without it.
 
 **Resource sampling.** Every 500 ms, one `ps -axo pid,ppid,rss,time,command` snapshot. The browser is identified by the unique profile path passed to that run, and its whole process subtree is summed through the ppid graph. CPU is derived from the growth of cumulative CPU seconds between samples, not from `ps`' lifetime average, so a burst is visible. The sampler's own event-loop cost is measured and reported (`sampler_overhead_ms`), because `ps` is synchronous and runs in the same process that times the protocol.
 
-Artifact: `evidence/summary/bench.json`.
+Artifacts: `evidence/summary/bench.json` (run A) and `evidence/summary/bench-run2.json` (run B, the full `make phase0` re-run hours later on the same host). Two runs are reported because the difference between them is itself a finding.
 
-## Results (median of 3)
+## Results (median of 3), two runs
+
+Run A was the first full benchmark of the day, with the browser binaries cold in the page cache. Run B repeated the identical protocol hours later with everything warm.
+
+| Adapter | Launch A | Launch B | Peak A | Peak B | Idle RSS A | Idle RSS B | Idle CPU A | Idle CPU B |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| playwright-headless | 3184 ms | **599 ms** | 308 MB | 319 MB | 271 MB | 315 MB | 0.3 % | 1.9 % |
+| playwright-headed | 8886 ms | **686 ms** | 832 MB | 958 MB | 509 MB | 929 MB | 2.2 % | 8.5 % |
+| playwright-chrome-headed | 1477 ms | **573 ms** | 856 MB | 927 MB | 732 MB | 875 MB | 2.8 % | 6.8 % |
+| agent-browser-headed | 13452 ms | **4072 ms** | 1090 MB | 1383 MB | 794 MB | 1369 MB | 3.8 % | 7.4 % |
+
+### What the two runs say together
+
+**Launch time is dominated by cold-cache cost, not by the runtime.** Every adapter is 2–13× faster in run B. On a fresh machine the first launch pays OS verification of the browser bundle and of a new profile; that is a one-off the product must handle (a first-run progress state), not a steady-state number. Quoting a single launch figure without saying which regime it came from is misleading in either direction.
+
+**Memory and CPU are the stable comparison.** The ordering never changes: headless is cheapest, then bundled headed, then installed Chrome, then agent-browser. The absolute headed numbers do move between sessions — 509 MB vs 929 MB for the same adapter and protocol — which is what a visible window costs when the compositor is doing real work. The ratio that survives both runs is the one that matters: **headless costs roughly a third of headed**.
+
+## Detailed results, run A (median of 3)
 
 | Adapter | Launch | Form submit | Snapshot | Iframe | Download | Upload | 1500 rows | Close | Peak RSS | Idle RSS | Idle CPU |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -21,7 +38,7 @@ Artifact: `evidence/summary/bench.json`.
 
 ## What the numbers say
 
-**Headless is not a detail, it is a different product.** Headless costs 308 MB peak against 832 MB headed, and 0.3 % idle CPU against 2.2 %. On an 8 GiB laptop, a background job that opens a headed window for every source is not viable; a headless worker is.
+**Headless is not a detail, it is a different product.** Across both runs headless costs 308–319 MB peak against 832–958 MB headed, and 0.3–1.9 % idle CPU against 2.2–8.5 %. On an 8 GiB laptop, a background job that opens a headed window for every source is not viable; a headless worker is.
 
 **The installed Chrome launches fastest but is the heaviest idle.** 1477 ms against 3184 ms for bundled Chromium, yet 732 MB idle against 271 MB. Chrome's own background services (update, sync, extensions) run whether or not the profile uses them. Fast to start is not the same as cheap to keep.
 

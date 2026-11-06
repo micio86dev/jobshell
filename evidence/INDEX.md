@@ -11,7 +11,8 @@ Regenerate with the commands in [`docs/phase-0/03-reproducible-poc.md`](../docs/
 | `summary/env.json` | `scripts/capture-env.sh` | host, toolchain and disk facts in `00-README.md`, `06-cross-platform-limits.md` |
 | `summary/runtimes-raw.json` | `poc/runtime-bench/src/collect-runtimes.ts` | licences, last commits, manifest kinds and integration seams in `02`, `13` |
 | `summary/runtimes-github.json` | `poc/runtime-bench/src/collect-github.ts` | stars, open issues, push dates and releases in `02`, `13` |
-| `summary/bench.json` | `poc/runtime-bench/src/harness.ts` | every timing and resource figure in `01`, `02`, `05`, `14` |
+| `summary/bench.json` | `poc/runtime-bench/src/harness.ts` | run A of every timing and resource figure in `01`, `02`, `05`, `14` |
+| `summary/bench-run2.json` | `make phase0` re-run | run B: the cold-cache vs warm-cache launch finding and the memory range in `01`, `02`, `05` |
 | `summary/persistence.json` | `poc/session-poc/persistence.ts` | steps 1–6 and the cookie-lifetime finding in `04` |
 | `summary/phase1.json` | `session-poc-selftest --phase crash` | the crash that leaves a task `running`, in `04` |
 | `summary/phase2.json` | `session-poc-selftest --phase recover` | recovery, keyring round trip and sidecar spawn, in `01`, `04`, `14` |

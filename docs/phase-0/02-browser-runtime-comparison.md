@@ -1,6 +1,6 @@
 # Browser runtime comparison
 
-Five candidates, evaluated against one protocol and one host. Cells marked **measured** come from `evidence/summary/bench.json`; cells marked **inspected** come from reading the cloned repository at the pinned commit in `evidence/summary/runtimes-raw.json`; cells marked **blocked** name the blocker instead of guessing.
+Five candidates, evaluated against one protocol and one host. Cells marked **measured** come from `evidence/summary/bench.json` and `evidence/summary/bench-run2.json`; cells marked **inspected** come from reading the cloned repository at the pinned commit in `evidence/summary/runtimes-raw.json`; cells marked **blocked** name the blocker instead of guessing.
 
 Host: macOS 26.5.2, Apple M1, 8 GiB. Protocol: launch → local login page → fill and submit → authenticated app page → accessibility snapshot → iframe read → download → upload → 1500-row page → 10 s idle → close. Three runs per adapter, median reported.
 
@@ -14,7 +14,7 @@ Host: macOS 26.5.2, Apple M1, 8 GiB. Protocol: launch → local login page → f
 | Last push | 2026-11-06 | — | — | 2026-11-06 | 2026-11-06 | 2026-11-03 | 2026-11-06 |
 | Rust integration | none (Node/Python/Java/.NET) | none | none | **native Rust binary crate, no lib target** | none (Python) | none (Python) | none (TS/Python) |
 | Installation | `pnpm add playwright`, browsers already cached | same | uses installed Chrome | npm package ships prebuilt binaries | `uv tool install` | `uv` + browser-harness + TypeSafe | pnpm workspace |
-| Launch (median) | 3184 ms | 8886 ms | **1477 ms** | 13452 ms | blocked | blocked | blocked |
+| Launch (median, two runs) | 3184 / **599** ms | 8886 / **686** ms | 1477 / **573** ms | 13452 / **4072** ms | blocked | blocked | blocked |
 | Accessibility tree | **22 ms**, `ariaSnapshot`, 1270 chars | 90 ms | 18 ms | 256 ms, compact text with `@ref` | blocked | blocked | blocked |
 | Persistent profile | yes, `launchPersistentContext` | yes | yes, dedicated profile | yes, `--profile` | uses the user's real Chrome | via browser-harness | yes (Playwright) |
 | Auth persistence | **tested**: persistent cookie survives, session cookie does not | — | — | not tested | not tested | not tested | not tested |
@@ -24,8 +24,8 @@ Host: macOS 26.5.2, Apple M1, 8 GiB. Protocol: launch → local login page → f
 | Download / upload | **69 ms / 10 ms** | 191 / 98 ms | 148 / 20 ms | 152 / 27 ms | blocked | blocked | blocked |
 | Iframe | **14 ms** via `frameLocator` | 53 ms | 14 ms | 9 ms via `eval` | blocked | blocked | blocked |
 | Crash recovery | **measured**: SIGKILL detected, action rejects in 0 ms, same profile reusable | same | same | daemon re-attach, not measured | not measured | not measured | not measured |
-| Peak RSS | **308 MB** | 832 MB | 856 MB | 1090 MB | blocked | blocked | blocked |
-| Idle RSS / CPU | **270 MB / 0.3 %** | 508 MB / 2.2 % | 731 MB / 2.8 % | 794 MB / 3.8 % | blocked | blocked | blocked |
+| Peak RSS (two runs) | **308 / 319 MB** | 832 / 958 MB | 856 / 927 MB | 1090 / 1383 MB | blocked | blocked | blocked |
+| Idle RSS / CPU (two runs) | **271–315 MB / 0.3–1.9 %** | 509–929 MB / 2.2–8.5 % | 732–875 MB / 2.8–6.8 % | 794–1369 MB / 3.8–7.4 % | blocked | blocked | blocked |
 | Cross-platform | macOS verified here; Windows/Linux documented only | same | same | ships win/linux/mac binaries | Python 3.11+ | Python 3.12+ | Node 22.18+ |
 
 ## Why the three Python/TS candidates are blocked
