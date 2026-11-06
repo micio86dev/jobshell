@@ -59,7 +59,7 @@ This is the shape Phase 1 implements. Every element below was exercised in Phase
 
 | Requirement | Supported? | Basis |
 | --- | --- | --- |
-| Installable desktop app | macOS yes, others unverified | `.app` bundle built; DMG fails (`evidence/summary/bundle.json`) |
+| Installable desktop app | macOS yes, others unverified | `.app` bundle and verified DMG built (`evidence/summary/bundle.json`, `evidence/summary/dmg.json`) |
 | Windows, macOS, Linux | designed, one platform proven | `06-cross-platform-limits.md` |
 | Local profiles, CVs, sessions | yes | SQLite + app data dir + dedicated profile |
 | Global job sources | yes for ATS feeds; aggregators need keys | `11-api-integration-matrix.md` |
@@ -83,5 +83,5 @@ This is the shape Phase 1 implements. Every element below was exercised in Phase
 | Node sidecar as an extra runtime | installer size, update surface | measure Rust-native CDP before Phase 2 ends |
 | Session-cookie sites need a resident browser | RAM floor of ~271 MB headless per profile | one browser per identity, aggressive idle timeout |
 | Aggregator credentials | product is unusable for wide search without them | ATS-first launch, aggregators as opt-in |
-| DMG packaging fails | blocks a clean macOS release | fix `bundle_dmg.sh` invocation, or ship a signed `.app` zip |
+| Code signing and notarisation | an unsigned `.app` is blocked by Gatekeeper on another machine | decide the signing identity before any external distribution; the DMG itself now builds (`scripts/make-dmg.sh`) |
 | Per-source terms | a wrong assumption is a legal problem, not a bug | `reuse_policy` gate before persisting anything |

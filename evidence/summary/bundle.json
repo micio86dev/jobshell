@@ -15,7 +15,16 @@
   "release_binary_bytes": 18312992,
   "dmg": {
     "attempted": true,
-    "produced_file": false,
-    "error": "error running bundle_dmg.sh: failed to run <repo>/.cache/target/release/bundle/dmg/bundle_dmg.sh"
+    "tauri_bundler": "fails: create-dmg runs AppleScript to arrange the Finder window and the call times out with -1712 without Automation permission",
+    "tauri_bundler_error": "error running bundle_dmg.sh: failed to run .../bundle_dmg.sh",
+    "workaround_flag": "--skip-jenkins makes Tauri's own bundle_dmg.sh succeed, but the flag is not exposed through tauri.conf.json",
+    "produced_file": true,
+    "method": "scripts/make-dmg.sh: hdiutil UDZO from a staged folder, no Finder automation",
+    "verified": true,
+    "bytes": 4845601,
+    "contains": [
+      "openjob-phase0.app",
+      "Applications symlink"
+    ]
   }
 }

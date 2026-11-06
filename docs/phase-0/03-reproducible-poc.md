@@ -29,7 +29,7 @@ Two host quirks are handled by wrappers, and both are real findings:
 | `cargo build` then `session-poc-selftest --phase crash` / `--phase recover` | `phase1.json`, `phase2.json` | task recovered and audited |
 | `scripts/check-desktop-launch.sh <binary> <dir>` | `desktop-launch.json` | shell alive after 12 s |
 | `make desktop` | `.app` bundle | bundle created |
-| `make dmg` | `.dmg` | **expected to fail** until `bundle_dmg.sh` is fixed (`evidence/summary/bundle.json`) |
+| `make dmg` | verified `.dmg` (4.8 MB, `hdiutil verify` VALID) | DMG produced and mounted |
 | `make phase0` | all of the above except `dmg` | every target green |
 
 ## Tests
@@ -67,7 +67,7 @@ Phase 1 output: `{"phase":"crash","state":"running","task_id":1}`. Phase 2 outpu
 
 `make phase0` writes every artifact under a single `evidence/run/<timestamp>/` directory. That required a fix during Phase 0: the `OUT` variable was recursive (`?=`), so `$(shell date …)` was re-evaluated for every target and one run scattered across five timestamped directories. It is now immediate (`:=`).
 
-The DMG step is deliberately excluded from `phase0`. It fails on this host, and hiding that behind a green build would be exactly the kind of silent failure these documents are supposed to prevent.
+`dmg` stays out of `phase0` only because it re-runs the release build; it is green on its own. It uses `scripts/make-dmg.sh` rather than Tauri's bundler, because `create-dmg` shells out to AppleScript to arrange the Finder window and that call times out with `-1712` on any machine without Automation permission — including every CI runner. The image itself never needed Finder; only the cosmetic layout did.
 
 ## What a re-run will not reproduce exactly
 

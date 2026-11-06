@@ -72,9 +72,14 @@ desktop:
 	cd poc/session-poc/app && set -a && . ../../../scripts/env.sh && set +a && \
 		export PATH="$$HOME/.cargo/bin:$$PATH" && ../../../scripts/cargo.sh tauri build --bundles app
 
-dmg:
-	cd poc/session-poc/app && set -a && . ../../../scripts/env.sh && set +a && \
-		export PATH="$$HOME/.cargo/bin:$$PATH" && ../../../scripts/cargo.sh tauri build --bundles dmg
+# Tauri's own dmg bundler runs create-dmg, which needs Finder Automation
+# permission and fails with an AppleEvent timeout (-1712) on this host and on CI.
+# scripts/make-dmg.sh builds the same read-only image with hdiutil alone.
+dmg: desktop
+	mkdir -p "$(OUT)"
+	set -a && . ./scripts/env.sh && set +a && \
+		./scripts/make-dmg.sh "$$CARGO_TARGET_DIR/release/bundle/macos/openjob-phase0.app" \
+			"$(OUT)/openjob-phase0_0.0.0_aarch64.dmg" | tee "$(OUT)/dmg.json"
 
 phase0: test bench probe persistence crash chrome spike desktop
 	@echo "Phase 0 evidence written to $(OUT)"

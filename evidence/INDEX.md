@@ -18,6 +18,7 @@ Regenerate with the commands in [`docs/phase-0/03-reproducible-poc.md`](../docs/
 | `summary/desktop-launch.json` | `scripts/check-desktop-launch.sh` | the shell staying alive at 114 MB, in `01`, `06`, `14` |
 | `summary/chrome-connect.json` | `poc/chrome-connect/connect.ts` | the three connection modes, the anonymous CDP endpoint and the extension finding, in `01`, `02`, `06`, `12` |
 | `summary/bundle.json` | `cargo tauri build` + capture | the 17 MB `.app` and the failing `.dmg`, in `01`, `06`, `14`, `15` |
+| `summary/dmg.json` | `scripts/make-dmg.sh` | the verified DMG in `03`, `06`, `14` |
 | `summary/crash-recovery.json` | `poc/session-poc/crash-recovery.ts` | the SIGKILL recovery table in `04` and the crash-recovery row in `02` |
 | `summary/api-probes.json` | `poc/api-probe/probe.ts` | every status, posting count and robots result in `09`, `11` |
 
@@ -43,7 +44,8 @@ Regenerate with the commands in [`docs/phase-0/03-reproducible-poc.md`](../docs/
 | Chrome for Testing loads the MV3 extension | `chrome-connect.json` | `modes[unpacked-mv3-extension-chrome-for-testing].ok` |
 | The CDP endpoint answers anonymous loopback HTTP | `chrome-connect.json` | `modes[connect-over-cdp].detail` |
 | A 17 MB `.app` bundle is produced | `bundle.json` | `size_bytes`, `contents` |
-| The `.dmg` step fails | `bundle.json` | `dmg.produced_file`, `dmg.error` |
+| Tauri's DMG bundler fails without Finder Automation; hdiutil succeeds | `bundle.json` | `dmg.tauri_bundler_error`, `dmg.method` |
+| The DMG verifies and contains the app plus an Applications link | `dmg.json` | `verified`, `bytes` |
 | Greenhouse/Lever/Ashby/SmartRecruiters/Recruitee answer without credentials | `api-probes.json` | `results[].usable_without_credentials` |
 | Workable answers 200 with an empty jobs array | `api-probes.json` | `results[id=workable].attempts` |
 | SmartRecruiters needs a verified tenant id | `api-probes.json` | `results[id=smartrecruiters].attempts` |

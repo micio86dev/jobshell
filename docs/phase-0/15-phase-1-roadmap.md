@@ -64,7 +64,7 @@ The part Phase 0 proved is conditional.
 
 ## M6 — Packaging and distribution (2 weeks)
 
-- Fix the `.dmg` failure (`evidence/summary/bundle.json`) or ship a signed `.app` zip.
+- Sign and notarise the `.app` and DMG. The packaging failure is fixed: `scripts/make-dmg.sh` builds a verified image with hdiutil, because Tauri's `create-dmg` path needs Finder Automation permission.
 - Bundle Chrome for Testing with its licence tree, or implement first-run download with a clear offline error.
 - Third-party notices covering Playwright (Apache-2.0 + NOTICE), Chromium, Node and the Rust/Vue tree.
 - Windows and Linux installers, once M0 is green.

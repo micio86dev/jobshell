@@ -13,7 +13,7 @@ The requirement is Windows, macOS and Linux. Only macOS arm64 was built and run 
 | Playwright + Chrome for Testing 156 headless and headed | `evidence/summary/bench.json` |
 | Installed Chrome via `channel: "chrome"` | `evidence/summary/chrome-connect.json` |
 | `.app` bundle builds via `make desktop` | `evidence/summary/bundle.json` |
-| `.dmg` packaging **fails** in `bundle_dmg.sh` on this host (`make dmg`) | `evidence/summary/bundle.json` |
+| `.dmg` builds and verifies via `make dmg` (hdiutil, no Finder automation) | `evidence/summary/dmg.json` |
 
 ## Not verified — no claim is made
 
