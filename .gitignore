@@ -1,0 +1,16 @@
+# Caches and build artifacts live on the project volume, never in history.
+.cache/
+node_modules/
+target/
+dist/
+*.log
+.DS_Store
+
+# Raw, machine-generated evidence is reproducible; only INDEX.md and summaries are committed.
+evidence/run/
+
+# Secrets are never committed and never materialized as files in this repo.
+.env
+.env.*
+*.pem
+*.key
