@@ -20,7 +20,7 @@ Turn `sources.csv` into the runtime registry and ingest five ATS platforms.
 
 - Load `sources.csv` into the `sources` table on first run; validate `kind` and `auth_mode`.
 - One `ats_feed` adapter with a per-platform payload mapper (Greenhouse, Lever, Ashby, SmartRecruiters, Recruitee).
-- Tenant registry: verified ids only. `DeliveryHero` returned 902 postings while `Ubisoft` returned 0 — a guessed id must fail loudly, not silently return nothing.
+- Tenant registry: verified ids only. `DeliveryHero` returned 901 postings while `Ubisoft` returned 0 — a guessed id must fail loudly, not silently return nothing.
 - Persist only when `reuse_policy` is not `unknown`; otherwise show transiently with a link-out.
 - Enforce a per-source rate limit and honour `robots.txt` `Disallow` for browser sources.
 
