@@ -115,13 +115,14 @@ node src/harness.ts --runs 1 --idle-ms 3000 --only playwright-headless --out /tm
 
 **There is no `.env` file and no dotenv loader anywhere in this repository.** No API key is read by any code path. The matrix in `11-api-integration-matrix.md` marks Adzuna, Jooble, InfoJobs and SEEK as `requires credentials` precisely because no client for them was written.
 
-Only three environment variables exist:
+Only four environment variables exist:
 
 | Variable | Read by | Effect when unset |
 | --- | --- | --- |
 | `OPENJOB_REAL_LOGIN_URL` | `poc/session-poc/persistence.ts` | the real-service login variant is skipped and recorded as skipped |
 | `OPENJOB_REAL_LOGGED_IN_SELECTOR` | same | same; both are required together |
 | `OPENJOB_AGENT_BROWSER_BIN` | `poc/runtime-bench/src/adapters/agent-browser.ts` | defaults to the binary inside `poc/agent-browser-probe` |
+| `OPENJOB_RUST_TOOLCHAIN` | `scripts/cargo.sh` | defaults to `1.98.1-aarch64-apple-darwin` |
 
 If you later want to exercise an aggregator, you would first have to write the client: nothing exists to consume an Adzuna `app_id`, a Jooble key, an InfoJobs OAuth pair or a SEEK approval. Inventing a key would change nothing.
 

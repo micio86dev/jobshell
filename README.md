@@ -24,6 +24,9 @@ the first run.
   Homebrew `rustup` exposes a real `cargo` binary rather than a proxy, so
   `rust-toolchain.toml` and `cargo +toolchain` are both ignored; the wrapper is the only
   reliable way to get the version Tauri 2.10+ needs.
+- **tauri-cli 2.10.1**, only for `make desktop` and `make dmg`. `cargo tauri` resolves
+  `~/.cargo/bin/cargo-tauri`, which this machine already had; `make desktop` puts
+  `$HOME/.cargo/bin` on `PATH` itself, so no shell setup is needed.
 - **A Playwright browser cache.** This machine had it seeded already. On a fresh machine
   you must provide one; the expected revision is `chromium-1248`, and
   `pnpm exec playwright install chromium` inside `poc/runtime-bench`, **with
@@ -63,6 +66,10 @@ The UI **must** be installed with pnpm: `npm install` fails twice over there, on
 
 ### 4. Prove the machine works
 
+The first `make test` is slower than the 65-test count suggests: it compiles the Rust core
+and its dependencies from crates.io, so give it minutes rather than seconds. Later runs
+are seconds.
+
 ```bash
 make test
 ```
@@ -100,13 +107,14 @@ checklist you tick only against output you observed.
 is read by any code path.** Credential-gated sources are recorded as blockers instead of
 being faked.
 
-Only three project variables exist, and every one of them is optional:
+Only four project variables exist, and every one of them is optional:
 
 | Variable | Read by | Effect when unset |
 | --- | --- | --- |
 | `OPENJOB_REAL_LOGIN_URL` | `poc/session-poc/persistence.ts` | the real-service login variant is skipped and recorded as skipped |
 | `OPENJOB_REAL_LOGGED_IN_SELECTOR` | same | same; both are required together |
 | `OPENJOB_AGENT_BROWSER_BIN` | `poc/runtime-bench/src/adapters/agent-browser.ts` | defaults to the binary inside `poc/agent-browser-probe` |
+| `OPENJOB_RUST_TOOLCHAIN` | `scripts/cargo.sh` | defaults to `1.98.1-aarch64-apple-darwin` |
 
 The variables `scripts/env.sh` exports (`CARGO_TARGET_DIR`, `PLAYWRIGHT_BROWSERS_PATH`,
 `npm_config_store_dir`, `PNPM_HOME`, `TMPDIR`) are artifact placement, not configuration.

@@ -72,9 +72,10 @@ spike:
 			--node "$$(which node)" --sidecar "$(ROOT)/poc/session-poc/sidecar/browser-agent.mjs" \
 			--url https://example.com > "$(OUT)/spike/phase2.json"
 
-# The .app bundle builds. The .dmg step fails in bundle_dmg.sh on this host
-# (evidence/summary/bundle.json), so it is a separate target that is expected to
-# fail until that is fixed; phase0 must not hide the failure behind a green build.
+# The .app bundle builds. Tauri's own dmg step fails in bundle_dmg.sh on this host
+# (evidence/summary/bundle.json), because create-dmg needs Finder Automation permission
+# and times out with -1712. `dmg` therefore builds the image with hdiutil alone and is
+# green on its own; it stays out of phase0 only because it re-runs the release build.
 desktop:
 	cd poc/session-poc/ui && set -a && . ../../../scripts/env.sh && set +a && \
 		pnpm install --frozen-lockfile && pnpm run build
