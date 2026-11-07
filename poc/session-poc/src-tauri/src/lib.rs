@@ -119,7 +119,12 @@ async fn record_event(
     Ok(())
 }
 
-/// Apply a state change and audit it.
+/// Apply a state change and audit it, only while the row still holds the state
+/// the caller observed.
+///
+/// The observed state is part of the `WHERE` clause, so the write is a
+/// compare-and-swap: two callers that read the same row cannot both apply the
+/// same transition. Returns whether it applied.
 ///
 /// `counts_as_attempt` distinguishes a retryable execution from a terminal
 /// outcome: finishing a task is the result of an attempt, not a new one.
@@ -129,18 +134,23 @@ async fn transition(
     to: TaskState,
     result: Option<&str>,
     counts_as_attempt: bool,
-) -> Result<()> {
-    sqlx::query(
-        "UPDATE tasks SET state = ?1, result = COALESCE(?2, result), attempts = attempts + ?3, updated_at = datetime('now') WHERE id = ?4",
+) -> Result<bool> {
+    let updated = sqlx::query(
+        "UPDATE tasks SET state = ?1, result = COALESCE(?2, result), attempts = attempts + ?3, updated_at = datetime('now') WHERE id = ?4 AND state = ?5",
     )
     .bind(to.as_str())
     .bind(result)
     .bind(i64::from(counts_as_attempt))
     .bind(task.id)
+    .bind(task.state.as_str())
     .execute(pool)
     .await
     .context("updating task state")?;
-    record_event(pool, task.id, Some(task.state), to, result).await
+    if updated.rows_affected() == 0 {
+        return Ok(false);
+    }
+    record_event(pool, task.id, Some(task.state), to, result).await?;
+    Ok(true)
 }
 
 pub async fn get_task(pool: &Pool<Sqlite>, id: i64) -> Result<Task> {
@@ -195,12 +205,26 @@ pub async fn recover_interrupted(pool: &Pool<Sqlite>) -> Result<Vec<i64>> {
 /// The desktop shell and any future scheduler share this path, so completing a
 /// task from the UI leaves the same trace as completing it from the core. It does
 /// not increment `attempts`: finishing is the outcome of an attempt, not a new one.
+///
+/// Completing twice is not an error: the second call writes nothing and keeps the
+/// first result, so a double click or a retried command stays idempotent without
+/// adding a second audit row.
 pub async fn complete_task(pool: &Pool<Sqlite>, id: i64, result: &str) -> Result<()> {
     let task = get_task(pool, id).await?;
     if task.state == TaskState::Done {
-        anyhow::bail!("task {id} is already done");
+        return Ok(());
     }
-    transition(pool, &task, TaskState::Done, Some(result), false).await
+    if transition(pool, &task, TaskState::Done, Some(result), false).await? {
+        return Ok(());
+    }
+    let current = get_task(pool, id).await?;
+    if current.state == TaskState::Done {
+        return Ok(());
+    }
+    anyhow::bail!(
+        "task {id} moved to {} while it was being completed",
+        current.state.as_str()
+    )
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -371,12 +395,41 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn completing_a_done_task_is_rejected_instead_of_silently_rewritten() {
+    async fn completing_a_done_task_again_is_idempotent_and_never_rewrites_it() {
         let pool = pool().await;
         let id = enqueue_task(&pool, "browser_probe", "{}").await.expect("enqueue");
         complete_task(&pool, id, "first").await.expect("complete");
-        assert!(complete_task(&pool, id, "second").await.is_err());
-        assert_eq!(get_task(&pool, id).await.expect("get").result.as_deref(), Some("first"));
+        complete_task(&pool, id, "second").await.expect("a repeat is not an error");
+
+        let task = get_task(&pool, id).await.expect("get");
+        assert_eq!(task.state, TaskState::Done);
+        assert_eq!(task.result.as_deref(), Some("first"));
+        let done_events: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM task_events WHERE task_id = ?1 AND to_state = 'done'")
+                .bind(id)
+                .fetch_one(&pool)
+                .await
+                .expect("events");
+        assert_eq!(done_events, 1);
+    }
+
+    #[tokio::test]
+    async fn a_transition_whose_observed_state_moved_is_not_applied() {
+        let pool = pool().await;
+        let id = enqueue_task(&pool, "browser_probe", "{}").await.expect("enqueue");
+        let observed = get_task(&pool, id).await.expect("get");
+        sqlx::query("UPDATE tasks SET state = 'running' WHERE id = ?1")
+            .bind(id)
+            .execute(&pool)
+            .await
+            .expect("move the row behind the caller");
+
+        let applied = transition(&pool, &observed, TaskState::Failed, Some("stale"), true)
+            .await
+            .expect("transition");
+        assert!(!applied);
+        assert_eq!(get_task(&pool, id).await.expect("get").result, None);
+        assert_eq!(get_task(&pool, id).await.expect("get").state, TaskState::Running);
     }
 
     #[tokio::test]
