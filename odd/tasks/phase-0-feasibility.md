@@ -65,6 +65,7 @@ S20 — Constraint: "Do not copy cookies or extract browser credentials." and "D
 | T14 | S6, S18 | inline: cross-platform constraints | docs commit |
 | T15 | S12, S13, S1, S14, S15 | inline: threat model, licensing, ADR, roadmap | docs commit |
 | T16 | S16-S20 | inline: evidence index and clean re-run | docs commit |
+| T17 | S16, S19 | inline: static UI wiring check and shared completion path | 7e70dbe |
 
 ## Log
 
@@ -334,3 +335,7 @@ L3 — Findings that changed the architecture, each backed by `evidence/summary/
 L4 — Blockers recorded, not hidden: LinkedIn and Indeed have no candidate-side job-search API; Adzuna, Jooble, InfoJobs and SEEK need credentials the maintainer has not supplied; Windows and Linux were not built; the `.dmg` bundle step fails; native messaging and real-service session persistence were deliberately not executed.
 
 L5 — Environment incident during closure: `diskutil verifyVolume` on the project volume failed ("sm_free_count is not valid", space verification failed, exit 8) and one `node_modules` file (`@types/node/util/types.d.ts`) was found NUL-filled, which broke `tsc` with bogus TS1127 errors. All 339 tracked and untracked text files were scanned for NUL bytes: none affected, and `git fsck` is clean. Dependencies are reproducible, so the repair was a reinstall. The heavy benchmark re-run was deferred until the volume is checked by the maintainer; every other experiment was re-run and re-verified afterwards.
+
+L6 — T17, from a defect the testing guide itself recorded: it said "The UI wiring is not verified", and `finish_task` bypassed the core with its own `UPDATE`. Both are now measured claims. `finish_task` calls `complete_task`, which reuses `transition`, writes the `task_events` row, and refuses to rewrite an already-done task; `transition` takes `counts_as_attempt` because finishing is the outcome of an attempt. `scripts/check-tauri-wiring.sh` (`make wiring`, part of `make test`) fails when the UI calls a name `generate_handler!` does not register. Observed: `make test` exit 0 with 65 TS tests, 7 Rust tests (1 ignored, keyring), five typechecks and the wiring check; `clippy -D warnings` clean on `session-poc-core`; the wiring check itself measured at 1.58 s. The UI click path remains unverified and stays in the guide's incomplete table.
+
+L7 — Blocker recorded for T17, not hidden (S19): the native review of candidate `sha256:8fed41a3…c711` (lineage `review-9f033231beade43f`, tier high, lenses readability + reliability) could not run. `gentle_review_capture_group` failed at the Pi host relay with `no model is configured for review-readability; assign it a model in the agent model routing config`; the same holds for `review-reliability`. Nothing was submitted and no reviewer ran. The candidate was committed as `7e70dbe` anyway, because delivery policy is the maintainer's and the commit was already authorized; the review can be started again over the committed range once a model is routed to those lens configs.
