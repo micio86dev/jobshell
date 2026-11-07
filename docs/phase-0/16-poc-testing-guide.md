@@ -26,7 +26,7 @@ Read the rest of this guide with that framing: you are testing infrastructure, n
 | Session persistence experiment (steps 1–6) | `poc/session-poc/persistence.ts` | works, 2 variants |
 | Crash recovery experiment (SIGKILL) | `poc/session-poc/crash-recovery.ts` | works |
 | Soak measurement (2 min idle) | `poc/session-poc/soak.ts` | works |
-| Rust core: task queue, recovery, keyring, sidecar spawn | `poc/session-poc/src-tauri/src/lib.rs` | works, 7 tests |
+| Rust core: task queue, recovery, keyring, sidecar spawn | `poc/session-poc/src-tauri/src/lib.rs` | works, 8 tests |
 | Node browser sidecar | `poc/session-poc/sidecar/browser-agent.mjs` | works, driven by Rust |
 | Tauri 2 desktop shell + Vue 3 UI | `poc/session-poc/app/`, `poc/session-poc/ui/` | builds, launches, 6 commands, 5 wired |
 | Chrome connection modes (CDP, extensions) | `poc/chrome-connect/connect.ts` | works, 4 modes |
@@ -86,7 +86,7 @@ Observed result of `make phase0`: exit code 0, seven subdirectories (`api`, `ben
 
 | Command | Duration | What it produces |
 | --- | --- | --- |
-| `make test` | ~1 min | 65 TS tests, 7 Rust tests, 5 typechecks, the wiring check |
+| `make test` | ~1 min | 65 TS tests, 8 Rust tests, 5 typechecks, the wiring check |
 | `make wiring` | ~2 s | fails if the UI calls a command `generate_handler!` does not register |
 | `make bench` | ~5 min | `bench/bench.json` |
 | `make probe` | ~1 min | `api/api-probes.json` |
@@ -232,7 +232,7 @@ sqlite3 "evidence/run/<ts>/spike/data/spike.sqlite" "select count(*) from source
 make test
 ```
 
-Expected: `ℹ tests 65` / `ℹ pass 65` / `ℹ fail 0` from Node, then `test result: ok. 7 passed; 0 failed; 1 ignored` from cargo, and last:
+Expected: `ℹ tests 65` / `ℹ pass 65` / `ℹ fail 0` from Node, then `test result: ok. 8 passed; 0 failed; 1 ignored` from cargo, and last:
 
 ```
 wiring: UI calls 5, Rust registers 6
@@ -291,7 +291,7 @@ The harness now uses a session name unique to each process, so a new run starts 
 
 Tick only what you observed. Each line names the command and the observable result.
 
-- [ ] `make test` exits 0 with `65 pass`, `7 passed; 1 ignored`, and `every command the UI calls is registered`.
+- [ ] `make test` exits 0 with `65 pass`, `8 passed; 1 ignored`, and `every command the UI calls is registered`.
 - [ ] `make phase0` exits 0 and prints one `evidence/run/<ts>` path containing `api`, `bench`, `chrome`, `crash`, `persistence`, `soak`, `spike`.
 - [ ] `bench/bench.json` contains four adapters, each with `runs_ok: 3`.
 - [ ] The headless adapter's `idle_mean_rss_mb.median` is roughly a third of the headed one.

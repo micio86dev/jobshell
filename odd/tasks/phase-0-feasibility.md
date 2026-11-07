@@ -65,7 +65,7 @@ S20 — Constraint: "Do not copy cookies or extract browser credentials." and "D
 | T14 | S6, S18 | inline: cross-platform constraints | docs commit |
 | T15 | S12, S13, S1, S14, S15 | inline: threat model, licensing, ADR, roadmap | docs commit |
 | T16 | S16-S20 | inline: evidence index and clean re-run | docs commit |
-| T17 | S16, S19 | inline: static UI wiring check and shared completion path | 7e70dbe |
+| T17 | S16, S19 | inline: static UI wiring check and shared completion path | 7e70dbe, bbf36e9 |
 
 ## Log
 
@@ -339,3 +339,14 @@ L5 — Environment incident during closure: `diskutil verifyVolume` on the proje
 L6 — T17, from a defect the testing guide itself recorded: it said "The UI wiring is not verified", and `finish_task` bypassed the core with its own `UPDATE`. Both are now measured claims. `finish_task` calls `complete_task`, which reuses `transition`, writes the `task_events` row, and refuses to rewrite an already-done task; `transition` takes `counts_as_attempt` because finishing is the outcome of an attempt. `scripts/check-tauri-wiring.sh` (`make wiring`, part of `make test`) fails when the UI calls a name `generate_handler!` does not register. Observed: `make test` exit 0 with 65 TS tests, 7 Rust tests (1 ignored, keyring), five typechecks and the wiring check; `clippy -D warnings` clean on `session-poc-core`; the wiring check itself measured at 1.58 s. The UI click path remains unverified and stays in the guide's incomplete table.
 
 L7 — Blocker recorded for T17, not hidden (S19): the native review of candidate `sha256:8fed41a3…c711` (lineage `review-9f033231beade43f`, tier high, lenses readability + reliability) could not run. `gentle_review_capture_group` failed at the Pi host relay with `no model is configured for review-readability; assign it a model in the agent model routing config`; the same holds for `review-reliability`. Nothing was submitted and no reviewer ran. The candidate was committed as `7e70dbe` anyway, because delivery policy is the maintainer's and the commit was already authorized; the review can be started again over the committed range once a model is routed to those lens configs.
+
+L8 — The blocker in L7 was a missing routing entry, not a missing capability. The Pi host relay reads `~/.pi/gentle-ai/models.json`, keyed by routing key (`review-<lens>`, `review-refuter`, `review-validator`); `~/.pi/agent/subagents.json` carries a different, unrelated `model_profiles` shape and does not feed the relay. The maintainer authorized the model choice, so every review role was routed to the model the other gentle-ai agents already use (`opencode-go/deepseek-v4.1-flash`) and the review was re-run over the committed range (`baseRef` `e978c36`, committed-only) as lineage `review-f7b314d0a7c73485` (7 files, 177 lines, tier high).
+
+The review paid for itself: two candidate-caused CRITICAL findings, both mine, both accepted.
+
+- R2-001 (readability, inferential): `complete_task`'s “already done” guard was a read-check-write across two `await`s, so two concurrent `finish_task` callers could both pass it and both write a done event. Fixed by putting the observed state in the `UPDATE`'s `WHERE` clause (compare-and-swap) and returning whether it applied.
+- R3-001 (reliability, deterministic): that guard also broke `finish_task` idempotency — a repeated finish became a visible error where the baseline returned `Ok`, a contract change the request never asked for. Fixed by returning `Ok` without writing when the task is already done or another caller won the race.
+
+The correction stayed inside the frozen budget (73 diff lines planned at 85, budget 89) and touched only `lib.rs`. The targeted validator approved it, the acknowledgement burned the authority, and the correction is `bbf36e9`. Tests went from 7 to 8 Rust tests: the stale-state transition is not applied, and a repeated completion rewrites nothing and records exactly one done event.
+
+R3-002 (WARNING, informational, `poc/session-poc/src-tauri/src/lib.rs:199-203`) came back from the same ledger as a non-blocking advisory with no claim text attached. It is recorded here as an open follow-up on that region, not interpreted, and it must not reopen this candidate's review.

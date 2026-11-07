@@ -43,7 +43,7 @@ cd poc/session-poc/src-tauri && ../../../scripts/cargo.sh test
 ./scripts/check-tauri-wiring.sh
 ```
 
-65 TypeScript tests and 7 Rust tests. They cover the pure logic that the evidence depends on: licence classification, pyproject parsing, package.json narrowing, the depth-limited file walk, HTTP probe pacing, CPU-time parsing, subtree summation, the median/aggregate path, robots.txt parsing and RFC 9309 availability policy, task-state recovery, and the completion path the desktop shell and the core share.
+65 TypeScript tests and 8 Rust tests. They cover the pure logic that the evidence depends on: licence classification, pyproject parsing, package.json narrowing, the depth-limited file walk, HTTP probe pacing, CPU-time parsing, subtree summation, the median/aggregate path, robots.txt parsing and RFC 9309 availability policy, task-state recovery, and the completion path the desktop shell and the core share.
 
 The terminal `check-tauri-wiring.sh` is not a test of behaviour: it fails the build when a command name the Vue UI calls is missing from `generate_handler!`, a rename that TypeScript and Rust both accept and that only breaks at runtime.
 
