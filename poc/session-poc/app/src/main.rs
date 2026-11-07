@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use serde::Serialize;
-use session_poc_core::{default_data_dir, enqueue_task, get_task, open_database, recover_interrupted, secrets};
+use session_poc_core::{complete_task, default_data_dir, enqueue_task, get_task, open_database, recover_interrupted, secrets};
 use sqlx::{Pool, Sqlite};
 use tauri::State;
 
@@ -53,10 +53,9 @@ async fn recover_tasks(state: State<'_, Arc<AppState>>) -> Result<Vec<i64>, Stri
 
 #[tauri::command]
 async fn finish_task(state: State<'_, Arc<AppState>>, id: i64, result: String) -> Result<String, String> {
-    sqlx::query("UPDATE tasks SET state = 'done', result = ?1, updated_at = datetime('now') WHERE id = ?2")
-        .bind(result)
-        .bind(id)
-        .execute(&state.pool)
+    // Always through the core, so a completion from the UI leaves the same audit
+    // row as one from the scheduler.
+    complete_task(&state.pool, id, &result)
         .await
         .map_err(|error| error.to_string())?;
     Ok("done".to_string())

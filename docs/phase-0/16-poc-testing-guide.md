@@ -26,9 +26,9 @@ Read the rest of this guide with that framing: you are testing infrastructure, n
 | Session persistence experiment (steps 1–6) | `poc/session-poc/persistence.ts` | works, 2 variants |
 | Crash recovery experiment (SIGKILL) | `poc/session-poc/crash-recovery.ts` | works |
 | Soak measurement (2 min idle) | `poc/session-poc/soak.ts` | works |
-| Rust core: task queue, recovery, keyring, sidecar spawn | `poc/session-poc/src-tauri/src/lib.rs` | works, 5 tests |
+| Rust core: task queue, recovery, keyring, sidecar spawn | `poc/session-poc/src-tauri/src/lib.rs` | works, 7 tests |
 | Node browser sidecar | `poc/session-poc/sidecar/browser-agent.mjs` | works, driven by Rust |
-| Tauri 2 desktop shell + Vue 3 UI | `poc/session-poc/app/`, `poc/session-poc/ui/` | builds, launches, 6 commands |
+| Tauri 2 desktop shell + Vue 3 UI | `poc/session-poc/app/`, `poc/session-poc/ui/` | builds, launches, 6 commands, 5 wired |
 | Chrome connection modes (CDP, extensions) | `poc/chrome-connect/connect.ts` | works, 4 modes |
 | Public ATS API probe with robots enforcement | `poc/api-probe/probe.ts` | works, 6 sources |
 | macOS `.app` + `.dmg` packaging | `make desktop`, `make dmg` | works |
@@ -86,7 +86,8 @@ Observed result of `make phase0`: exit code 0, seven subdirectories (`api`, `ben
 
 | Command | Duration | What it produces |
 | --- | --- | --- |
-| `make test` | ~1 min | 65 TS tests, 5 Rust tests, 5 typechecks |
+| `make test` | ~1 min | 65 TS tests, 7 Rust tests, 5 typechecks, the wiring check |
+| `make wiring` | ~2 s | fails if the UI calls a command `generate_handler!` does not register |
 | `make bench` | ~5 min | `bench/bench.json` |
 | `make probe` | ~1 min | `api/api-probes.json` |
 | `make persistence` | ~1 min | `persistence/persistence.json` |
@@ -96,6 +97,10 @@ Observed result of `make phase0`: exit code 0, seven subdirectories (`api`, `ben
 | `make spike` | ~1 min | `spike/phase1.json`, `spike/phase2.json` |
 | `make desktop` | ~2 min warm | `.app` bundle in `$CARGO_TARGET_DIR/release/bundle/macos/` |
 | `make dmg` | ~1 min | verified `.dmg` in `$(OUT)` |
+| `make clean` | not measured | deletes build outputs only: `$CARGO_TARGET_DIR` and the UI `dist/` |
+| `make clean-deps` | not measured | deletes `node_modules` only; restores from the lockfiles |
+
+Both `clean` targets are destructive by design and were added without a timed run, so no duration is claimed for them. `clean` never touches `evidence/`: measured run directories and the committed summaries survive it on purpose.
 
 Options are not passed through `make`. For a single adapter or a shorter run, call the harness directly:
 
@@ -227,13 +232,23 @@ sqlite3 "evidence/run/<ts>/spike/data/spike.sqlite" "select count(*) from source
 make test
 ```
 
-Expected: `ℹ tests 65` / `ℹ pass 65` / `ℹ fail 0` from Node, then `test result: ok. 5 passed; 0 failed; 1 ignored` from cargo. The ignored Rust test is the keyring round trip, because a CI runner has no unlocked keychain; `make spike` exercises the same path explicitly.
+Expected: `ℹ tests 65` / `ℹ pass 65` / `ℹ fail 0` from Node, then `test result: ok. 7 passed; 0 failed; 1 ignored` from cargo, and last:
+
+```
+wiring: UI calls 5, Rust registers 6
+  note: task_detail is registered but not called by the UI
+  every command the UI calls is registered
+```
+
+The `note:` line is expected: `task_detail` is registered for the Phase 1 detail view and the spike UI does not call it yet. The check fails only when the UI calls a name that is missing from `generate_handler!` — a rename on either side is otherwise a green build and a runtime error.
+
+The one ignored Rust test is the keyring round trip, because a CI runner has no unlocked keychain; `make spike` exercises the same path explicitly.
 
 Run it with `set -o pipefail` if you pipe it anywhere: `make test | grep …` returns grep's exit code, which hides a failure. That mistake was made here and corrected.
 
 ### 7.2 Manual checks worth doing
 
-1. **Watch the desktop app.** `make desktop`, then `open "$CARGO_TARGET_DIR/release/bundle/macos/openjob-phase0.app"`. It opens a window and stays up (measured: alive after 12 s at 114 MB RSS). **The UI wiring is not verified**: the shell was launched and its Rust commands are covered by the self-test, but nobody has clicked the buttons in an automated or observed way, so confirm the table and the keyring line yourself before ticking them.
+1. **Watch the desktop app.** `make desktop`, then `open "$CARGO_TARGET_DIR/release/bundle/macos/openjob-phase0.app"`. It opens a window and stays up (measured: alive after 12 s at 114 MB RSS). **The UI wiring is verified statically only**: `make wiring` proves that every command name the UI passes to `invoke()` exists in `generate_handler!`, and `finish_task` now reaches the same audited `complete_task` path as the core, but nobody has clicked the buttons in an automated or observed way. Confirm the table and the keyring line yourself before ticking them.
 2. **Kill it mid-task.** Force-quit with a task in `running` and relaunch: the equivalent recovery is proven at the library level by `make spike` (`phase1.json` → `phase2.json`), but the button path is the same unverified UI wiring as above.
 3. **Mount the DMG.** `hdiutil attach <dmg>` shows `openjob-phase0.app` and an `Applications` symlink.
 4. **Read one evidence file end to end** and check that every number in the document you are reading appears there. That is the whole point of the phase.
@@ -267,6 +282,7 @@ The harness now uses a session name unique to each process, so a new run starts 
 | Notifications | plugin wired, never exercised |
 | Windows / Linux builds | **never built**; CI written, never run |
 | Code signing / notarisation | not done |
+| UI click path | **statically checked only** — `make wiring` covers the command names, nothing presses a button |
 | Real-service session persistence | **never executed** (needs an account) |
 | Native messaging | documented only |
 | Native (RDD) code review | blocked: no model routed for `review-risk`, and the phase exceeds the lens context budget |
@@ -275,7 +291,7 @@ The harness now uses a session name unique to each process, so a new run starts 
 
 Tick only what you observed. Each line names the command and the observable result.
 
-- [ ] `make test` exits 0 with `65 pass` and `5 passed; 1 ignored`.
+- [ ] `make test` exits 0 with `65 pass`, `7 passed; 1 ignored`, and `every command the UI calls is registered`.
 - [ ] `make phase0` exits 0 and prints one `evidence/run/<ts>` path containing `api`, `bench`, `chrome`, `crash`, `persistence`, `soak`, `spike`.
 - [ ] `bench/bench.json` contains four adapters, each with `runs_ok: 3`.
 - [ ] The headless adapter's `idle_mean_rss_mb.median` is roughly a third of the headed one.

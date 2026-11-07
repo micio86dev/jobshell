@@ -119,20 +119,23 @@ async fn record_event(
     Ok(())
 }
 
-/// Apply a state change and audit it. Used by the tests today and by the
-/// Phase 1 scheduler tomorrow; kept in the core so both share one code path.
-#[cfg_attr(not(test), allow(dead_code))]
+/// Apply a state change and audit it.
+///
+/// `counts_as_attempt` distinguishes a retryable execution from a terminal
+/// outcome: finishing a task is the result of an attempt, not a new one.
 async fn transition(
     pool: &Pool<Sqlite>,
     task: &Task,
     to: TaskState,
     result: Option<&str>,
+    counts_as_attempt: bool,
 ) -> Result<()> {
     sqlx::query(
-        "UPDATE tasks SET state = ?1, result = COALESCE(?2, result), attempts = attempts + 1, updated_at = datetime('now') WHERE id = ?3",
+        "UPDATE tasks SET state = ?1, result = COALESCE(?2, result), attempts = attempts + ?3, updated_at = datetime('now') WHERE id = ?4",
     )
     .bind(to.as_str())
     .bind(result)
+    .bind(i64::from(counts_as_attempt))
     .bind(task.id)
     .execute(pool)
     .await
@@ -185,6 +188,19 @@ pub async fn recover_interrupted(pool: &Pool<Sqlite>) -> Result<Vec<i64>> {
         .await?;
     }
     Ok(ids)
+}
+
+/// Mark a task done and record the audit event.
+///
+/// The desktop shell and any future scheduler share this path, so completing a
+/// task from the UI leaves the same trace as completing it from the core. It does
+/// not increment `attempts`: finishing is the outcome of an attempt, not a new one.
+pub async fn complete_task(pool: &Pool<Sqlite>, id: i64, result: &str) -> Result<()> {
+    let task = get_task(pool, id).await?;
+    if task.state == TaskState::Done {
+        anyhow::bail!("task {id} is already done");
+    }
+    transition(pool, &task, TaskState::Done, Some(result), false).await
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -336,12 +352,42 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn completing_a_task_records_the_event_without_incrementing_attempts() {
+        let pool = pool().await;
+        let id = enqueue_task(&pool, "browser_probe", "{}").await.expect("enqueue");
+        complete_task(&pool, id, "finished in the shell").await.expect("complete");
+
+        let task = get_task(&pool, id).await.expect("get");
+        assert_eq!(task.state, TaskState::Done);
+        assert_eq!(task.result.as_deref(), Some("finished in the shell"));
+        assert_eq!(task.attempts, 0);
+
+        let events: Vec<String> = sqlx::query_scalar("SELECT to_state FROM task_events WHERE task_id = ?1 ORDER BY id")
+            .bind(id)
+            .fetch_all(&pool)
+            .await
+            .expect("events");
+        assert_eq!(events, vec!["queued".to_string(), "done".to_string()]);
+    }
+
+    #[tokio::test]
+    async fn completing_a_done_task_is_rejected_instead_of_silently_rewritten() {
+        let pool = pool().await;
+        let id = enqueue_task(&pool, "browser_probe", "{}").await.expect("enqueue");
+        complete_task(&pool, id, "first").await.expect("complete");
+        assert!(complete_task(&pool, id, "second").await.is_err());
+        assert_eq!(get_task(&pool, id).await.expect("get").result.as_deref(), Some("first"));
+    }
+
+    #[tokio::test]
     async fn a_transition_keeps_the_result_and_increments_attempts() {
         let pool = pool().await;
         let id = enqueue_task(&pool, "browser_probe", "{}").await.expect("enqueue");
         let mut task = get_task(&pool, id).await.expect("get");
         task.state = TaskState::Queued;
-        transition(&pool, &task, TaskState::Failed, Some("network down")).await.expect("transition");
+        transition(&pool, &task, TaskState::Failed, Some("network down"), true)
+            .await
+            .expect("transition");
         let after = get_task(&pool, id).await.expect("get");
         assert_eq!(after.state, TaskState::Failed);
         assert_eq!(after.result.as_deref(), Some("network down"));

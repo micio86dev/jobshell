@@ -29,6 +29,8 @@ Two host quirks are handled by wrappers, and both are real findings:
 | `node poc/api-probe/probe.ts` | `api-probes.json` | six sources probed, statuses recorded |
 | `cargo build` then `session-poc-selftest --phase crash` / `--phase recover` | `phase1.json`, `phase2.json` | task recovered and audited |
 | `scripts/check-desktop-launch.sh <binary> <dir>` | `desktop-launch.json` | shell alive after 12 s |
+| `make wiring` | nothing; the exit status is the artifact | every command name the UI passes to `invoke()` exists in `generate_handler!` |
+| `make clean` / `make clean-deps` | nothing; frees build outputs or dependencies | build outputs and `node_modules` removed, `evidence/` untouched |
 | `make desktop` | `.app` bundle | bundle created |
 | `make dmg` | verified `.dmg` (4.8 MB, `hdiutil verify` VALID) | DMG produced, verified and mounted |
 | `make phase0` | all of the above except `dmg` | every target green |
@@ -38,9 +40,12 @@ Two host quirks are handled by wrappers, and both are real findings:
 ```bash
 cd poc/runtime-bench && ./node_modules/.bin/tsc --noEmit && node --test "test/*.test.ts"
 cd poc/session-poc/src-tauri && ../../../scripts/cargo.sh test
+./scripts/check-tauri-wiring.sh
 ```
 
-65 TypeScript tests and 5 Rust tests. They cover the pure logic that the evidence depends on: licence classification, pyproject parsing, package.json narrowing, the depth-limited file walk, HTTP probe pacing, CPU-time parsing, subtree summation, the median/aggregate path, robots.txt parsing and RFC 9309 availability policy, and task-state recovery.
+65 TypeScript tests and 7 Rust tests. They cover the pure logic that the evidence depends on: licence classification, pyproject parsing, package.json narrowing, the depth-limited file walk, HTTP probe pacing, CPU-time parsing, subtree summation, the median/aggregate path, robots.txt parsing and RFC 9309 availability policy, task-state recovery, and the completion path the desktop shell and the core share.
+
+The terminal `check-tauri-wiring.sh` is not a test of behaviour: it fails the build when a command name the Vue UI calls is missing from `generate_handler!`, a rename that TypeScript and Rust both accept and that only breaks at runtime.
 
 The Rust keyring test is `#[ignore]`d because a CI runner has no unlocked keychain; the self-test exercises the same path explicitly.
 

@@ -1,6 +1,6 @@
 # Phase 0 entry points. Every target is reproducible from a clean checkout.
 #
-#   make test    unit tests for both languages
+#   make test    unit tests for both languages, typechecks, UI command wiring
 #   make bench   runtime benchmark (4 adapters x 3 runs)
 #   make probe   read-only API probes
 #   make phase0  everything above plus persistence and the crash-recovery self-test
@@ -11,9 +11,9 @@ ROOT  := $(shell pwd)
 # scatter one run across several timestamped directories.
 OUT   := $(ROOT)/evidence/run/$(shell date -u +%Y%m%dT%H%M%SZ)
 
-.PHONY: test test-ts test-rs typecheck bench probe persistence crash soak chrome spike desktop dmg phase0 clean
+.PHONY: test test-ts test-rs typecheck wiring bench probe persistence crash soak chrome spike desktop dmg phase0 clean clean-deps
 
-test: test-ts test-rs typecheck
+test: test-ts test-rs typecheck wiring
 
 test-ts:
 	cd poc/runtime-bench && set -a && . ../../scripts/env.sh && set +a && \
@@ -32,6 +32,10 @@ typecheck:
 		../runtime-bench/node_modules/.bin/tsc --noEmit
 	cd poc/session-poc/ui && set -a && . ../../../scripts/env.sh && set +a && \
 		npm run typecheck
+
+# Every name the Vue UI passes to invoke() must exist in generate_handler!.
+wiring:
+	./scripts/check-tauri-wiring.sh
 
 bench:
 	cd poc/runtime-bench && set -a && . ../../scripts/env.sh && set +a && \
@@ -88,3 +92,15 @@ dmg: desktop
 
 phase0: test bench probe persistence crash soak chrome spike desktop
 	@echo "Phase 0 evidence written to $(OUT)"
+
+# Build outputs only. Evidence under evidence/run/ and the committed summaries are
+# never removed, and dependencies are left in place (see clean-deps).
+clean:
+	set -a && . ./scripts/env.sh && set +a && \
+		rm -rf "$$CARGO_TARGET_DIR" poc/session-poc/ui/dist
+
+# Dependencies only: they are reproducible from the lockfiles.
+clean-deps:
+	rm -rf poc/runtime-bench/node_modules poc/api-probe/node_modules \
+		poc/session-poc/node_modules poc/session-poc/ui/node_modules \
+		poc/chrome-connect/node_modules poc/agent-browser-probe/node_modules
