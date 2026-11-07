@@ -285,7 +285,7 @@ The harness now uses a session name unique to each process, so a new run starts 
 | UI click path | **statically checked only** — `make wiring` covers the command names, nothing presses a button |
 | Real-service session persistence | **never executed** (needs an account) |
 | Native messaging | documented only |
-| Native (RDD) code review | blocked: no model routed for `review-risk`, and the phase exceeds the lens context budget |
+| Native (RDD) code review | **runs per candidate**: readability and reliability reviewed the T17 candidate (7 files, 177 lines), raised two CRITICAL findings, and approved the one bounded correction. Reviewing the whole Phase 0 diff in one transaction still exceeds the lens context budget |
 
 ## 9. Acceptance checklist
 

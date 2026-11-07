@@ -46,4 +46,4 @@ Two things, both measured rather than asserted:
 - Filesystem permissions on the profile directory, and whether to encrypt CV data at rest.
 - A logging layer with redaction, since currently there is no logging at all.
 - Prompt-injection containment design before any AI feature lands (T4).
-- A per-source rate limiter that is enforced, not documented. `robots.txt` enforcement is done: the probe fetches robots per origin first, parses it and never requests a disallowed URL (`poc/runtime-bench/src/lib/robots.ts`, 15 tests). Rate limiting itself is still only a fixed delay between requests.
+- A per-source rate limiter that is enforced, not documented. `robots.txt` enforcement is done: the probe fetches robots per origin first, parses it and never requests a disallowed URL (`poc/runtime-bench/src/lib/robots.ts`, 22 tests). Rate limiting itself is still only a fixed delay between requests.
