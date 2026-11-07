@@ -23,6 +23,7 @@ Every claim in these documents is backed by an artifact under `evidence/`. Where
 | 13 | [Licensing review](13-licensing-review.md) | Runtime licences and data-reuse restrictions |
 | 14 | [Recommended architecture](14-recommended-architecture.md) | The shape Phase 1 implements |
 | 15 | [Phase 1 roadmap](15-phase-1-roadmap.md) | Ordered work, each item with an acceptance test |
+| 16 | [PoC testing guide](16-poc-testing-guide.md) | Exact commands, what is testable, and an acceptance checklist |
 
 The claim-to-artifact map is [`../evidence/INDEX.md`](../evidence/INDEX.md).
 

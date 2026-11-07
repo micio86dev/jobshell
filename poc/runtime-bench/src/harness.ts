@@ -46,7 +46,9 @@ const adapters: Adapter[] = [
     name: 'agent-browser-headed',
     mode: 'headed',
     executablePath: chromiumExecutable,
-    session: 'openjob-bench',
+    // A session name unique to this harness process: reusing one lets a wedged
+    // daemon from an earlier run fail every later run with EAGAIN on its socket.
+    session: `openjob-bench-${process.pid}`,
   }),
 ];
 

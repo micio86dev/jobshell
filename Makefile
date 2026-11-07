@@ -72,7 +72,8 @@ spike:
 # (evidence/summary/bundle.json), so it is a separate target that is expected to
 # fail until that is fixed; phase0 must not hide the failure behind a green build.
 desktop:
-	cd poc/session-poc/ui && set -a && . ../../../scripts/env.sh && set +a && npm run build
+	cd poc/session-poc/ui && set -a && . ../../../scripts/env.sh && set +a && \
+		pnpm install --frozen-lockfile && pnpm run build
 	cd poc/session-poc/app && set -a && . ../../../scripts/env.sh && set +a && \
 		export PATH="$$HOME/.cargo/bin:$$PATH" && ../../../scripts/cargo.sh tauri build --bundles app
 

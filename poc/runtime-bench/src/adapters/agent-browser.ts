@@ -202,6 +202,13 @@ export const makeAgentBrowserAdapter = (options: AgentBrowserOptions): Adapter =
   mode: options.mode,
   availability: async () => {
     if (!fs.existsSync(BIN)) return { available: false, reason: `agent-browser binary missing at ${BIN}` };
+    // pnpm skips the package's postinstall, so the shipped binary can arrive
+    // without its executable bit. Fix it here instead of asking the operator to.
+    try {
+      fs.accessSync(BIN, fs.constants.X_OK);
+    } catch {
+      fs.chmodSync(BIN, 0o755);
+    }
     if (!fs.existsSync(options.executablePath)) {
       return { available: false, reason: `browser executable missing at ${options.executablePath}` };
     }
