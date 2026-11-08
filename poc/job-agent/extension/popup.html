@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>openjob.dev</title>
+    <style>
+      body { font: 13px/1.5 ui-sans-serif, system-ui, sans-serif; margin: 12px; width: 280px; color: #14181f; }
+      label { display: block; margin: 8px 0 4px; font-weight: 600; }
+      input { width: 100%; padding: 4px 6px; font: inherit; border: 1px solid #c3c9d4; border-radius: 6px; }
+      button { margin-top: 10px; width: 100%; padding: 6px; font: inherit; font-weight: 600; border: 1px solid #c3c9d4; border-radius: 6px; background: #f6f8fb; cursor: pointer; }
+      button:hover { background: #eaeef5; }
+      p { margin: 8px 0 0; font-family: ui-monospace, monospace; font-size: 11px; color: #45505f; }
+    </style>
+  </head>
+  <body>
+    <strong>openjob.dev</strong>
+    <p>Scores the postings on this page against your profile. It reads the page only when you click.</p>
+    <label for="token">Bridge token</label>
+    <input id="token" type="password" placeholder="printed by make agent-bridge" />
+    <button id="score" type="button">Score this page</button>
+    <p id="status">idle</p>
+    <script src="popup.js"></script>
+  </body>
+</html>

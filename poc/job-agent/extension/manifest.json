@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "openjob.dev — score this page",
+  "version": "0.1.0",
+  "description": "Reads the job postings on the page you have open and asks your local openjob agent to score them against your profile. It never reads cookies and never navigates on its own.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["http://127.0.0.1/*"],
+  "action": {
+    "default_title": "Score this page",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.linkedin.com/*",
+        "https://*.indeed.com/*",
+        "https://www.stepstone.de/*",
+        "https://www.tecnoempleo.com/*",
+        "https://www.infojobs.net/*",
+        "https://www.subito.it/*",
+        "https://www.bakeca.it/*",
+        "https://reteinformaticalavoro.it/*",
+        "https://www.freelance.de/*",
+        "https://www.freelancermap.de/*",
+        "https://www.free-work.com/*",
+        "https://www.welcometothejungle.com/*",
+        "https://www.getonbrd.com/*",
+        "https://www.facebook.com/groups/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
