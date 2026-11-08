@@ -2,9 +2,12 @@
 // spawned; `parseMcpRequest` is tested directly because notifications must not be
 // answered.
 import assert from 'node:assert/strict';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
 
-import { handleMcpRequest, parseMcpRequest, type McpDeps } from '../src/mcp-server.ts';
+import { handleMcpRequest, loadSeen, parseMcpRequest, type McpDeps } from '../src/mcp-server.ts';
 import { capture, posting, profile } from './support.ts';
 
 const mcpDeps = (): McpDeps => {
@@ -98,4 +101,23 @@ test('mcp: a frame without an id is a notification, and an invalid frame is refu
   assert.equal(parseMcpRequest({ jsonrpc: '2.0' }), null, 'no method is not a request');
   assert.equal(parseMcpRequest({ jsonrpc: '2.0', id: {}, method: 'x' }), null, 'a non-scalar id is refused');
   assert.equal(parseMcpRequest('not an object'), null);
+});
+
+test('mcp: a seen file that was asked for and cannot be read is an error, not an empty set', () => {
+  assert.throws(() => loadSeen('/nonexistent/seen.json'), /unreadable/);
+
+  const dir = mkdtempSync(join(tmpdir(), 'openjob-seen-'));
+  const corrupt = join(dir, 'corrupt.json');
+  writeFileSync(corrupt, 'not json', 'utf8');
+  assert.throws(() => loadSeen(corrupt), /unreadable/);
+
+  const notAnArray = join(dir, 'object.json');
+  writeFileSync(notAnArray, '{"a":1}', 'utf8');
+  assert.throws(() => loadSeen(notAnArray), /not a JSON array/);
+
+  const good = join(dir, 'good.json');
+  writeFileSync(good, '["remoteok:1","hn:2",7]', 'utf8');
+  assert.deepEqual([...loadSeen(good)].sort(), ['hn:2', 'remoteok:1'], 'non-string entries are dropped');
+
+  assert.deepEqual([...loadSeen(null)], [], 'no path at all is a legitimate first run');
 });

@@ -10,11 +10,32 @@
  * Transport: stdio, one JSON-RPC object per line. The handlers are pure functions so
  * they are tested without spawning a process.
  */
+import { readFileSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 
 import { judgePosting, type JeDeps } from './jev.ts';
 import type { UserProfile } from './profile.ts';
 import type { Posting } from './sources/types.ts';
+
+/**
+ * Load the "already shown" memory.
+ *
+ * `null` means the caller did not ask for a file, which is a legitimate first run. A
+ * path that was asked for and cannot be read is an error: starting silently from an
+ * empty set would make `already_seen` answer "unseen" for everything and discard the
+ * user's dedupe state without saying so.
+ */
+export const loadSeen = (path: string | null): Set<string> => {
+  if (path === null) return new Set();
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(readFileSync(path, 'utf8'));
+  } catch (error) {
+    throw new Error(`seen file ${path} is unreadable: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  if (!Array.isArray(parsed)) throw new Error(`seen file ${path} is not a JSON array of keys`);
+  return new Set(parsed.filter((value): value is string => typeof value === 'string'));
+};
 
 export const PROTOCOL_VERSION = '2024-11-05';
 export const SERVER_INFO = { name: 'openjob-agent', version: '0.1.0' };

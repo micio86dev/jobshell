@@ -8,11 +8,9 @@
  * Point any MCP client at it, for example:
  *   {"mcpServers":{"openjob":{"command":"node","args":["src/mcp-cli.ts","--profile","…"]}}}
  */
-import { readFileSync } from 'node:fs';
-
 import { loadRuntime, missingKeyMessage } from './bootstrap.ts';
 import { defaultFetch } from './jev.ts';
-import { serveStdio } from './mcp-server.ts';
+import { loadSeen, serveStdio } from './mcp-server.ts';
 import { readSecret } from './secrets.ts';
 
 const arg = (name: string): string | undefined => {
@@ -35,15 +33,13 @@ if (typesafeKey === null) {
   process.exit(2);
 }
 
-const readSeen = (path: string | undefined): Set<string> => {
-  if (path === undefined) return new Set();
-  try {
-    const parsed: unknown = JSON.parse(readFileSync(path, 'utf8'));
-    return new Set(Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === 'string') : []);
-  } catch {
-    return new Set();
-  }
-};
+let seen: Set<string>;
+try {
+  seen = loadSeen(arg('seen') ?? null);
+} catch (error) {
+  process.stderr.write(`openjob: ${error instanceof Error ? error.message : String(error)}\n`);
+  process.exit(2);
+}
 
 serveStdio({
   profile: runtime.profile,
@@ -53,5 +49,5 @@ serveStdio({
     fetchImpl: defaultFetch,
     ...(runtime.config.base_url === undefined ? {} : { baseUrl: runtime.config.base_url }),
   },
-  seen: readSeen(arg('seen')),
+  seen,
 });
