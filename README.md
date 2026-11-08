@@ -123,7 +123,7 @@ The variables `scripts/env.sh` exports (`CARGO_TARGET_DIR`, `PLAYWRIGHT_BROWSERS
 
 | Command | What it does |
 | --- | --- |
-| `make test` | 65 TypeScript tests, 8 Rust tests, 5 typechecks, and the UI↔Rust wiring check |
+| `make test` | 65 TypeScript tests, 14 Rust tests, 102 agent tests, 5 typechecks, and the UI↔Rust wiring check |
 | `make wiring` | fails if the Vue UI calls a command `generate_handler!` does not register |
 | `make bench` | the four browser-runtime adapters, 3 runs each, RAM and CPU |
 | `make probe` | read-only GETs to six public ATS job feeds, with `robots.txt` enforced first |
@@ -135,6 +135,10 @@ The variables `scripts/env.sh` exports (`CARGO_TARGET_DIR`, `PLAYWRIGHT_BROWSERS
 | `make desktop` | builds the macOS `.app` bundle |
 | `make dmg` | builds and verifies the `.dmg` |
 | `make phase0` | everything above except `dmg` |
+| `make agent-test` | the Phase 0.5 job agent: typecheck plus its offline test suite |
+| `make agent` | one daily run of the job agent (`PROFILE=…`, optional `DRY=1`) |
+| `make agent-bridge` | the localhost bridge the browser extension calls (`PROFILE=…`, `PORT=…`) |
+| `make agent-mcp` | the agent served over MCP on stdio (`PROFILE=…`) |
 | `make clean` | deletes build outputs only; `evidence/` is never touched |
 | `make clean-deps` | deletes `node_modules` only; restores from the lockfiles |
 

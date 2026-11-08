@@ -14,3 +14,6 @@ evidence/run/
 .env.*
 *.pem
 *.key
+
+# Harness scratch state, never part of the repository.
+.pi/

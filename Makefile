@@ -11,9 +11,9 @@ ROOT  := $(shell pwd)
 # scatter one run across several timestamped directories.
 OUT   := $(ROOT)/evidence/run/$(shell date -u +%Y%m%dT%H%M%SZ)
 
-.PHONY: test test-ts test-rs typecheck wiring bench probe persistence crash soak chrome spike desktop dmg phase0 clean clean-deps
+.PHONY: test test-ts test-rs typecheck wiring agent-test agent agent-bridge agent-mcp bench probe persistence crash soak chrome spike desktop dmg phase0 clean clean-deps
 
-test: test-ts test-rs typecheck wiring
+test: test-ts test-rs typecheck wiring agent-test
 
 test-ts:
 	cd poc/runtime-bench && set -a && . ../../scripts/env.sh && set +a && \
@@ -36,6 +36,29 @@ typecheck:
 # Every name the Vue UI passes to invoke() must exist in generate_handler!.
 wiring:
 	./scripts/check-tauri-wiring.sh
+
+# The Phase 0.5 browser job agent: offline tests, then the three entry points.
+agent-test:
+	cd poc/job-agent && set -a && . ../../scripts/env.sh && set +a && \
+		./node_modules/.bin/tsc --noEmit && node --test "test/*.test.ts"
+
+# PROFILE=/path/to/profile.json [DRY=1]
+agent:
+	@test -n "$(PROFILE)" || (echo "set PROFILE=/path/to/profile.json"; exit 2)
+	cd poc/job-agent && set -a && . ../../scripts/env.sh && set +a && \
+		node src/cli.ts --profile "$(PROFILE)" $(if $(DRY),--dry-run,)
+
+# PROFILE=/path/to/profile.json [PORT=8787] — prints the token for the extension.
+agent-bridge:
+	@test -n "$(PROFILE)" || (echo "set PROFILE=/path/to/profile.json"; exit 2)
+	cd poc/job-agent && set -a && . ../../scripts/env.sh && set +a && \
+		node src/bridge-cli.ts --profile "$(PROFILE)" --port $(or $(PORT),8787)
+
+# PROFILE=/path/to/profile.json — MCP over stdio for the user's own assistant.
+agent-mcp:
+	@test -n "$(PROFILE)" || (echo "set PROFILE=/path/to/profile.json"; exit 2)
+	cd poc/job-agent && set -a && . ../../scripts/env.sh && set +a && \
+		node src/mcp-cli.ts --profile "$(PROFILE)"
 
 bench:
 	cd poc/runtime-bench && set -a && . ../../scripts/env.sh && set +a && \
