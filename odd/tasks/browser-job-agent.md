@@ -230,3 +230,12 @@ product database, the Vue UI, and any automated access to a source whose policy 
   only through the extension); keys are read at the point of use instead of being held by the
   loader; the extension token moved to `chrome.storage.session`. Also fixed: `base_url` was
   validated and never used.
+- **L21** (native review, 2026-11-08): `review-9b2198c0cac92c38` on the range
+  `dedff3bb..HEAD` — tier high, lenses risk + resilience, 1,459 changed lines. Outcome
+  **approved**; authority burned (`gentle-ai.review-acknowledged/v1`); delivery follows
+  ordinary repository policy. One CRITICAL finding, **R4-001**, was real and is fixed in
+  `1117d26`: `readSeen` swallowed every error on the explicit `--seen` path, so a corrupt
+  file silently reset the user's dedupe state. Five non-blocking advisories remain as
+  separate later work, never a reason to re-run this review: R4-002 and R4-003 on
+  `src/bridge.ts:80-91`, R4-004 on `src/bridge.ts:179`, R4-005 on `extension/content.js:8`,
+  R4-006 on `src/mcp-cli.ts:56`.
