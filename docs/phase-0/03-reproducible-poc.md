@@ -63,7 +63,7 @@ DATA=/tmp/spike-data
   --url https://example.com
 ```
 
-Phase 1 output: `{"phase":"crash","state":"running","task_id":1}`. Phase 2 output includes `recovered_task_ids:[1]`, `recovered_task_state:"interrupted"`, `resumed_task_id:1`, `keyring:{ok:true}` and a sidecar report.
+Phase 1 output: `{"attempts":1,"phase":"crash","state":"running","task_id":1}` — the attempt is started through `start_task`, so it is audited and counted. Phase 2 output includes `recovered_task_ids:[1]`, `recovered_task_state:"interrupted"`, `recovered_task_attempts:1`, `resumed_task_id:1`, `resumed_task_state:"running"`, `resumed_task_attempts:2`, `keyring:{ok:true}` and a sidecar report.
 
 ## Fixtures
 

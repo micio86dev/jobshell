@@ -28,7 +28,7 @@ Read the rest of this guide with that framing: you are testing infrastructure, n
 | Soak measurement (2 min idle) | `poc/session-poc/soak.ts` | works |
 | Rust core: task queue, recovery, keyring, sidecar spawn | `poc/session-poc/src-tauri/src/lib.rs` | works, 8 tests |
 | Node browser sidecar | `poc/session-poc/sidecar/browser-agent.mjs` | works, driven by Rust |
-| Tauri 2 desktop shell + Vue 3 UI | `poc/session-poc/app/`, `poc/session-poc/ui/` | builds, launches, 6 commands, 5 wired |
+| Tauri 2 desktop shell + Vue 3 UI | `poc/session-poc/app/`, `poc/session-poc/ui/` | builds, launches, 8 commands, 7 wired |
 | Chrome connection modes (CDP, extensions) | `poc/chrome-connect/connect.ts` | works, 4 modes |
 | Public ATS API probe with robots enforcement | `poc/api-probe/probe.ts` | works, 6 sources |
 | macOS `.app` + `.dmg` packaging | `make desktop`, `make dmg` | works |
@@ -198,7 +198,7 @@ Everything lands in `evidence/run/<timestamp>/`. The committed copies the docume
 | --- | --- | --- |
 | Which runtime won on speed and memory? | `bench/bench.json` | `aggregate[]`: `launch_ms`, `idle_mean_rss_mb`, `idle_mean_cpu_pct`, `peak_rss_mb`, each with `.median` and `.n` |
 | Does a login survive a restart? | `persistence/persistence.json` | `deterministic_variants[].observed_persist`, `.matches_expectation` |
-| Does the app recover a task after a crash? | `spike/phase1.json`, `spike/phase2.json` | `state: "running"` then `recovered_task_ids`, `recovered_task_state` |
+| Does the app recover a task after a crash? | `spike/phase1.json`, `spike/phase2.json` | `state: "running"` and `attempts: 1` in phase 1, then `recovered_task_ids`, `recovered_task_state`, `recovered_task_attempts`, `resumed_task_state`, `resumed_task_attempts` |
 | Does the keyring work? | `spike/phase2.json` | `keyring.ok` |
 | Does Rust really drive the browser? | `spike/phase2.json` | `sidecar.ok`, `sidecar.reported_ms` |
 | Which sources answered? | `api/api-probes.json` | `results[].attempts[]`, `usable_without_credentials`, `skipped_by_robots` |
@@ -213,17 +213,45 @@ sqlite3 "evidence/run/<ts>/spike/data/spike.sqlite" ".tables"
 # _sqlx_migrations  sources  task_events  tasks
 
 sqlite3 "evidence/run/<ts>/spike/data/spike.sqlite" "select id,kind,state,attempts from tasks;"
-# 1|browser_probe|queued|0
+# 1|browser_probe|running|2
 
 sqlite3 "evidence/run/<ts>/spike/data/spike.sqlite" "select task_id,from_state,to_state,note from task_events order by id;"
 # 1||queued|enqueued
+# 1|queued|running|
 # 1|running|interrupted|recovered after process restart
+# 1|interrupted|running|
 
 sqlite3 "evidence/run/<ts>/spike/data/spike.sqlite" "select count(*) from sources;"
 # 0   <- the registry table exists and nothing fills it yet
 ```
 
 **No job postings are stored anywhere.** If you want to inspect postings, read the JSON in `api/api-probes.json`, which contains only payload *shape* and counts, not the postings themselves.
+
+### 6.1 What `attempts` counts
+
+`attempts` counts *executions started*, not outcomes recorded. In the desktop app one
+task walks the whole path:
+
+| UI action | Transition | `attempts` after |
+| --- | --- | --- |
+| Enqueue probe task | `→ queued` | 0 |
+| start | `queued → running` | **1** (this is the attempt) |
+| fail | `running → failed`, reason kept in `result` | 1 |
+| finish | `queued|running → done` (the UI hides it on a `failed` row, because `failed` is terminal) | unchanged |
+| Recover interrupted | `running → interrupted` after a crash | unchanged |
+| retry (same button, on an interrupted row) | `interrupted → running` | **2** (a second attempt) |
+
+`start_task` is the only transition that increments the counter
+(`poc/session-poc/src-tauri/src/lib.rs`, `counts_as_attempt = true`); finishing and
+failing close the attempt that was already counted. It accepts a `queued` task (first
+attempt) and an `interrupted` one (next attempt after a crash); `failed` is terminal by
+choice, so it is refused rather than retried. Anything else — a `running` or `done` task
+— is refused with an error and writes nothing, so a double click cannot invent an attempt
+that never ran.
+
+`make spike` drives the same functions, so its evidence now shows the counter: phase 1
+prints `attempts: 1`, and phase 2 reports `recovered_task_attempts: 1` followed by
+`resumed_task_attempts: 2` after restarting the interrupted row.
 
 ## 7. Tests to run
 
@@ -233,10 +261,10 @@ sqlite3 "evidence/run/<ts>/spike/data/spike.sqlite" "select count(*) from source
 make test
 ```
 
-Expected: `ℹ tests 65` / `ℹ pass 65` / `ℹ fail 0` from Node, then `test result: ok. 8 passed; 0 failed; 1 ignored` from cargo, and last:
+Expected: `ℹ tests 65` / `ℹ pass 65` / `ℹ fail 0` from Node, then `test result: ok. 14 passed; 0 failed; 1 ignored` from cargo, and last:
 
 ```
-wiring: UI calls 5, Rust registers 6
+wiring: UI calls 7, Rust registers 8
   note: task_detail is registered but not called by the UI
   every command the UI calls is registered
 ```
@@ -249,8 +277,8 @@ Run it with `set -o pipefail` if you pipe it anywhere: `make test | grep …` re
 
 ### 7.2 Manual checks worth doing
 
-1. **Watch the desktop app.** `make desktop`, then `open "$CARGO_TARGET_DIR/release/bundle/macos/openjob-phase0.app"`. It opens a window and stays up (measured: alive after 12 s at 114 MB RSS). **The UI wiring is verified statically only**: `make wiring` proves that every command name the UI passes to `invoke()` exists in `generate_handler!`, and `finish_task` now reaches the same audited `complete_task` path as the core, but nobody has clicked the buttons in an automated or observed way. Confirm the table and the keyring line yourself before ticking them.
-2. **Kill it mid-task.** Force-quit with a task in `running` and relaunch: the equivalent recovery is proven at the library level by `make spike` (`phase1.json` → `phase2.json`), but the button path is the same unverified UI wiring as above.
+1. **Watch the desktop app.** `make desktop`, then `open "$CARGO_TARGET_DIR/release/bundle/macos/openjob-phase0.app"`. It opens a window and stays up (measured: alive after 12 s at 114 MB RSS). **The UI wiring is verified statically by `make wiring`, and the click path has been observed once by hand**: `evidence/summary/ui-click-path.json` transcribes the maintainer clicking start, crash, recover and retry, with the sqlite output of each step. That artifact states its own limits — nothing here presses the buttons automatically, and the `fail` branch was not clicked. Confirm the table and the keyring line yourself before ticking them — see §6.1 for what `attempts` should read after each click.
+2. **Kill it mid-task.** Force-quit with a task in `running` and relaunch, then click **Recover interrupted**: the equivalent recovery is proven at the library level by `make spike` (`phase1.json` → `phase2.json`), and the button path now reaches the same audited core functions. The interrupted row offers **retry** instead of start, which begins the second attempt (`attempts` 2) — see §6.1.
 3. **Mount the DMG.** `hdiutil attach <dmg>` shows `openjob-phase0.app` and an `Applications` symlink.
 4. **Read one evidence file end to end** and check that every number in the document you are reading appears there. That is the whole point of the phase.
 
@@ -283,7 +311,7 @@ The harness now uses a session name unique to each process, so a new run starts 
 | Notifications | plugin wired, never exercised |
 | Windows / Linux builds | **never built**; CI written, never run |
 | Code signing / notarisation | not done |
-| UI click path | **statically checked only** — `make wiring` covers the command names, nothing presses a button |
+| UI click path | **observed once by hand** — `make wiring` checks the command names, and `evidence/summary/ui-click-path.json` transcribes one maintainer session through start, crash, recover and retry; nothing presses a button automatically, and the `fail` branch was not clicked |
 | Real-service session persistence | **never executed** (needs an account) |
 | Native messaging | documented only |
 | Native (RDD) code review | **runs per candidate**: readability and reliability reviewed the T17 candidate (7 files, 177 lines), raised two CRITICAL findings, and approved the one bounded correction. Reviewing the whole Phase 0 diff in one transaction still exceeds the lens context budget |
@@ -292,14 +320,15 @@ The harness now uses a session name unique to each process, so a new run starts 
 
 Tick only what you observed. Each line names the command and the observable result.
 
-- [ ] `make test` exits 0 with `65 pass`, `8 passed; 1 ignored`, and `every command the UI calls is registered`.
+- [ ] `make test` exits 0 with `65 pass`, `14 passed; 1 ignored`, and `every command the UI calls is registered`.
 - [ ] `make phase0` exits 0 and prints one `evidence/run/<ts>` path containing `api`, `bench`, `chrome`, `crash`, `persistence`, `soak`, `spike`.
 - [ ] `bench/bench.json` contains four adapters, each with `runs_ok: 3`.
 - [ ] The headless adapter's `idle_mean_rss_mb.median` is roughly a third of the headed one.
 - [ ] `persistence/persistence.json` shows the persistent-cookie variant passing step 6 and the session-cookie variant failing it, with both `matches_expectation: true`.
 - [ ] `crash/crash-recovery.json` shows `isConnected` false after SIGKILL and the same profile reusable.
 - [ ] `soak/soak.json` shows `processes_after_close: 0` and a `drift_pct` that is not a large positive number.
-- [ ] `spike/phase1.json` shows a task left in `running`; `spike/phase2.json` shows it recovered to `interrupted` and re-queued, plus `keyring.ok: true` and `sidecar.ok: true`.
+- [ ] `spike/phase1.json` shows a task left in `running` with `attempts: 1`; `spike/phase2.json` shows it recovered to `interrupted` (`recovered_task_attempts: 1`) and restarted (`resumed_task_state: "running"`, `resumed_task_attempts: 2`), plus `keyring.ok: true` and `sidecar.ok: true`.
+- [ ] The desktop app's buttons behave as §6.1 describes: `start` moves a queued row to `running` with `attempts` 1, `Recover interrupted` after a force-quit moves a `running` row to `interrupted`, and `retry` on that row brings `attempts` to 2.
 - [ ] `api/api-probes.json` lists SmartRecruiters under `skipped_by_robots` with `origin_allowed: false`.
 - [ ] `chrome/chrome-connect.json` shows branded Chrome failing the extension mode and Chrome for Testing passing it.
 - [ ] `make desktop` produces `openjob-phase0.app`; `open` launches it and it stays up.

@@ -17,7 +17,7 @@ Artifacts: `evidence/summary/persistence.json`, `evidence/summary/phase1.json`, 
 | 7. Execute a permitted background task | PASS (sidecar, 6.7 s) | n/a |
 | 8. Close the application | PASS (process exits with a running task) | n/a |
 | 9. Restart the application | PASS (new OS process) | n/a |
-| 10. Verify session and task recovery | PASS (task recovered and re-queued) | n/a |
+| 10. Verify session and task recovery | PASS (task recovered and restarted as a second attempt) | n/a |
 
 ## The finding that matters
 
@@ -38,8 +38,8 @@ Behaviourally only. The script asserts that the authenticated view renders and t
 
 Run against the Rust core, not against the browser script, because these steps are about application state rather than page state.
 
-1. Phase 1 (`--phase crash`) enqueues a `browser_probe` task, moves it to `running`, prints `{"phase":"crash","state":"running","task_id":1}` and exits without cleanup — a faithful crash.
-2. Phase 2 runs in a **new OS process**, opens the same SQLite database, finds the orphaned `running` row, marks it `interrupted`, appends a `task_events` record ("recovered after process restart"), and re-queues it.
+1. Phase 1 (`--phase crash`) enqueues a `browser_probe` task, starts an attempt through `start_task` — so the row is `running` with `attempts` 1 and a `queued -> running` audit row — prints `{"attempts":1,"phase":"crash","state":"running","task_id":1}` and exits without cleanup: a faithful crash.
+2. Phase 2 runs in a **new OS process**, opens the same SQLite database, finds the orphaned `running` row, marks it `interrupted`, appends a `task_events` record ("recovered after process restart"), and then restarts it through the same `start_task`, which accepts an `interrupted` row and counts a second attempt. Nothing rewrites the row behind the audit log.
 3. The same process stores and reads a secret through the macOS Keychain (`{"keyring":{"ok":true}}`) and spawns the Node sidecar, which drives Playwright in a dedicated profile and returns `{"ok":true,"detail":"loaded \"Example Domain\" ...","reported_ms":6672}`.
 
 The desktop shell itself launches and is still alive after 12 s at 114 MB RSS (`evidence/summary/desktop-launch.json`).

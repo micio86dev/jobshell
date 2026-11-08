@@ -12,7 +12,7 @@ use anyhow::{Context, Result};
 use serde_json::json;
 use session_poc_core::{
     default_data_dir, enqueue_task, get_task, open_database, recover_interrupted,
-    run_browser_sidecar, secrets, TaskState,
+    run_browser_sidecar, secrets, start_task,
 };
 
 fn arg(name: &str) -> Option<String> {
@@ -53,14 +53,23 @@ async fn main() -> Result<()> {
     let mut results = serde_json::Map::new();
 
     if phase == "crash" {
-        // Phase 1: enqueue a task, move it to `running`, then die without cleanup.
+        // Phase 1: enqueue a task, start a real attempt, then die without cleanup.
+        //
+        // The attempt goes through `start_task` rather than a direct UPDATE so the
+        // evidence shows a state the shipped code can actually produce: `attempts`
+        // is 1 and the `queued -> running` transition is audited.
         let id = enqueue_task(&pool, "browser_probe", r#"{"url":"fixture"}"#).await?;
-        sqlx::query("UPDATE tasks SET state = 'running' WHERE id = ?1")
-            .bind(id)
-            .execute(&pool)
-            .await
-            .context("forcing running state")?;
-        println!("{}", json!({ "phase": "crash", "task_id": id, "state": "running" }));
+        start_task(&pool, id).await.context("starting the task before the crash")?;
+        let started = get_task(&pool, id).await?;
+        println!(
+            "{}",
+            json!({
+                "phase": "crash",
+                "task_id": id,
+                "state": started.state.as_str(),
+                "attempts": started.attempts,
+            })
+        );
         return Ok(());
     }
 
@@ -74,12 +83,14 @@ async fn main() -> Result<()> {
             json!(task.state.as_str()),
         );
         results.insert("recovered_task_attempts".into(), json!(task.attempts));
-        // Resume the recovered work so the queue keeps moving after a restart.
-        sqlx::query("UPDATE tasks SET state = 'queued' WHERE id = ?1")
-            .bind(first)
-            .execute(&pool)
-            .await?;
+        // Resume the recovered work as a second attempt. `start_task` accepts an
+        // `interrupted` task for exactly this reason, so the restart is audited and
+        // `attempts` keeps counting instead of the row being rewritten behind the log.
+        start_task(&pool, *first).await.context("resuming the recovered task")?;
+        let resumed = get_task(&pool, *first).await?;
         results.insert("resumed_task_id".into(), json!(first));
+        results.insert("resumed_task_state".into(), json!(resumed.state.as_str()));
+        results.insert("resumed_task_attempts".into(), json!(resumed.attempts));
     }
 
     // Keyring round trip (explicitly requested: a CI runner has no unlocked keychain).
@@ -126,7 +137,6 @@ async fn main() -> Result<()> {
         "interrupted_remaining".into(),
         json!(sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM tasks WHERE state = 'interrupted'").fetch_one(&pool).await?),
     );
-    results.insert("task_states".into(), json!(TaskState::Queued.as_str()));
 
     println!("{}", serde_json::Value::Object(results));
     Ok(())

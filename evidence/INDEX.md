@@ -23,6 +23,7 @@ Regenerate with the commands in [`docs/phase-0/03-reproducible-poc.md`](../docs/
 | `summary/dmg.json` | `scripts/make-dmg.sh` | the verified DMG in `03`, `06`, `14` |
 | `summary/crash-recovery.json` | `poc/session-poc/crash-recovery.ts` | the SIGKILL recovery table in `04` and the crash-recovery row in `02` |
 | `summary/api-probes.json` | `poc/api-probe/probe.ts` | every status, posting count and robots result in `09`, `11` |
+| `summary/ui-click-path.json` | a manual maintainer session against `make desktop`, transcribed with its sqlite queries | the click-path row in `16` §8, §7.2 and §6.1; **not machine-captured** |
 
 ## Claim → artifact
 
@@ -37,8 +38,9 @@ Regenerate with the commands in [`docs/phase-0/03-reproducible-poc.md`](../docs/
 | Licences: Playwright Apache-2.0, Harness/Jev/Stagehand MIT | `runtimes-raw.json`, `runtimes-github.json` | `license.spdx_guess`, `license_spdx` |
 | A persistent cookie survives a browser restart | `persistence.json` | `deterministic_variants[variant=persistent-cookie].observed_persist` |
 | A session cookie does not survive | `persistence.json` | `deterministic_variants[variant=session-cookie].observed_persist` |
-| A crashed process leaves a `running` task | `phase1.json` | `state` |
-| A new process recovers and re-queues it | `phase2.json` | `recovered_task_ids`, `recovered_task_state`, `resumed_task_id` |
+| A crashed process leaves a `running` task with one attempt | `phase1.json` | `state`, `attempts` |
+| A new process recovers it and restarts it as a second attempt | `phase2.json` | `recovered_task_ids`, `recovered_task_state`, `recovered_task_attempts`, `resumed_task_state`, `resumed_task_attempts` |
+| The UI buttons move a task through start, recover and retry | `ui-click-path.json` | `steps[].output` (manual observation, not machine-captured) |
 | The macOS keyring round trip works | `phase2.json` | `keyring.ok` |
 | Rust spawns the Node sidecar and parses its JSON | `phase2.json` | `sidecar.ok`, `sidecar.reported_ms` |
 | The desktop shell stays alive | `desktop-launch.json` | `state_after_12s` |

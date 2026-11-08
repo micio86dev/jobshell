@@ -44,7 +44,7 @@ The part Phase 0 proved is conditional.
 - Notification when a run completes or a task needs the user (expired session).
 - A per-source failure budget with backoff; no silent retry loops.
 
-**Acceptance:** kill the app mid-run three times in a row; each restart recovers, re-queues, and completes; the UI shows three `interrupted` events; a source that returns 500 five times is backed off and reported, not retried forever.
+**Acceptance:** kill the app mid-run three times in a row; each restart recovers, restarts, and completes; the UI shows three `interrupted` events; a source that returns 500 five times is backed off and reported, not retried forever.
 
 ## M4 — Search, filtering and matching (2 weeks)
 

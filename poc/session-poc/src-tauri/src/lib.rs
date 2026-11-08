@@ -227,9 +227,62 @@ pub async fn complete_task(pool: &Pool<Sqlite>, id: i64, result: &str) -> Result
     )
 }
 
+/// Begin one execution of a task, counting a new attempt.
+///
+/// This is the only transition that counts an attempt: it opens the retryable
+/// execution the queue exists for, while finishing or failing only closes the
+/// attempt that was already counted.
+///
+/// A `queued` task starts its first attempt; an `interrupted` task — one a crash
+/// left behind and `recover_interrupted` marked — starts the next one, which is
+/// why `attempts` can reach 2. `failed` is terminal by choice: a failure is a
+/// recorded outcome, not a resumable state, so it is refused instead of retried.
+/// Anything else is refused with an error rather than silently ignored, so a
+/// double click cannot invent an attempt that never ran.
+pub async fn start_task(pool: &Pool<Sqlite>, id: i64) -> Result<()> {
+    let task = get_task(pool, id).await?;
+    match task.state {
+        TaskState::Queued | TaskState::Interrupted => {}
+        other => anyhow::bail!(
+            "task {id} is {}, which cannot start an attempt",
+            other.as_str()
+        ),
+    }
+    if transition(pool, &task, TaskState::Running, None, true).await? {
+        return Ok(());
+    }
+    anyhow::bail!("task {id} moved while it was being started")
+}
+
+/// Record a terminal failure for a running task, keeping the reason as its result.
+///
+/// Failing does not count a new attempt: it closes the one `start_task` opened.
+/// Failing twice is not an error and keeps the first reason, so a double click or
+/// a retried command stays idempotent without a second audit row — the same shape
+/// as `complete_task`.
+pub async fn fail_task(pool: &Pool<Sqlite>, id: i64, reason: &str) -> Result<()> {
+    let task = get_task(pool, id).await?;
+    if task.state == TaskState::Failed {
+        return Ok(());
+    }
+    if task.state != TaskState::Running {
+        anyhow::bail!("task {id} is {}, not running", task.state.as_str());
+    }
+    if transition(pool, &task, TaskState::Failed, Some(reason), false).await? {
+        return Ok(());
+    }
+    let current = get_task(pool, id).await?;
+    if current.state == TaskState::Failed {
+        return Ok(());
+    }
+    anyhow::bail!(
+        "task {id} moved to {} while it was being failed",
+        current.state.as_str()
+    )
+}
+
 #[derive(Debug, Serialize, Deserialize)]
-pub struct SidecarReport {
-    pub ok: bool,
+pub struct SidecarReport {    pub ok: bool,
     pub detail: String,
     pub elapsed_ms: u64,
 }
@@ -445,5 +498,109 @@ mod tests {
         assert_eq!(after.state, TaskState::Failed);
         assert_eq!(after.result.as_deref(), Some("network down"));
         assert_eq!(after.attempts, 1);
+    }
+
+    async fn event_count(pool: &Pool<Sqlite>, task_id: i64, to_state: &str) -> i64 {
+        sqlx::query_scalar(
+            "SELECT COUNT(*) FROM task_events WHERE task_id = ?1 AND to_state = ?2",
+        )
+        .bind(task_id)
+        .bind(to_state)
+        .fetch_one(pool)
+        .await
+        .expect("counting events")
+    }
+
+    #[tokio::test]
+    async fn starting_a_queued_task_moves_it_to_running_and_counts_one_attempt() {
+        let pool = pool().await;
+        let id = enqueue_task(&pool, "browser_probe", "{}").await.expect("enqueue");
+
+        start_task(&pool, id).await.expect("start");
+
+        let task = get_task(&pool, id).await.expect("get");
+        assert_eq!(task.state, TaskState::Running);
+        assert_eq!(task.attempts, 1);
+        assert_eq!(task.result, None);
+        assert_eq!(event_count(&pool, id, "running").await, 1);
+    }
+
+    #[tokio::test]
+    async fn starting_a_task_that_is_already_running_is_refused_and_writes_nothing() {
+        let pool = pool().await;
+        let id = enqueue_task(&pool, "browser_probe", "{}").await.expect("enqueue");
+        start_task(&pool, id).await.expect("start");
+
+        let refused = start_task(&pool, id).await;
+
+        assert!(refused.is_err(), "a running task must not start a second attempt");
+        let task = get_task(&pool, id).await.expect("get");
+        assert_eq!(task.state, TaskState::Running);
+        assert_eq!(task.attempts, 1);
+        assert_eq!(event_count(&pool, id, "running").await, 1);
+    }
+
+    #[tokio::test]
+    async fn retrying_an_interrupted_task_counts_a_second_attempt() {
+        let pool = pool().await;
+        let id = enqueue_task(&pool, "browser_probe", "{}").await.expect("enqueue");
+        start_task(&pool, id).await.expect("start");
+        let recovered = recover_interrupted(&pool).await.expect("recover");
+        assert_eq!(recovered, vec![id]);
+
+        start_task(&pool, id).await.expect("retry after a crash");
+
+        let task = get_task(&pool, id).await.expect("get");
+        assert_eq!(task.state, TaskState::Running);
+        assert_eq!(task.attempts, 2);
+        assert_eq!(event_count(&pool, id, "running").await, 2);
+        assert_eq!(event_count(&pool, id, "interrupted").await, 1);
+    }
+
+    #[tokio::test]
+    async fn a_failed_task_cannot_be_restarted() {
+        let pool = pool().await;
+        let id = enqueue_task(&pool, "browser_probe", "{}").await.expect("enqueue");
+        start_task(&pool, id).await.expect("start");
+        fail_task(&pool, id, "sidecar exited with 1").await.expect("fail");
+
+        let refused = start_task(&pool, id).await;
+
+        assert!(refused.is_err(), "failed is terminal, so no retry is offered");
+        let task = get_task(&pool, id).await.expect("get");
+        assert_eq!(task.state, TaskState::Failed);
+        assert_eq!(task.attempts, 1);
+        assert_eq!(task.result.as_deref(), Some("sidecar exited with 1"));
+        assert_eq!(event_count(&pool, id, "running").await, 1);
+    }
+
+    #[tokio::test]
+    async fn failing_a_running_task_keeps_the_single_attempt_and_records_the_reason() {
+        let pool = pool().await;
+        let id = enqueue_task(&pool, "browser_probe", "{}").await.expect("enqueue");
+        start_task(&pool, id).await.expect("start");
+
+        fail_task(&pool, id, "sidecar exited with 1").await.expect("fail");
+
+        let task = get_task(&pool, id).await.expect("get");
+        assert_eq!(task.state, TaskState::Failed);
+        assert_eq!(task.attempts, 1, "failing is the outcome of an attempt, not a new one");
+        assert_eq!(task.result.as_deref(), Some("sidecar exited with 1"));
+        assert_eq!(event_count(&pool, id, "failed").await, 1);
+    }
+
+    #[tokio::test]
+    async fn failing_a_failed_task_again_is_idempotent_and_keeps_the_first_reason() {
+        let pool = pool().await;
+        let id = enqueue_task(&pool, "browser_probe", "{}").await.expect("enqueue");
+        start_task(&pool, id).await.expect("start");
+        fail_task(&pool, id, "first reason").await.expect("fail");
+
+        fail_task(&pool, id, "second reason").await.expect("a repeat is not an error");
+
+        let task = get_task(&pool, id).await.expect("get");
+        assert_eq!(task.state, TaskState::Failed);
+        assert_eq!(task.result.as_deref(), Some("first reason"));
+        assert_eq!(event_count(&pool, id, "failed").await, 1);
     }
 }

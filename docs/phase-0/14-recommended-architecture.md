@@ -51,7 +51,7 @@ This is the shape Phase 1 implements. Every element below was exercised in Phase
 
 **3. The source registry is data, not code.** Five of the six probed ATS platforms share one shape: an unauthenticated JSON feed per employer (`11-api-integration-matrix.md`). The `sources` table in `migrations/0001_init.sql` models `kind`, `auth_mode`, `reuse_policy` and `evidence_url`; adding a Greenhouse tenant is a row, not a release.
 
-**4. Recovery is explicit and audited.** A task left in `running` becomes `interrupted` with a `task_events` row, then is re-queued. The user can see that the app was closed mid-task. Silent retries would hide a real condition.
+**4. Recovery is explicit and audited.** A task left in `running` becomes `interrupted` with a `task_events` row, then restarts as a counted second attempt through the same `start_task` the UI uses. The user can see that the app was closed mid-task. Silent retries would hide a real condition.
 
 **5. Everything untrusted is data.** Job postings, page text and feed payloads are never instructions. There is no AI layer in Phase 1; when one lands it must not be able to call tools from page content (`12-security-threat-model.md`, T4).
 

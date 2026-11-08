@@ -61,6 +61,32 @@ async fn finish_task(state: State<'_, Arc<AppState>>, id: i64, result: String) -
     Ok("done".to_string())
 }
 
+/// Begin one execution of a task, counting an attempt.
+///
+/// Accepts a `queued` task (first attempt) and an `interrupted` one (the next
+/// attempt after a crash), so this is the command that makes `attempts` and the
+/// `running` state reachable from the UI at all.
+#[tauri::command]
+async fn start_task(state: State<'_, Arc<AppState>>, id: i64) -> Result<String, String> {
+    session_poc_core::start_task(&state.pool, id)
+        .await
+        .map_err(|error| error.to_string())?;
+    Ok("running".to_string())
+}
+
+/// Record a terminal failure for a running task, with the reason as its result.
+#[tauri::command]
+async fn fail_task(
+    state: State<'_, Arc<AppState>>,
+    id: i64,
+    reason: String,
+) -> Result<String, String> {
+    session_poc_core::fail_task(&state.pool, id, &reason)
+        .await
+        .map_err(|error| error.to_string())?;
+    Ok("failed".to_string())
+}
+
 #[tauri::command]
 fn keyring_probe(account: String) -> Result<bool, String> {
     secrets::store_secret(&account, "probe-value").map_err(|error| error.to_string())?;
@@ -103,6 +129,8 @@ fn main() {
             list_tasks,
             recover_tasks,
             finish_task,
+            start_task,
+            fail_task,
             keyring_probe,
             task_detail
         ])

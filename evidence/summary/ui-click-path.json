@@ -1,0 +1,93 @@
+{
+  "artifact": "ui-click-path",
+  "provenance": "manual-observation",
+  "observed_at": "2026-11-08",
+  "captured_by": "maintainer",
+  "transcribed_by": "the coding session, from the maintainer's terminal output",
+  "method": "The maintainer clicked the Phase 0 spike UI and ran the sqlite3 queries below against the app's own database. The queries and their output are transcribed verbatim.",
+  "limits": [
+    "Nothing in this repository presses the UI buttons: this file is a transcription of an observed session, not script output. `make test` and `make wiring` remain the only machine checks of the UI-to-Rust wiring.",
+    "The `fail` branch was not clicked in this session. It is covered by the Rust tests `failing_a_running_task_keeps_the_single_attempt_and_records_the_reason` and `failing_a_failed_task_again_is_idempotent_and_keeps_the_first_reason`, not by this artifact.",
+    "One host, one platform (macOS arm64), the machine in `summary/env.json`."
+  ],
+  "app": {
+    "bundle": "$CARGO_TARGET_DIR/release/bundle/macos/openjob-phase0.app",
+    "built_by": "make desktop",
+    "database": "~/Library/Application Support/openjob-phase0/spike.sqlite"
+  },
+  "steps": [
+    {
+      "step": 1,
+      "ui_action": "Enqueue probe task (twice), then finish on an older queued row",
+      "queries": [
+        "SELECT id,state,attempts,result FROM tasks ORDER BY id;"
+      ],
+      "output": [
+        "1|done|0|completed in the spike",
+        "2|done|0|completed in the spike",
+        "3|done|0|completed in the spike",
+        "4|done|0|completed in the spike",
+        "5|queued|0|",
+        "6|queued|0|"
+      ],
+      "reading": "Finishing a task that never started leaves attempts at 0: no execution began."
+    },
+    {
+      "step": 2,
+      "ui_action": "start on task 5",
+      "queries": [
+        "SELECT id,state,attempts,result FROM tasks ORDER BY id;",
+        "SELECT task_id,from_state,to_state FROM task_events ORDER BY id;"
+      ],
+      "output": [
+        "5|running|1|",
+        "5||queued",
+        "5|queued|running"
+      ],
+      "reading": "The click path reaches start_task: one attempt counted, one audited transition, no result written."
+    },
+    {
+      "step": 3,
+      "ui_action": "Cmd+Q with task 5 running, relaunch, Recover interrupted",
+      "queries": [
+        "SELECT task_id,from_state,to_state,note FROM task_events WHERE task_id IN (5,6) ORDER BY id;"
+      ],
+      "output": [
+        "5||queued|enqueued",
+        "6||queued|enqueued",
+        "5|queued|running|",
+        "5|running|interrupted|recovered after process restart"
+      ],
+      "reading": "A crash mid-task is recovered by an explicit, audited transition, and the app reports `recovered 5` in its status line."
+    },
+    {
+      "step": 4,
+      "ui_action": "retry on the interrupted row 5",
+      "queries": [
+        "SELECT id,state,attempts,result FROM tasks ORDER BY id;",
+        "SELECT task_id,from_state,to_state FROM task_events ORDER BY id;"
+      ],
+      "output": [
+        "1|done|0|completed in the spike",
+        "2|done|0|completed in the spike",
+        "3|done|0|completed in the spike",
+        "4|done|0|completed in the spike",
+        "5|running|2|",
+        "6|queued|0|",
+        "5|queued|running",
+        "5|running|interrupted",
+        "5|interrupted|running"
+      ],
+      "reading": "attempts reaches 2 through the UI, and the full chain queued -> running -> interrupted -> running is audited in order."
+    },
+    {
+      "step": 5,
+      "ui_action": "Quit, move the database aside, relaunch",
+      "queries": [],
+      "output": [
+        "no tasks yet"
+      ],
+      "reading": "The app recreates spike.sqlite from the migrations when the file is absent, so the spike carries no state it cannot rebuild."
+    }
+  ]
+}

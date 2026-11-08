@@ -51,6 +51,24 @@ const finish = async (id: number): Promise<void> => {
   }
 };
 
+const start = async (id: number): Promise<void> => {
+  try {
+    await invoke<string>('start_task', { id });
+    await refresh();
+  } catch (error) {
+    status.value = `start failed: ${String(error)}`;
+  }
+};
+
+const fail = async (id: number): Promise<void> => {
+  try {
+    await invoke<string>('fail_task', { id, reason: 'failed in the spike' });
+    await refresh();
+  } catch (error) {
+    status.value = `fail failed: ${String(error)}`;
+  }
+};
+
 const probeKeyring = async (): Promise<void> => {
   try {
     keyringOk.value = await invoke<boolean>('keyring_probe', { account: 'selftest-account' });
@@ -77,7 +95,7 @@ onMounted(refresh);
     </p>
     <table>
       <thead>
-        <tr><th>id</th><th>kind</th><th>state</th><th>attempts</th><th></th></tr>
+        <tr><th>id</th><th>kind</th><th>state</th><th>attempts</th><th>result</th><th></th></tr>
       </thead>
       <tbody>
         <tr v-for="task in tasks" :key="task.id">
@@ -85,11 +103,23 @@ onMounted(refresh);
           <td>{{ task.kind }}</td>
           <td>{{ task.state }}</td>
           <td>{{ task.attempts }}</td>
+          <td>{{ task.result ?? '' }}</td>
           <td>
-            <button v-if="task.state !== 'done'" type="button" @click="finish(task.id)">finish</button>
+            <button
+              v-if="task.state === 'queued' || task.state === 'interrupted'"
+              type="button"
+              @click="start(task.id)"
+            >{{ task.state === 'interrupted' ? 'retry' : 'start' }}</button>
+            <button v-if="task.state === 'running'" type="button" @click="fail(task.id)">fail</button>
+            <!-- `failed` is terminal by choice, so it offers no way out. -->
+            <button
+              v-if="task.state !== 'done' && task.state !== 'failed'"
+              type="button"
+              @click="finish(task.id)"
+            >finish</button>
           </td>
         </tr>
-        <tr v-if="tasks.length === 0"><td colspan="5">no tasks yet</td></tr>
+        <tr v-if="tasks.length === 0"><td colspan="6">no tasks yet</td></tr>
       </tbody>
     </table>
   </main>
