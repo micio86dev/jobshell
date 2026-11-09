@@ -70,6 +70,27 @@ const runAgent = async (dryRun: boolean): Promise<void> => {
   }
 };
 
+const sourcesMessage = ref('');
+
+const openSources = async (): Promise<void> => {
+  sourcesMessage.value = 'apro il bridge e il browser…';
+  try {
+    const message = await invoke<string>('agent_open_sources');
+    sourcesMessage.value = `fonti aperte: ${message}`;
+  } catch (error) {
+    sourcesMessage.value = `non riesco ad aprire le fonti: ${String(error)}`;
+  }
+};
+
+const stopSources = async (): Promise<void> => {
+  try {
+    await invoke('agent_stop_sources');
+    sourcesMessage.value = 'fonti chiuse';
+  } catch (error) {
+    sourcesMessage.value = `chiusura fallita: ${String(error)}`;
+  }
+};
+
 const percent = (probability: number): number => Math.round(probability * 100);
 
 const verdictLabel = (verdict: string): string => {
@@ -237,6 +258,17 @@ onMounted(() => {
         "Prova a secco" scarica e filtra senza spendere token. "Cerca adesso" giudica con Jev e
         richiede la chiave TypeSafe nel tab Impostazioni.
       </p>
+
+      <div class="actions">
+        <button type="button" @click="openSources">Apri le fonti con login</button>
+        <button type="button" @click="stopSources">Chiudi le fonti</button>
+      </div>
+      <p class="hint">
+        Apre un browser dedicato con l'estensione già caricata: fai login su LinkedIn o Indeed
+        una volta, poi apri un annuncio e premi l'icona dell'estensione. Il profilo è
+        dell'app, non il tuo browser di tutti i giorni.
+      </p>
+      <p v-if="sourcesMessage.length > 0" class="status">{{ sourcesMessage }}</p>
 
       <p v-if="loaded && run === null" class="empty">
         Nessun giro ancora. Premi <strong>Prova a secco</strong> per il primo: scarica gli

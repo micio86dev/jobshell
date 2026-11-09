@@ -8,7 +8,8 @@
 mod agent;
 
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::process::Child;
+use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
 use serde::Serialize;
@@ -18,6 +19,24 @@ use tauri::State;
 
 struct AppState {
     pool: Pool<Sqlite>,
+}
+
+/// The two processes the window owns while the user browses the sources that need a login.
+#[derive(Default)]
+struct Sources {
+    bridge: Option<Child>,
+    browser: Option<Child>,
+}
+
+fn stop_sources(sources: &Mutex<Sources>) {
+    if let Ok(mut held) = sources.lock() {
+        if let Some(mut bridge) = held.bridge.take() {
+            let _ = bridge.kill();
+        }
+        if let Some(mut browser) = held.browser.take() {
+            let _ = browser.kill();
+        }
+    }
 }
 
 #[derive(Serialize)]
@@ -118,6 +137,35 @@ async fn agent_run(dry_run: bool) -> Result<String, String> {
         .map_err(|error| error.to_string())
 }
 
+/// Start the bridge if needed and open the dedicated browser with the extension loaded,
+/// so the user never manages a profile, an extension or a token.
+#[tauri::command]
+async fn agent_open_sources(sources: State<'_, Arc<Mutex<Sources>>>) -> Result<String, String> {
+    let held = Arc::clone(&sources);
+    tauri::async_runtime::spawn_blocking(move || {
+        let bridge_started = agent::start_bridge().map_err(|error| error.to_string())?;
+        let browser = agent::open_browser().map_err(|error| error.to_string())?;
+        let mut guard = held.lock().map_err(|error| error.to_string())?;
+        if let Some(child) = bridge_started {
+            guard.bridge = Some(child);
+        }
+        guard.browser = Some(browser);
+        Ok::<String, String>(format!(
+            "bridge on 127.0.0.1:8787 · browser profile {}",
+            agent::browser_profile_dir().display()
+        ))
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
+/// Close what the window started.
+#[tauri::command]
+fn agent_stop_sources(sources: State<'_, Arc<Mutex<Sources>>>) -> Result<(), String> {
+    stop_sources(&sources);
+    Ok(())
+}
+
 /// Which accounts have a key, without returning any of them.
 #[tauri::command]
 fn agent_key_status() -> Result<std::collections::BTreeMap<String, bool>, String> {
@@ -173,10 +221,12 @@ fn main() {
 
     tracing_hint(&data_dir);
     let state = Arc::new(AppState { pool });
+    let sources: Arc<Mutex<Sources>> = Arc::new(Mutex::new(Sources::default()));
 
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
         .manage(state)
+        .manage(Arc::clone(&sources))
         .invoke_handler(tauri::generate_handler![
             enqueue_probe,
             list_tasks,
@@ -189,8 +239,17 @@ fn main() {
             agent_last_run,
             agent_save_key,
             agent_key_status,
-            agent_run
+            agent_run,
+            agent_open_sources,
+            agent_stop_sources
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running the Tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building the Tauri application")
+        .run(move |_handle, event| {
+            // A bridge or browser left running after the window closes is a process the
+            // user did not ask for and cannot see.
+            if let tauri::RunEvent::Exit = event {
+                stop_sources(&sources);
+            }
+        });
 }

@@ -6,7 +6,9 @@
 //! pure function over the file's text, so it is tested without a filesystem or a window.
 
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::net::{SocketAddr, TcpStream};
+use std::process::{Child, Command};
+use std::time::Duration;
 
 use anyhow::{Context, Result};
 use serde::Serialize;
@@ -242,6 +244,78 @@ pub fn run_once(dry_run: bool) -> Result<String> {
     Ok(stdout)
 }
 
+/// The browser the app drives: a dedicated Chrome for Testing, because a branded Chrome
+/// ignores `--load-extension` (the finding recorded in the Phase 0 evidence).
+pub fn chrome_path() -> PathBuf {
+    if let Ok(path) = std::env::var("OPENJOB_CHROME") {
+        return PathBuf::from(path);
+    }
+    Path::new(env!("CARGO_MANIFEST_DIR")).join(
+        "../../../.cache/pw-browsers/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
+    )
+}
+
+/// A profile the app owns, so the user's everyday browser is never touched.
+pub fn browser_profile_dir() -> PathBuf {
+    evidence_dir().join("browser-profile")
+}
+
+/// The extension that reads a page when the user asks it to.
+pub fn extension_dir() -> PathBuf {
+    agent_dir().join("extension")
+}
+
+/// The arguments the dedicated browser starts with. Pure, so the shape is tested.
+pub fn chrome_args(profile: &Path, extension: &Path) -> Vec<String> {
+    vec![
+        format!("--user-data-dir={}", profile.display()),
+        format!("--load-extension={}", extension.display()),
+        "--no-first-run".to_string(),
+        "--no-default-browser-check".to_string(),
+    ]
+}
+
+/// Whether the bridge is already answering on its port.
+pub fn bridge_is_up() -> bool {
+    let address = SocketAddr::from(([127, 0, 0, 1], 8787));
+    TcpStream::connect_timeout(&address, Duration::from_millis(300)).is_ok()
+}
+
+/// Start the bridge if it is not already running, and hand the child back to the caller.
+pub fn start_bridge() -> Result<Option<Child>> {
+    if bridge_is_up() {
+        return Ok(None);
+    }
+    let child = Command::new("node")
+        .args([
+            "src/bridge-cli.ts",
+            "--profile",
+            &profile_path().display().to_string(),
+        ])
+        .current_dir(agent_dir())
+        .spawn()
+        .context("starting the bridge")?;
+    Ok(Some(child))
+}
+
+/// Open the dedicated browser on the sources that need a login.
+pub fn open_browser() -> Result<Child> {
+    let chrome = chrome_path();
+    if !chrome.exists() {
+        anyhow::bail!(
+            "no browser at {}. Set OPENJOB_CHROME to a Chrome for Testing binary.",
+            chrome.display()
+        );
+    }
+    let profile = browser_profile_dir();
+    std::fs::create_dir_all(&profile).with_context(|| format!("creating {}", profile.display()))?;
+
+    Command::new(&chrome)
+        .args(chrome_args(&profile, &extension_dir()))
+        .spawn()
+        .with_context(|| format!("starting {}", chrome.display()))
+}
+
 /// Read the newest run, if there is one.
 pub fn read_latest(dir: &Path) -> Result<Option<AgentRunView>> {
     let Some(path) = latest_run(dir)? else {
@@ -352,6 +426,27 @@ mod tests {
     fn the_agent_directory_points_at_the_package() {
         let dir = agent_dir();
         assert!(dir.join("src/cli.ts").exists(), "expected the agent package at {}", dir.display());
+    }
+
+    #[test]
+    fn the_browser_starts_with_its_own_profile_and_the_extension() {
+        let args = chrome_args(Path::new("/tmp/profile"), Path::new("/tmp/ext"));
+        assert_eq!(
+            args,
+            vec![
+                "--user-data-dir=/tmp/profile",
+                "--load-extension=/tmp/ext",
+                "--no-first-run",
+                "--no-default-browser-check",
+            ]
+        );
+    }
+
+    #[test]
+    fn the_browser_profile_lives_under_the_app_data_directory() {
+        let dir = browser_profile_dir();
+        assert!(dir.ends_with("browser-profile"), "unexpected profile dir {}", dir.display());
+        assert!(extension_dir().join("manifest.json").exists(), "the extension ships with the agent");
     }
 
     #[test]

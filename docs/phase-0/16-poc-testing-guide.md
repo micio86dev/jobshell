@@ -264,7 +264,7 @@ make test
 Expected: `ℹ tests 65` / `ℹ pass 65` / `ℹ fail 0` from Node, then `test result: ok. 14 passed; 0 failed; 1 ignored` from cargo, and last:
 
 ```
-wiring: UI calls 11, Rust registers 12
+wiring: UI calls 13, Rust registers 14
   note: task_detail is registered but not called by the UI
   every command the UI calls is registered
 ```
