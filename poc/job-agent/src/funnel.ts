@@ -247,9 +247,15 @@ export const applyHardFilters = (
       }
     }
 
+    // An empty list means "no preference", exactly as for countries and cities. Without
+    // this guard `includes` is false for every detected contract and the filter drops
+    // postings the user never asked to exclude.
     const contract = detectContract(`${posting.title} ${posting.description ?? ''}`);
-    if (contract === null) unknownContract += 1;
-    else if (!spec.hard.contract_types.includes(contract)) {
+    if (spec.hard.contract_types.length === 0) {
+      // no constraint
+    } else if (contract === null) {
+      unknownContract += 1;
+    } else if (!spec.hard.contract_types.includes(contract)) {
       dropped.push({ posting, reason: 'contract_type', detail: contract });
       continue;
     }

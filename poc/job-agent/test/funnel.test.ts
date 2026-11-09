@@ -243,3 +243,15 @@ test('contract detection needs a marker, and both markers cancel out', () => {
   assert.equal(detectContract('We build things'), null);
   assert.equal(detectContract('Freelance or full-time, you choose'), null, 'both markers are ambiguous');
 });
+
+test('contract: an empty preference list is no constraint, not "reject everything"', () => {
+  const base = spec();
+  const noPreference = { ...base, hard: { ...base.hard, contract_types: [] } };
+  const employee = make({ id: 'e', description: 'Full-time permanent position' });
+  const freelance = make({ id: 'f', description: 'Freelance, partita IVA' });
+
+  const result = applyHardFilters([employee, freelance], noPreference, new Set(), NOW);
+
+  assert.deepEqual(result.kept.map(postingKey), ['remoteok:e', 'remoteok:f']);
+  assert.equal(result.dropped.length, 0);
+});
