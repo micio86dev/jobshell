@@ -3,8 +3,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { handleHealth, handleScore, parseScoreRequest, startBridge } from '../src/bridge.ts';
-import { capture, posting } from './support.ts';
+import { handleHealth, handleScore, mapWithConcurrency, parseScoreRequest, startBridge } from '../src/bridge.ts';
+import type { FetchLike } from '../src/jev.ts';
+import { JUDGEMENT, capture, posting } from './support.ts';
 
 const bridgeDeps = () => {
   const { urls, fetchImpl } = capture();
@@ -83,3 +84,54 @@ test('bridge: the server refuses a request without the token and accepts one wit
   }
 });
 
+
+test('bridge: one failing judgment does not discard the rest of the batch', async () => {
+  // The judged state carries the title, not the id, so that is what discriminates.
+  const fetchImpl: FetchLike = async (_url, init) => {
+    const body = JSON.parse(init.body) as { state: { posting: { title: string } } };
+    if (body.state.posting.title === 'Broken posting') return { status: 500, text: 'boom' };
+    return { status: 200, text: JUDGEMENT };
+  };
+  const response = await handleScore(
+    {
+      postings: [
+        posting,
+        { ...posting, id: 'bad', title: 'Broken posting', url: 'https://example.test/bad' },
+      ],
+    },
+    { jev: { apiKey: 'k', fetchImpl }, promptContext: 'c', threshold: 0.9, token: 't' },
+  );
+
+  assert.equal(response.results.length, 1, 'the good posting is still scored');
+  assert.equal(response.results[0]?.key, 'linkedin:4012345678');
+  assert.equal(response.errors.length, 1);
+  assert.match(response.errors[0]?.key ?? '', /bad/);
+  assert.match(response.errors[0]?.message ?? '', /500/);
+});
+
+test('bridge: concurrency is bounded and the order is preserved', async () => {
+  let inFlight = 0;
+  let peak = 0;
+  const items = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  const out = await mapWithConcurrency(items, 3, async (item) => {
+    inFlight += 1;
+    peak = Math.max(peak, inFlight);
+    await new Promise((resolve) => setTimeout(resolve, 1));
+    inFlight -= 1;
+    return item * 2;
+  });
+  assert.deepEqual(out, items.map((item) => item * 2));
+  assert.ok(peak <= 3, `at most 3 in flight, saw ${peak}`);
+});
+
+test('bridge: a busy port fails loudly instead of hanging', async () => {
+  const first = await startBridge({ jev: { apiKey: 'k', fetchImpl: capture().fetchImpl }, promptContext: 'c', threshold: 0.9, token: 't1' });
+  try {
+    await assert.rejects(
+      () => startBridge({ jev: { apiKey: 'k', fetchImpl: capture().fetchImpl }, promptContext: 'c', threshold: 0.9, token: 't2' }, first.port),
+      /cannot listen on 127\.0\.0\.1/,
+    );
+  } finally {
+    await first.close();
+  }
+});

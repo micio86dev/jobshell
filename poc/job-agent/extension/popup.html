@@ -15,8 +15,10 @@
   <body>
     <strong>openjob.dev</strong>
     <p>Scores the postings on this page against your profile. It reads the page only when you click.</p>
+    <label for="bridge">Bridge URL</label>
+    <input id="bridge" type="text" value="http://127.0.0.1:8787" />
     <label for="token">Bridge token</label>
-    <input id="token" type="password" placeholder="printed by make agent-bridge" />
+    <input id="token" type="password" placeholder="written to bridge-token by make agent-bridge" />
     <button id="score" type="button">Score this page</button>
     <p id="status">idle</p>
     <script src="popup.js"></script>

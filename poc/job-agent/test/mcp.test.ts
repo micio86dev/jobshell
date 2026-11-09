@@ -16,7 +16,7 @@ const mcpDeps = (): McpDeps => {
     profile,
     promptContext: 'candidate',
     jev: { apiKey: 'k', fetchImpl },
-    seen: new Set(['remoteok:1']),
+    seen: (key) => key === 'remoteok:1',
   };
 };
 

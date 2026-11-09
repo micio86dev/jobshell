@@ -5,8 +5,6 @@
 // own: it waits for a message from the popup, which is a click. That boundary is the
 // whole reason this is allowed where a crawler is not.
 
-const BRIDGE = 'http://127.0.0.1:8787';
-
 /** Where a posting lives on each supported site. */
 const PATTERNS = [
   { source: 'linkedin', match: /\/jobs\/view\/(\d+)/, id: (m) => m[1] },
@@ -94,7 +92,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     sendResponse({ ok: false, error: 'no postings found on this page' });
     return true;
   }
-  fetch(`${BRIDGE}/score`, {
+  // The popup sends the bridge URL, so a bridge started on another port still works.
+  const bridge = typeof message.bridge === 'string' ? message.bridge.replace(/\/+$/, '') : '';
+  if (bridge.length === 0) {
+    sendResponse({ ok: false, error: 'no bridge URL' });
+    return true;
+  }
+  fetch(`${bridge}/score`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-openjob-token': message.token },
     body: JSON.stringify({ postings }),
@@ -103,7 +107,12 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       if (!response.ok) throw new Error(`bridge answered ${response.status}`);
       const body = await response.json();
       annotate(body.results ?? []);
-      sendResponse({ ok: true, scored: (body.results ?? []).length, threshold: body.threshold });
+      sendResponse({
+        ok: true,
+        scored: (body.results ?? []).length,
+        failed: (body.errors ?? []).length,
+        threshold: body.threshold,
+      });
     })
     .catch((error) => sendResponse({ ok: false, error: String(error) }));
   return true;

@@ -33,9 +33,11 @@ if (typesafeKey === null) {
   process.exit(2);
 }
 
-let seen: Set<string>;
+const seenPath = arg('seen') ?? null;
+// Fail now if the file cannot be read, then re-read it on every question: the memory
+// belongs to the file, not to this process.
 try {
-  seen = loadSeen(arg('seen') ?? null);
+  loadSeen(seenPath);
 } catch (error) {
   process.stderr.write(`openjob: ${error instanceof Error ? error.message : String(error)}\n`);
   process.exit(2);
@@ -49,5 +51,5 @@ serveStdio({
     fetchImpl: defaultFetch,
     ...(runtime.config.base_url === undefined ? {} : { baseUrl: runtime.config.base_url }),
   },
-  seen,
+  seen: (key) => loadSeen(seenPath).has(key),
 });

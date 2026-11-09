@@ -27,7 +27,38 @@ export type ScoreResult = {
   verdict: string;
   stack_stance: string;
 };
-export type ScoreResponse = { results: ScoreResult[]; threshold: number; input_tokens: number };
+export type ScoreError = { key: string; message: string };
+export type ScoreResponse = {
+  results: ScoreResult[];
+  /** Postings whose judgment failed. One failure never discards the rest of the batch. */
+  errors: ScoreError[];
+  threshold: number;
+  input_tokens: number;
+};
+
+/** How many judgments run at once. Enough to keep the popup responsive, few enough to stay polite. */
+export const DEFAULT_CONCURRENCY = 4;
+
+/** Run an async function over items with a bounded number in flight, preserving order. */
+export const mapWithConcurrency = async <T, R>(
+  items: T[],
+  limit: number,
+  run: (item: T) => Promise<R>,
+): Promise<R[]> => {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  const worker = async (): Promise<void> => {
+    for (;;) {
+      const index = next;
+      next += 1;
+      const item = items[index];
+      if (item === undefined) return;
+      results[index] = await run(item);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, worker));
+  return results;
+};
 
 export type BridgeDeps = {
   jev: JeDeps;
@@ -74,14 +105,31 @@ export const parseScoreRequest = (raw: unknown): Posting[] => {
 /** Judge the postings the user is looking at. No storage, no side effects. */
 export const handleScore = async (raw: unknown, deps: BridgeDeps): Promise<ScoreResponse> => {
   const postings = parseScoreRequest(raw);
+
+  const outcomes = await mapWithConcurrency(postings, DEFAULT_CONCURRENCY, async (posting) => {
+    const key = `${posting.source}:${posting.id}`;
+    try {
+      const judged = await judgePosting(posting, deps.promptContext, deps.jev);
+      return { ok: true as const, key, posting, judged };
+    } catch (error) {
+      // One posting that cannot be judged must not cost the user the other 39.
+      return { ok: false as const, key, message: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
   const results: ScoreResult[] = [];
+  const errors: ScoreError[] = [];
   let inputTokens = 0;
 
-  for (const posting of postings) {
-    const judged = await judgePosting(posting, deps.promptContext, deps.jev);
+  for (const outcome of outcomes) {
+    if (!outcome.ok) {
+      errors.push({ key: outcome.key, message: outcome.message });
+      continue;
+    }
+    const { posting, judged } = outcome;
     inputTokens += judged.usage.input_tokens;
     results.push({
-      key: `${posting.source}:${posting.id}`,
+      key: outcome.key,
       title: posting.title,
       url: posting.url,
       probability: judged.fit.probability,
@@ -90,7 +138,7 @@ export const handleScore = async (raw: unknown, deps: BridgeDeps): Promise<Score
     });
   }
 
-  return { results, threshold: deps.threshold, input_tokens: inputTokens };
+  return { results, errors, threshold: deps.threshold, input_tokens: inputTokens };
 };
 
 export const handleHealth = (deps: BridgeDeps): { ok: true; threshold: number } => ({
@@ -176,7 +224,18 @@ export const startBridge = async (deps: BridgeDeps, port = 0): Promise<BridgeSer
     send(response, 404, { error: 'not found' });
   });
 
-  await new Promise<void>((resolve) => server.listen(port, '127.0.0.1', resolve));
+  await new Promise<void>((resolve, reject) => {
+    // Without this handler a busy port emits 'error', the promise never settles and
+    // the CLI waits forever with nothing on screen.
+    const onError = (error: Error): void => {
+      reject(new Error(`bridge: cannot listen on 127.0.0.1:${port}: ${error.message}`));
+    };
+    server.once('error', onError);
+    server.listen(port, '127.0.0.1', () => {
+      server.off('error', onError);
+      resolve();
+    });
+  });
   const address = server.address();
   const boundPort = typeof address === 'object' && address !== null ? address.port : port;
 

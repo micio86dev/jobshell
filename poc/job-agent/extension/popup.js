@@ -2,6 +2,7 @@
 // clicked, and the token is stored locally so it is asked once per browser profile.
 
 const tokenInput = document.getElementById('token');
+const bridgeInput = document.getElementById('bridge');
 const statusLine = document.getElementById('status');
 const button = document.getElementById('score');
 
@@ -11,13 +12,19 @@ const setStatus = (message) => {
 
 // Session storage keeps the token in memory: it dies with the browser, so a stale
 // token from a previous bridge run cannot linger in the profile.
-chrome.storage.session.get(['token'], (stored) => {
+chrome.storage.session.get(['token', 'bridge'], (stored) => {
   if (typeof stored.token === 'string') tokenInput.value = stored.token;
+  if (typeof stored.bridge === 'string') bridgeInput.value = stored.bridge;
 });
 
-tokenInput.addEventListener('change', () => {
-  chrome.storage.session.set({ token: tokenInput.value.trim() });
-});
+const remember = () => {
+  chrome.storage.session.set({
+    token: tokenInput.value.trim(),
+    bridge: bridgeInput.value.trim(),
+  });
+};
+tokenInput.addEventListener('change', remember);
+bridgeInput.addEventListener('change', remember);
 
 button.addEventListener('click', async () => {
   const token = tokenInput.value.trim();
@@ -25,7 +32,12 @@ button.addEventListener('click', async () => {
     setStatus('paste the bridge token first');
     return;
   }
-  chrome.storage.session.set({ token });
+  const bridge = bridgeInput.value.trim();
+  if (bridge.length === 0) {
+    setStatus('set the bridge URL first');
+    return;
+  }
+  remember();
   setStatus('reading the page…');
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -34,12 +46,15 @@ button.addEventListener('click', async () => {
     return;
   }
 
-  chrome.tabs.sendMessage(tab.id, { type: 'score-page', token }, (response) => {
+  chrome.tabs.sendMessage(tab.id, { type: 'score-page', token, bridge }, (response) => {
     if (chrome.runtime.lastError) {
       setStatus(`this page is not supported: ${chrome.runtime.lastError.message}`);
       return;
     }
-    if (response?.ok) setStatus(`scored ${response.scored} postings (threshold ${Math.round(response.threshold * 100)}%)`);
+    if (response?.ok) {
+      const failed = response.failed > 0 ? `, ${response.failed} failed` : '';
+      setStatus(`scored ${response.scored} postings${failed} (threshold ${Math.round(response.threshold * 100)}%)`);
+    }
     else setStatus(`failed: ${response?.error ?? 'unknown error'}`);
   });
 });

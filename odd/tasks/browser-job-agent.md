@@ -239,3 +239,15 @@ product database, the Vue UI, and any automated access to a source whose policy 
   separate later work, never a reason to re-run this review: R4-002 and R4-003 on
   `src/bridge.ts:80-91`, R4-004 on `src/bridge.ts:179`, R4-005 on `extension/content.js:8`,
   R4-006 on `src/mcp-cli.ts:56`.
+- **L22** (advisories, 2026-11-08): the five non-blocking findings from the approved review
+  are fixed in a separate commit, never by re-running that review. R4-002/R4-003
+  (`bridge.ts:80-91`): one failed judgment aborted the whole batch, so the extension got a
+  400 and zero results, and the judgments ran strictly in series — now bounded concurrency
+  (4) with per-posting isolation, and the response carries `errors[]` beside `results[]`.
+  R4-004 (`bridge.ts:179`): `server.listen` had no `error` handler, so a busy port left the
+  promise unsettled and the CLI hanging silently — now it rejects with the port named.
+  R4-005 (`extension/content.js:8`): the bridge URL was hardcoded to port 8787, so a bridge
+  started with `--port` failed without saying so — the popup now sends the URL with the
+  click. R4-006 (`mcp-cli.ts:56`): the seen memory was snapshotted at startup, so
+  `already_seen` answered "unseen" for everything scored during the session — it is now read
+  at call time.

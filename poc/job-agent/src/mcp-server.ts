@@ -44,7 +44,12 @@ export type McpDeps = {
   profile: UserProfile;
   promptContext: string;
   jev: JeDeps;
-  seen: Set<string>;
+  /**
+   * Asked at call time, not captured at startup: a set loaded once would answer
+   * "unseen" for everything scored during this session and ignore what a later
+   * `make agent` run added.
+   */
+  seen: (key: string) => boolean;
 };
 
 export type McpRequest = { jsonrpc: '2.0'; id?: string | number | null; method: string; params?: unknown };
@@ -211,7 +216,7 @@ export const handleMcpRequest = async (request: McpRequest, deps: McpDeps): Prom
         if (typeof key !== 'string') {
           return { jsonrpc: '2.0', id, error: { code: -32602, message: 'key must be a string' } };
         }
-        return { jsonrpc: '2.0', id, result: toolResult({ key, seen: deps.seen.has(key) }) };
+        return { jsonrpc: '2.0', id, result: toolResult({ key, seen: deps.seen(key) }) };
       }
 
       return { jsonrpc: '2.0', id, error: { code: -32601, message: `unknown tool ${String(name)}` } };
