@@ -102,18 +102,23 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
   fetch(`${bridge}/score`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-openjob-token': message.token },
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ postings }),
   })
     .then(async (response) => {
       if (!response.ok) throw new Error(`bridge answered ${response.status}`);
       const body = await response.json();
-      annotate(body.results ?? []);
+      // The bridge is our own code, but a malformed answer must not paint nonsense on a
+      // third-party page, so the shape is checked before use.
+      const results = Array.isArray(body?.results)
+        ? body.results.filter((item) => typeof item?.url === 'string' && typeof item?.probability === 'number')
+        : [];
+      annotate(results);
       sendResponse({
         ok: true,
-        scored: (body.results ?? []).length,
-        failed: (body.errors ?? []).length,
-        threshold: body.threshold,
+        scored: results.length,
+        failed: Array.isArray(body?.errors) ? body.errors.length : 0,
+        threshold: typeof body?.threshold === 'number' ? body.threshold : 0,
       });
     })
     .catch((error) => sendResponse({ ok: false, error: String(error) }));

@@ -21,8 +21,10 @@ if not ui_dir.is_dir() or not main_rs.is_file():
     print(f'wiring: expected {ui_dir} and {main_rs}')
     sys.exit(1)
 
-# invoke<T>('name', ...) and invoke('name', ...)
-call_pattern = re.compile(r"invoke(?:<[^>]*>)?\(\s*['\"]([A-Za-z0-9_]+)['\"]")
+# invoke<T>('name', ...) and invoke('name', ...). The type argument may itself contain a
+# generic (`Record<string, boolean>`), so one level of nesting is allowed: stopping at the
+# first '>' would hide the call and a renamed command would pass unnoticed.
+call_pattern = re.compile(r"invoke(?:<(?:[^<>]|<[^<>]*>)*>)?\(\s*['\"]([A-Za-z0-9_]+)['\"]")
 called: set[str] = set()
 for path in sorted(ui_dir.rglob('*')):
     if path.suffix not in {'.ts', '.vue'}:

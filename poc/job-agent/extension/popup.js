@@ -1,7 +1,6 @@
 // The popup is the human gesture: nothing happens on this page until this button is
-// clicked, and the token is stored locally so it is asked once per browser profile.
+// clicked. It only needs the bridge URL, remembered for the browser session.
 
-const tokenInput = document.getElementById('token');
 const bridgeInput = document.getElementById('bridge');
 const statusLine = document.getElementById('status');
 const button = document.getElementById('score');
@@ -10,34 +9,36 @@ const setStatus = (message) => {
   statusLine.textContent = message;
 };
 
-// Session storage keeps the token in memory: it dies with the browser, so a stale
-// token from a previous bridge run cannot linger in the profile.
-chrome.storage.session.get(['token', 'bridge'], (stored) => {
-  if (typeof stored.token === 'string') tokenInput.value = stored.token;
+// Session storage keeps the URL in memory: it dies with the browser.
+chrome.storage.session.get(['bridge'], (stored) => {
   if (typeof stored.bridge === 'string') bridgeInput.value = stored.bridge;
+  void probeBridge();
 });
 
-const remember = () => {
-  chrome.storage.session.set({
-    token: tokenInput.value.trim(),
-    bridge: bridgeInput.value.trim(),
-  });
+bridgeInput.addEventListener('change', () => {
+  chrome.storage.session.set({ bridge: bridgeInput.value.trim() });
+  void probeBridge();
+});
+
+/** Say whether the agent is running, so the user is never guessing. */
+const probeBridge = async () => {
+  const bridge = bridgeInput.value.trim().replace(/\/+$/, '');
+  try {
+    const response = await fetch(`${bridge}/health`);
+    if (!response.ok) throw new Error(`status ${response.status}`);
+    const body = await response.json();
+    setStatus(`connected · threshold ${Math.round((body.threshold ?? 0) * 100)}%`);
+  } catch {
+    setStatus('the agent is not running: run make agent-bridge');
+  }
 };
-tokenInput.addEventListener('change', remember);
-bridgeInput.addEventListener('change', remember);
 
 button.addEventListener('click', async () => {
-  const token = tokenInput.value.trim();
-  if (token.length === 0) {
-    setStatus('paste the bridge token first');
-    return;
-  }
   const bridge = bridgeInput.value.trim();
   if (bridge.length === 0) {
     setStatus('set the bridge URL first');
     return;
   }
-  remember();
   setStatus('reading the page…');
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -46,7 +47,7 @@ button.addEventListener('click', async () => {
     return;
   }
 
-  chrome.tabs.sendMessage(tab.id, { type: 'score-page', token, bridge }, (response) => {
+  chrome.tabs.sendMessage(tab.id, { type: 'score-page', bridge }, (response) => {
     if (chrome.runtime.lastError) {
       setStatus(`this page is not supported: ${chrome.runtime.lastError.message}`);
       return;

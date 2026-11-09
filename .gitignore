@@ -20,3 +20,6 @@ evidence/run/
 
 # A real profile is personal data: only the example is tracked.
 profile.json
+
+# A session log holds the user's real postings: never tracked.
+evidence/*.jsonl

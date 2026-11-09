@@ -1,11 +1,28 @@
-// Tests for the localhost bridge the extension calls. The handlers are pure, so the
-// behaviour is exercised without a socket, plus one test that does open one.
+// Tests for the localhost bridge. The handlers are pure, so most behaviour is exercised
+// without a socket; the socket tests use node:http so the Origin header is exactly what
+// a browser would send.
 import assert from 'node:assert/strict';
+import { request } from 'node:http';
 import { test } from 'node:test';
 
-import { handleHealth, handleScore, mapWithConcurrency, parseScoreRequest, startBridge } from '../src/bridge.ts';
+import {
+  handleHealth,
+  handleScore,
+  isAllowedOrigin,
+  isExtensionOrigin,
+  mapWithConcurrency,
+  parseScoreRequest,
+  startBridge,
+} from '../src/bridge.ts';
 import type { FetchLike } from '../src/jev.ts';
 import { JUDGEMENT, capture, posting } from './support.ts';
+
+import { EXTENSION_ORIGIN } from '../src/bridge.ts';
+
+const EXTENSION = EXTENSION_ORIGIN;
+
+/** The real keyring holds the user's own keys; these tests never read it. */
+const noKeyring = (): null => null;
 
 const bridgeDeps = () => {
   const { urls, fetchImpl } = capture();
@@ -15,10 +32,35 @@ const bridgeDeps = () => {
       jev: { apiKey: 'k', fetchImpl },
       promptContext: 'candidate',
       threshold: 0.9,
-      token: 'token-1',
+      resolveKey: () => 'k',
+      keyring: noKeyring,
     },
   };
 };
+
+type Answer = { status: number; body: string; headers: Record<string, string | string[] | undefined> };
+
+const call = (
+  port: number,
+  method: string,
+  path: string,
+  options: { origin?: string; body?: string } = {},
+): Promise<Answer> =>
+  new Promise((resolve, reject) => {
+    const headers: Record<string, string> = {};
+    if (options.origin !== undefined) headers['origin'] = options.origin;
+    if (options.body !== undefined) headers['content-type'] = 'application/json';
+    const req = request({ host: '127.0.0.1', port, method, path, headers }, (res) => {
+      const chunks: Buffer[] = [];
+      res.on('data', (chunk: Buffer) => chunks.push(chunk));
+      res.on('end', () =>
+        resolve({ status: res.statusCode ?? 0, body: Buffer.concat(chunks).toString('utf8'), headers: res.headers }),
+      );
+    });
+    req.on('error', reject);
+    if (options.body !== undefined) req.write(options.body);
+    req.end();
+  });
 
 test('bridge: a malformed posting is dropped instead of trusted', () => {
   const parsed = parseScoreRequest({
@@ -53,37 +95,42 @@ test('bridge: scoring returns the probability, the verdict and the cost', async 
 
 test('bridge: health reports the threshold and nothing secret', () => {
   const { deps } = bridgeDeps();
-  const health = handleHealth(deps);
-  assert.deepEqual(health, { ok: true, threshold: 0.9 });
-  assert.doesNotMatch(JSON.stringify(health), /token-1/);
+  assert.deepEqual(handleHealth(deps), { ok: true, threshold: 0.9 });
 });
 
-test('bridge: the server refuses a request without the token and accepts one with it', async () => {
+test('bridge: only an extension origin may score, and a web page is refused', async () => {
   const { deps } = bridgeDeps();
   const server = await startBridge(deps);
   try {
-    const health = await fetch(`http://127.0.0.1:${server.port}/health`);
-    assert.equal(health.status, 401, 'a localhost port is reachable by anything, so it needs a token');
-
-    const authorised = await fetch(`http://127.0.0.1:${server.port}/health`, {
-      headers: { 'x-openjob-token': server.token },
-    });
-    assert.equal(authorised.status, 200);
-    assert.deepEqual(await authorised.json(), { ok: true, threshold: 0.9 });
-
-    const scored = await fetch(`http://127.0.0.1:${server.port}/score`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-openjob-token': server.token },
+    const web = await call(server.port, 'POST', '/score', {
+      origin: 'https://evil.test',
       body: JSON.stringify({ postings: [posting] }),
     });
-    assert.equal(scored.status, 200);
-    const body = (await scored.json()) as { results: unknown[] };
-    assert.equal(body.results.length, 1);
+    assert.equal(web.status, 403, 'a web page cannot pretend to be an extension');
+
+    const extension = await call(server.port, 'POST', '/score', {
+      origin: EXTENSION,
+      body: JSON.stringify({ postings: [posting] }),
+    });
+    assert.equal(extension.status, 200);
+    assert.equal((JSON.parse(extension.body) as { results: unknown[] }).results.length, 1);
+    assert.equal(extension.headers['access-control-allow-origin'], EXTENSION, 'CORS echoes only the extension');
   } finally {
     await server.close();
   }
 });
 
+test('bridge: health is open so the popup can say whether the agent is running', async () => {
+  const { deps } = bridgeDeps();
+  const server = await startBridge(deps);
+  try {
+    const health = await call(server.port, 'GET', '/health');
+    assert.equal(health.status, 200);
+    assert.deepEqual(JSON.parse(health.body), { ok: true, threshold: 0.9 });
+  } finally {
+    await server.close();
+  }
+});
 
 test('bridge: one failing judgment does not discard the rest of the batch', async () => {
   // The judged state carries the title, not the id, so that is what discriminates.
@@ -99,7 +146,7 @@ test('bridge: one failing judgment does not discard the rest of the batch', asyn
         { ...posting, id: 'bad', title: 'Broken posting', url: 'https://example.test/bad' },
       ],
     },
-    { jev: { apiKey: 'k', fetchImpl }, promptContext: 'c', threshold: 0.9, token: 't' },
+    { jev: { apiKey: 'k', fetchImpl }, promptContext: 'c', threshold: 0.9, resolveKey: () => 'k' },
   );
 
   assert.equal(response.results.length, 1, 'the good posting is still scored');
@@ -125,12 +172,10 @@ test('bridge: concurrency is bounded and the order is preserved', async () => {
 });
 
 test('bridge: a busy port fails loudly instead of hanging', async () => {
-  const first = await startBridge({ jev: { apiKey: 'k', fetchImpl: capture().fetchImpl }, promptContext: 'c', threshold: 0.9, token: 't1' });
+  const { deps } = bridgeDeps();
+  const first = await startBridge(deps);
   try {
-    await assert.rejects(
-      () => startBridge({ jev: { apiKey: 'k', fetchImpl: capture().fetchImpl }, promptContext: 'c', threshold: 0.9, token: 't2' }, first.port),
-      /cannot listen on 127\.0\.0\.1/,
-    );
+    await assert.rejects(() => startBridge(deps, first.port), /cannot listen on 127\.0\.0\.1/);
   } finally {
     await first.close();
   }
@@ -156,4 +201,18 @@ test('bridge: every score request leaves one record behind', async () => {
   assert.equal(records[0]?.['input_tokens'], 140);
   assert.equal(typeof records[0]?.['ms'], 'number');
   assert.match(String(records[0]?.['at']), /^\d{4}-/);
+});
+
+test('bridge: the origin rules are explicit', () => {
+  assert.equal(isExtensionOrigin(EXTENSION), true);
+  assert.equal(isExtensionOrigin('https://evil.test'), false);
+  assert.equal(isExtensionOrigin(undefined), false);
+  assert.equal(
+    isExtensionOrigin('chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+    false,
+    'another extension must not be able to spend the user tokens',
+  );
+  assert.equal(isAllowedOrigin('http://127.0.0.1:8787', 8787), true);
+  assert.equal(isAllowedOrigin('http://127.0.0.1:9999', 8787), false);
+  assert.equal(isAllowedOrigin('https://evil.test', 8787), false);
 });

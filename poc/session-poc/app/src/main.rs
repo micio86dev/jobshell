@@ -5,6 +5,8 @@
 //! processes. What this binary proves is that the desktop stack builds, launches
 //! and exposes those capabilities over Tauri commands.
 
+mod agent;
+
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -87,6 +89,48 @@ async fn fail_task(
     Ok("failed".to_string())
 }
 
+/// The accounts the settings view can hold a key for.
+const KEY_ACCOUNTS: [&str; 3] = ["typesafe", "anthropic", "qwen"];
+
+/// Store an API key in the OS keyring.
+///
+/// The desktop app writes it natively, through the `keyring` crate, so the secret never
+/// touches a file and never appears in a process argument list — the two things `AGENTS.md`
+/// forbids. The agent reads it back through the same keychain.
+#[tauri::command]
+fn agent_save_key(account: String, value: String) -> Result<(), String> {
+    if !KEY_ACCOUNTS.contains(&account.as_str()) {
+        return Err(format!("unknown key account: {account}"));
+    }
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        return Err("the key is empty".to_string());
+    }
+    secrets::store_secret(&account, trimmed).map_err(|error| error.to_string())
+}
+
+/// Which accounts have a key, without returning any of them.
+#[tauri::command]
+fn agent_key_status() -> Result<std::collections::BTreeMap<String, bool>, String> {
+    let mut status = std::collections::BTreeMap::new();
+    for account in KEY_ACCOUNTS {
+        let present = secrets::read_secret(account).map_err(|error| error.to_string())?.is_some();
+        status.insert(account.to_string(), present);
+    }
+    Ok(status)
+}
+
+/// The last job-agent run, projected for the results view. `None` means the agent has
+/// never run in this profile: the window says so instead of showing an empty table.
+#[tauri::command]
+async fn agent_last_run() -> Result<Option<agent::AgentRunView>, String> {
+    let dir = agent::evidence_dir();
+    tauri::async_runtime::spawn_blocking(move || agent::read_latest(&dir))
+        .await
+        .map_err(|error| error.to_string())?
+        .map_err(|error| error.to_string())
+}
+
 #[tauri::command]
 fn keyring_probe(account: String) -> Result<bool, String> {
     secrets::store_secret(&account, "probe-value").map_err(|error| error.to_string())?;
@@ -132,7 +176,10 @@ fn main() {
             start_task,
             fail_task,
             keyring_probe,
-            task_detail
+            task_detail,
+            agent_last_run,
+            agent_save_key,
+            agent_key_status
         ])
         .run(tauri::generate_context!())
         .expect("error while running the Tauri application");

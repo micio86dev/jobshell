@@ -22,6 +22,11 @@ test-ts:
 test-rs:
 	cd poc/session-poc/src-tauri && set -a && . ../../../scripts/env.sh && set +a && \
 		../../../scripts/cargo.sh test
+	# The desktop crate embeds the built UI, so its tests need that directory to exist.
+	@test -f poc/session-poc/ui/dist/index.html || (cd poc/session-poc/ui && \
+		set -a && . ../../../scripts/env.sh && set +a && pnpm run build)
+	cd poc/session-poc/app && set -a && . ../../../scripts/env.sh && set +a && \
+		../../../scripts/cargo.sh test
 
 typecheck:
 	cd poc/api-probe && set -a && . ../../scripts/env.sh && set +a && \

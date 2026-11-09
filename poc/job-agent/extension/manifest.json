@@ -1,10 +1,16 @@
 {
   "manifest_version": 3,
-  "name": "openjob.dev — score this page",
+  "name": "openjob.dev \u2014 score this page",
   "version": "0.1.0",
   "description": "Reads the job postings on the page you have open and asks your local openjob agent to score them against your profile. It never reads cookies and never navigates on its own.",
-  "permissions": ["activeTab", "scripting", "storage"],
-  "host_permissions": ["http://127.0.0.1/*"],
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1/*"
+  ],
   "action": {
     "default_title": "Score this page",
     "default_popup": "popup.html"
@@ -26,8 +32,11 @@
         "https://www.welcometothejungle.com/*",
         "https://www.getonbrd.com/*"
       ],
-      "js": ["content.js"],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsyDD8451JfCcjXElU+A53EwUDI50+RCopEd3Zt1VdpdVUlxzXVGO4ygtBOuX1ffIUfAIWmmojIgcXLV0Gr5Ghy9vmY/gRjLOIxDXQ6BVCEnHHW4kWCkOCZl7W0Qk0je7tWImt62U7frtIUXFYxLJHxJX5SeaYX4dMTQMLFOl3ji7TexDCScacjvTcGn6LZp10cAO0otXeyGtt+TNpkd7ghp+oPZh5QxXBf74mivGuSBXExoRZpYLFegQZ8xyG0XbhG5YHtYICOjc1ujyiFiuGYUhz2TkmMYzDUkFqYU/SF/qHNchhQmF3BfbOz4PBku4ELrpi14Lnu+xElHUvcc2aQIDAQAB"
 }
