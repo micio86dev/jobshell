@@ -61,4 +61,5 @@ export const profile: UserProfile = {
   portfolio: null,
   threshold: 0.9,
   daily_cap: 2,
+  scoring_budget: 120,
 };

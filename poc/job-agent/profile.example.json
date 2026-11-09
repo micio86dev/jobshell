@@ -32,5 +32,6 @@
   "cv": "Twelve years building things. Rust and Python apps with coding agents.",
   "portfolio": null,
   "threshold": 0.9,
-  "daily_cap": 2
+  "daily_cap": 2,
+  "scoring_budget": 120
 }

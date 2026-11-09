@@ -15,7 +15,7 @@ import { adapterFor } from './sources/registry.ts';
 import { postingsFile, readPostings } from './sources/ziprecruiter.ts';
 import type { Challenge, Posting } from './sources/types.ts';
 
-/** How many survivors get a paid judgment in one run. The cost ceiling. */
+/** Fallback when neither the caller nor the profile sets a budget. */
 export const DEFAULT_SCORING_BUDGET = 120;
 
 export type SourceReport = {
@@ -89,7 +89,7 @@ const countDrops = (reasons: DropReason[]): Record<string, number> => {
 export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
   const reports: SourceReport[] = [];
   const fetched: Posting[] = [];
-  const budget = deps.scoringBudget ?? DEFAULT_SCORING_BUDGET;
+  const budget = deps.scoringBudget ?? deps.spec.scoring_budget ?? DEFAULT_SCORING_BUDGET;
 
   // ZipRecruiter is fetched by the desktop app, with the user's OAuth, through its MCP
   // server; the agent only reads what the app left behind. One judging path stays in place.

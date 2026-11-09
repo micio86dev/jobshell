@@ -40,6 +40,8 @@ pub struct RunSummary {
     pub fetched: u64,
     pub kept: u64,
     pub judged: u64,
+    /** How many survivors the run was allowed to judge. */
+    pub budget: u64,
     pub input_tokens: u64,
     pub dropped: Vec<DroppedCount>,
     pub selected: Vec<SelectedView>,
@@ -166,6 +168,7 @@ pub fn project_run(raw: &str, path: &str) -> Result<AgentRunView> {
             fetched: count(funnel.get("fetched")),
             kept: count(funnel.get("kept")),
             judged: count(scoring.get("judged")),
+            budget: count(scoring.get("budget")),
             input_tokens: count(scoring.get("input_tokens")),
             dropped,
             selected,
@@ -351,6 +354,7 @@ mod tests {
         assert_eq!(view.summary.fetched, 538);
         assert_eq!(view.summary.kept, 114);
         assert_eq!(view.summary.judged, 114);
+        assert_eq!(view.summary.budget, 120, "the window can say what the ceiling was");
         assert_eq!(view.summary.threshold, 0.9, "the window shows the threshold the run used");
         assert_eq!(view.summary.input_tokens, 17100);
         assert_eq!(view.summary.selected.len(), 1);

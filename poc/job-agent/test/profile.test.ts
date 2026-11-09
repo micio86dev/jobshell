@@ -86,6 +86,20 @@ test('a profile without a salary floor or a portfolio is valid', () => {
   assert.equal(result.profile.portfolio, null);
 });
 
+test('the judge budget defaults to 120 and can be set per profile', () => {
+  assert.equal(parsed().scoring_budget, 120, 'a profile that does not say keeps the default');
+
+  const bigger = parseProfile({ ...raw, scoring_budget: 400 });
+  assert.equal(bigger.ok, true);
+  if (bigger.ok) assert.equal(bigger.profile.scoring_budget, 400);
+
+  for (const bad of [0, -1, 1.5, 'many']) {
+    const rejected = parseProfile({ ...raw, scoring_budget: bad });
+    assert.equal(rejected.ok, false, `scoring_budget ${String(bad)} must be refused`);
+    if (!rejected.ok) assert.match(rejected.error, /scoring_budget/);
+  }
+});
+
 test('queries come from capability and seniority, never from a language list', () => {
   const queries = compileQueries(parsed());
   assert.ok(queries.includes('desktop app'));

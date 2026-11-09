@@ -22,6 +22,7 @@ type RunSummary = {
   fetched: number;
   kept: number;
   judged: number;
+  budget: number;
   input_tokens: number;
   dropped: DroppedCount[];
   selected: SelectedView[];
@@ -328,7 +329,17 @@ onMounted(() => {
           ultimo giro {{ when(run.summary.run_at) }} · soglia
           {{ Math.round(run.summary.threshold * 100) }}% ·
           {{ run.summary.fetched }} annunci scaricati · {{ run.summary.kept }} tenuti ·
-          {{ run.summary.judged }} giudicati · {{ run.summary.input_tokens }} token
+          <strong>{{ run.summary.judged }} giudicati su {{ run.summary.kept }}</strong> ·
+          {{ run.summary.input_tokens }} token
+        </p>
+
+        <p
+          v-if="run.summary.judged > 0 && run.summary.judged < run.summary.kept"
+          class="empty"
+        >
+          Tetto di questo profilo: {{ run.summary.budget }} giudizi per giro. Gli altri
+          {{ run.summary.kept - run.summary.judged }} annunci tenuti non sono stati giudicati:
+          alza <code>scoring_budget</code> nel profilo per includerli.
         </p>
 
         <p v-if="run.summary.selected.length === 0 && run.summary.judged === 0" class="empty">

@@ -69,12 +69,17 @@ key that looks like a credential is rejected with a message pointing at the keyr
   "cv": "Twelve years building things. Rust and Python apps with coding agents.",
   "portfolio": "https://example.test/portfolio",
   "threshold": 0.9,
-  "daily_cap": 2
+  "daily_cap": 2,
+  "scoring_budget": 120
 }
 ```
 
 `accepted_gaps` is the field that lets a posting requiring an unknown language still
 score high. The app never decides that for you; you declare it.
+
+`scoring_budget` is the cost ceiling: how many survivors one run may judge. It defaults to
+120, and the app always reports "X judged out of Y kept" so a ceiling can never look like
+an empty day.
 
 ## Running it
 

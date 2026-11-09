@@ -51,6 +51,8 @@ export type UserProfile = {
   portfolio: string | null;
   threshold: number;
   daily_cap: number;
+  /** How many survivors one run is allowed to judge. A cost ceiling, not a quality one. */
+  scoring_budget: number;
 };
 
 export type Spec = {
@@ -70,6 +72,7 @@ export type Spec = {
   queries: string[];
   threshold: number;
   daily_cap: number;
+  scoring_budget: number;
   /** Compact state handed to the scorer with every posting. */
   prompt_context: string;
 };
@@ -182,6 +185,13 @@ export const parseProfile = (raw: unknown): ProfileResult => {
     return fail('daily_cap must be a positive integer');
   }
 
+  // Optional, so a profile written before this field existed still loads.
+  const rawBudget = raw['scoring_budget'];
+  if (rawBudget !== undefined && (typeof rawBudget !== 'number' || !Number.isInteger(rawBudget) || rawBudget <= 0)) {
+    return fail('scoring_budget must be a positive integer when present');
+  }
+  const scoringBudget = typeof rawBudget === 'number' ? rawBudget : DEFAULT_SCORING_BUDGET;
+
   const overlap = raw['timezone_overlap_hours'];
   if (overlap !== undefined && overlap !== null && (typeof overlap !== 'number' || overlap < 0)) {
     return fail('timezone_overlap_hours must be a non-negative number when present');
@@ -226,9 +236,13 @@ export const parseProfile = (raw: unknown): ProfileResult => {
     portfolio: typeof portfolio === 'string' && portfolio.trim().length > 0 ? portfolio.trim() : null,
     threshold,
     daily_cap: dailyCap,
+    scoring_budget: scoringBudget,
   };
   return { ok: true, profile };
 };
+
+/** How many survivors one run may judge when the profile does not say. */
+export const DEFAULT_SCORING_BUDGET = 120;
 
 /** How many days a posting may be old before it is treated as stale. */
 export const DEFAULT_MAX_AGE_DAYS = 14;
@@ -292,5 +306,6 @@ export const compileProfile = (
   queries: compileQueries(profile, options.queryLimit ?? 8),
   threshold: profile.threshold,
   daily_cap: profile.daily_cap,
+  scoring_budget: profile.scoring_budget,
   prompt_context: compilePromptContext(profile),
 });

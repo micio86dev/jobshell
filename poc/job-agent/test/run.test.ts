@@ -166,6 +166,21 @@ test('a network error is reported instead of throwing the run away', async () =>
   assert.match(evidence.sources[0]?.skipped ?? '', /fetch failed: offline/);
 });
 
+test('the budget in the profile decides how many survivors are judged', async () => {
+  const route: Route = (url) =>
+    url.startsWith('https://remoteok.com')
+      ? { status: 200, text: FEED }
+      : { status: 200, text: JUDGEMENT(0.95, 0, 'not_specified') };
+  const base = compileProfile(profile);
+  const { scoringBudget: _ignored, ...withoutOverride } = deps(route);
+  const evidence = await runOnce({
+    ...withoutOverride,
+    spec: { ...base, scoring_budget: 1 },
+  });
+  assert.equal(evidence.scoring.judged, 1);
+  assert.equal(evidence.scoring.budget, 1);
+});
+
 test('the scoring budget caps how many survivors are judged', async () => {
   const route: Route = (url) =>
     url.startsWith('https://remoteok.com')

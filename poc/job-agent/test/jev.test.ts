@@ -136,6 +136,7 @@ const profile = {
   portfolio: null,
   threshold: 0.9,
   daily_cap: 2,
+  scoring_budget: 120,
 };
 
 test('the planner asks Anthropic with the documented headers and parses the answer', async () => {
