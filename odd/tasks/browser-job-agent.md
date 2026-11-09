@@ -265,3 +265,12 @@ product database, the Vue UI, and any automated access to a source whose policy 
   hardcoded, so the promised disclosure never happened. Fixed with tests that would have
   caught each one, including a fake fetch that now records the init so a GET with a body can
   never pass again.
+- **L24** (third review, 2026-11-09): `review-11e7f9276ccda3d5`, tier high, risk lens, 14
+  files / 489 lines — the delta that no native review had seen: the six-finding correction
+  plus the three defects the first real run exposed. The refuter confirmed one CRITICAL,
+  **R1-001**: the contract filter ran even when `contract_types` was empty, and `includes`
+  is false for every detected contract in that case, so postings stating "freelance" or
+  "full-time" were dropped for a profile expressing no preference — inconsistent with the
+  country and city filters beside it. Corrected in `265270c` (20 lines, exactly the declared
+  plan), targeted validation passed, **approved**, authority burned. One advisory remains as
+  separate later work: R1-002 on `src/funnel.ts:109` (WARNING).
