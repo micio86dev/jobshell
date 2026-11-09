@@ -161,6 +161,20 @@ const connectZipRecruiter = async (): Promise<void> => {
 
 const zipQuery = ref('');
 
+const writeZipDocument = async (): Promise<void> => {
+  const clientId = zipClientId.value.trim();
+  if (clientId.length === 0) {
+    zipMessage.value = "prima scrivi l'URL dove pubblicherai il document";
+    return;
+  }
+  try {
+    const path = await invoke<string>('ziprecruiter_client_document', { clientId });
+    zipMessage.value = `document scritto in ${path}: pubblicalo a quell'URL`;
+  } catch (error) {
+    zipMessage.value = `scrittura fallita: ${String(error)}`;
+  }
+};
+
 const fetchZipRecruiter = async (): Promise<void> => {
   const query = zipQuery.value.trim();
   if (query.length === 0) {
@@ -386,6 +400,9 @@ onMounted(() => {
         <label for="zipclient">client id (URL del document)</label>
         <input id="zipclient" v-model="zipClientId" type="text" placeholder="https://tuo-dominio/openjob-client.json" />
         <button type="button" @click="connectZipRecruiter">Collega</button>
+      </div>
+      <div class="actions">
+        <button type="button" @click="writeZipDocument">Scrivi il document da pubblicare</button>
       </div>
       <div class="keyrow">
         <label for="zipquery">cerca</label>
