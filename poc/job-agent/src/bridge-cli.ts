@@ -8,7 +8,7 @@
  * browser profile, not in this repository.
  */
 import { randomBytes } from 'node:crypto';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { loadRuntime, missingKeyMessage } from './bootstrap.ts';
@@ -38,6 +38,8 @@ if (typesafeKey === null) {
 }
 
 const rawPort = arg('port') ?? '8787';
+const logPath = arg('log');
+
 const port = Number.parseInt(rawPort, 10);
 if (!Number.isInteger(port) || port < 0 || port > 65535) {
   process.stderr.write(`openjob: --port must be an integer between 0 and 65535 (got ${rawPort})\n`);
@@ -61,6 +63,9 @@ const server = await startBridge(
     promptContext: runtime.spec.prompt_context,
     threshold: runtime.spec.threshold,
     token,
+    ...(logPath === undefined
+      ? {}
+      : { log: (record: unknown) => appendFileSync(logPath, `${JSON.stringify(record)}\n`, 'utf8') }),
   },
   port,
 );

@@ -1,0 +1,36 @@
+{
+  "headline": "Backend and desktop developer",
+  "capabilities": [
+    "desktop app",
+    "API"
+  ],
+  "domains": [
+    "SaaS B2B"
+  ],
+  "seniority": "senior",
+  "years_experience": 12,
+  "remote_modes": [
+    "remote"
+  ],
+  "onsite_cities": [],
+  "countries": [],
+  "contract_types": [
+    "freelance",
+    "employee"
+  ],
+  "languages": [
+    "it",
+    "en"
+  ],
+  "min_salary": null,
+  "timezone_overlap_hours": null,
+  "exclude_companies": [],
+  "exclude_terms": [],
+  "accepted_gaps": [
+    "willing to learn Go"
+  ],
+  "cv": "Twelve years building things. Rust and Python apps with coding agents.",
+  "portfolio": null,
+  "threshold": 0.9,
+  "daily_cap": 2
+}

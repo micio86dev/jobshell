@@ -135,3 +135,25 @@ test('bridge: a busy port fails loudly instead of hanging', async () => {
     await first.close();
   }
 });
+
+test('bridge: every score request leaves one record behind', async () => {
+  const records: Array<Record<string, unknown>> = [];
+  const { deps } = bridgeDeps();
+  const response = await handleScore(
+    { postings: [posting] },
+    {
+      ...deps,
+      log: (record) => {
+        records.push(record as unknown as Record<string, unknown>);
+      },
+    },
+  );
+
+  assert.equal(records.length, 1);
+  assert.equal(records[0]?.['postings'], 1);
+  assert.equal(records[0]?.['scored'], response.results.length);
+  assert.equal(records[0]?.['failed'], 0);
+  assert.equal(records[0]?.['input_tokens'], 140);
+  assert.equal(typeof records[0]?.['ms'], 'number');
+  assert.match(String(records[0]?.['at']), /^\d{4}-/);
+});

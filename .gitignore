@@ -17,3 +17,6 @@ evidence/run/
 
 # Harness scratch state, never part of the repository.
 .pi/
+
+# A real profile is personal data: only the example is tracked.
+profile.json

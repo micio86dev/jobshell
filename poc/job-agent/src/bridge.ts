@@ -60,11 +60,22 @@ export const mapWithConcurrency = async <T, R>(
   return results;
 };
 
+export type ScoreLog = {
+  at: string;
+  postings: number;
+  scored: number;
+  failed: number;
+  input_tokens: number;
+  ms: number;
+};
+
 export type BridgeDeps = {
   jev: JeDeps;
   promptContext: string;
   threshold: number;
   token: string;
+  /** Called once per score request, so a session leaves a record instead of an impression. */
+  log?: (record: ScoreLog) => void;
   maxPostings?: number;
 };
 
@@ -104,6 +115,7 @@ export const parseScoreRequest = (raw: unknown): Posting[] => {
 
 /** Judge the postings the user is looking at. No storage, no side effects. */
 export const handleScore = async (raw: unknown, deps: BridgeDeps): Promise<ScoreResponse> => {
+  const started = Date.now();
   const postings = parseScoreRequest(raw);
 
   const outcomes = await mapWithConcurrency(postings, DEFAULT_CONCURRENCY, async (posting) => {
@@ -137,6 +149,15 @@ export const handleScore = async (raw: unknown, deps: BridgeDeps): Promise<Score
       stack_stance: judged.stack_stance.stance,
     });
   }
+
+  deps.log?.({
+    at: new Date().toISOString(),
+    postings: postings.length,
+    scored: results.length,
+    failed: errors.length,
+    input_tokens: inputTokens,
+    ms: Date.now() - started,
+  });
 
   return { results, errors, threshold: deps.threshold, input_tokens: inputTokens };
 };
