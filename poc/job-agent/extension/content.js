@@ -18,7 +18,9 @@ const PATTERNS = [
   { source: 'freework', match: /\/fr\/tech-it\/emploi\/([a-z0-9-]+)/i, id: (m) => m[1] },
   { source: 'welcometothejungle', match: /\/companies\/[^/]+\/jobs\/([a-z0-9-]+)/i, id: (m) => m[1] },
   { source: 'getonbrd', match: /\/jobs\/([a-z0-9-]+)/i, id: (m) => m[1] },
-  { source: 'facebook', match: /\/groups\/[^/]+\/posts\/(\d+)/, id: (m) => m[1] },
+  // Facebook groups are deliberately absent: a group post is not a job posting, and
+  // sending the text of a private post to the bridge would leak content the user never
+  // meant to share. Read those yourself; this tool does not.
 ];
 
 const text = (node) => (node?.textContent ?? '').replace(/\s+/g, ' ').trim();

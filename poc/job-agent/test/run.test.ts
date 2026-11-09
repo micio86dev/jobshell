@@ -78,12 +78,13 @@ const JUDGEMENT = (yes: number, withGap: number, stance: string): string =>
     usage: { input_tokens: 150, output_tokens: 20 },
   });
 
-type Route = (url: string) => { status: number; text: string };
+type Init = { method: string; headers: Record<string, string>; body?: string };
+type Route = (url: string, init: Init) => { status: number; text: string };
 
 const deps = (route: Route, patch: Partial<RunDeps> = {}): RunDeps => {
   // The feed fetch and the judgment fetch are separate injections, so both must be
   // routed to the fake: forgetting one would send a real request to TypeSafe.
-  const fetchImpl = (async (url: string) => route(url)) as FetchLike;
+  const fetchImpl = (async (url: string, init: Init) => route(url, init)) as FetchLike;
   return {
   config: defaultConfig(),
   spec: compileProfile(profile),
@@ -196,4 +197,21 @@ test('postings already shown are dropped before any judgment is paid for', async
   assert.equal(evidence.funnel.kept, 0);
   assert.equal(evidence.funnel.dropped['already_seen'], 2);
   assert.equal(evidence.scoring.judged, 0, 'no tokens are spent on a posting already seen');
+});
+
+test('a source request is a GET with no body, which is what Node fetch requires', async () => {
+  const seen: Init[] = [];
+  const route: Route = (url, init) => {
+    if (url.startsWith('https://remoteok.com')) {
+      seen.push(init);
+      return { status: 200, text: FEED };
+    }
+    return { status: 200, text: JUDGEMENT(0.95, 0, 'not_specified') };
+  };
+  await runOnce(deps(route));
+
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0]?.method, 'GET');
+  assert.equal(seen[0]?.body, undefined, 'a GET with a body is rejected by the real fetch');
+  assert.match(seen[0]?.headers['user-agent'] ?? '', /openjob/);
 });

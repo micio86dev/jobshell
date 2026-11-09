@@ -24,8 +24,7 @@
         "https://www.freelancermap.de/*",
         "https://www.free-work.com/*",
         "https://www.welcometothejungle.com/*",
-        "https://www.getonbrd.com/*",
-        "https://www.facebook.com/groups/*"
+        "https://www.getonbrd.com/*"
       ],
       "js": ["content.js"],
       "run_at": "document_idle"

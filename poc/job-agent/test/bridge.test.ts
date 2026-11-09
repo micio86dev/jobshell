@@ -88,7 +88,7 @@ test('bridge: the server refuses a request without the token and accepts one wit
 test('bridge: one failing judgment does not discard the rest of the batch', async () => {
   // The judged state carries the title, not the id, so that is what discriminates.
   const fetchImpl: FetchLike = async (_url, init) => {
-    const body = JSON.parse(init.body) as { state: { posting: { title: string } } };
+    const body = JSON.parse(init.body ?? '{}') as { state: { posting: { title: string } } };
     if (body.state.posting.title === 'Broken posting') return { status: 500, text: 'boom' };
     return { status: 200, text: JUDGEMENT };
   };

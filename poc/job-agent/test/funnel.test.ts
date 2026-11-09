@@ -5,6 +5,8 @@ import { test } from 'node:test';
 
 import {
   applyHardFilters,
+  detectContract,
+  detectCountry,
   detectLanguage,
   parseSalary,
   postingKey,
@@ -174,4 +176,70 @@ test('the threshold is inclusive at the boundary and a quiet day selects nothing
   const result = rankAndCap(quiet, 0.9, 2);
   assert.equal(result.selected.length, 0);
   assert.equal(result.below_threshold, 1);
+});
+
+test('country: a recognised foreign location is dropped, an unreadable one is kept', () => {
+  const italian = make({ id: 'it', location: 'Milano, Italia' });
+  const german = make({ id: 'de', location: 'Berlin, Deutschland' });
+  const unknown = make({ id: 'xx', location: 'Anywhere' });
+  const result = applyHardFilters([italian, german, unknown], spec({ countries: ['IT'] }), new Set(), NOW);
+
+  assert.deepEqual(result.kept.map(postingKey), ['remoteok:it', 'remoteok:xx']);
+  assert.equal(result.dropped[0]?.reason, 'country');
+  assert.match(result.dropped[0]?.detail ?? '', /DE/);
+  assert.equal(result.unknown_country, 1, 'an unrecognised place is counted, never guessed');
+});
+
+test('country detection reads names, not codes', () => {
+  assert.equal(detectCountry('Milano, Italia'), 'IT');
+  assert.equal(detectCountry('Remote - Europe'), null);
+  assert.equal(detectCountry(''), null);
+});
+
+test('onsite city: a non-remote posting outside the reachable cities is dropped', () => {
+  const milan = make({ id: 'mi', location: 'Milano, Italia', remote_hint: false });
+  const rome = make({ id: 'rm', location: 'Roma, Italia', remote_hint: false });
+  const result = applyHardFilters(
+    [milan, rome],
+    spec({ remote_modes: ['remote', 'onsite'], onsite_cities: ['Milano'], countries: [] }),
+    new Set(),
+    NOW,
+  );
+
+  assert.deepEqual(result.kept.map(postingKey), ['remoteok:mi']);
+  assert.equal(result.dropped[0]?.reason, 'onsite_city');
+});
+
+test('onsite city: a remote posting is not judged by city at all', () => {
+  const remote = make({ id: 'r', location: 'Roma, Italia', remote_hint: true });
+  const result = applyHardFilters(
+    [remote],
+    spec({ remote_modes: ['remote', 'onsite'], onsite_cities: ['Milano'], countries: [] }),
+    new Set(),
+    NOW,
+  );
+  assert.equal(result.kept.length, 1);
+});
+
+test('contract: a stated shape the profile rejects is dropped, an unstated one is kept', () => {
+  const freelance = make({ id: 'f', description: 'Freelance, partita IVA, 6 months' });
+  const employee = make({ id: 'e', description: 'Full-time permanent position' });
+  const silent = make({ id: 's', description: 'We build desktop apps' });
+  const result = applyHardFilters(
+    [freelance, employee, silent],
+    spec({ contract_types: ['freelance'] }),
+    new Set(),
+    NOW,
+  );
+
+  assert.deepEqual(result.kept.map(postingKey), ['remoteok:f', 'remoteok:s']);
+  assert.equal(result.dropped[0]?.reason, 'contract_type');
+  assert.equal(result.unknown_contract, 1);
+});
+
+test('contract detection needs a marker, and both markers cancel out', () => {
+  assert.equal(detectContract('Freelance, partita IVA'), 'freelance');
+  assert.equal(detectContract('Full-time permanent role'), 'employee');
+  assert.equal(detectContract('We build things'), null);
+  assert.equal(detectContract('Freelance or full-time, you choose'), null, 'both markers are ambiguous');
 });

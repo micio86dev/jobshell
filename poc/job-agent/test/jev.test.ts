@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { askSystemOne, scoreFit, stackStance, type FetchLike } from '../src/jev.ts';
+import { asGap, askSystemOne, scoreFit, stackStance, type FetchLike } from '../src/jev.ts';
 import { planQueries, extractQueries } from '../src/planner.ts';
 import type { Posting } from '../src/sources/types.ts';
 
@@ -20,7 +20,7 @@ const posting: Posting = {
   salary: null,
 };
 
-type Call = { url: string; init: { method: string; headers: Record<string, string>; body: string } };
+type Call = { url: string; init: { method: string; headers: Record<string, string>; body?: string } };
 
 const capture = (status: number, body: string): { calls: Call[]; fetchImpl: FetchLike } => {
   const calls: Call[] = [];
@@ -204,4 +204,11 @@ test('the answer parser accepts fences and rejects garbage', () => {
   assert.equal(extractQueries('[1,2,3]', 8), null, 'non-string entries are not queries');
   assert.deepEqual(extractQueries('["a","a","b"]', 8), ['a', 'b'], 'duplicates collapse');
   assert.equal(extractQueries('["a","b","c"]', 2)?.length, 2, 'the limit is honoured');
+});
+
+test('the gap parser accepts only the known kinds', () => {
+  assert.equal(asGap('stack'), 'stack');
+  assert.equal(asGap('seniority'), 'seniority');
+  assert.equal(asGap('something else'), 'none');
+  assert.equal(asGap(''), 'none');
 });

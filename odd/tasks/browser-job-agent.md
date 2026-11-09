@@ -251,3 +251,17 @@ product database, the Vue UI, and any automated access to a source whose policy 
   click. R4-006 (`mcp-cli.ts:56`): the seen memory was snapshotted at startup, so
   `already_seen` answered "unseen" for everything scored during the session — it is now read
   at call time.
+- **L23** (second review, 2026-11-08): `review-ee2fa4047be3f55b`, tier high, lenses risk and
+  reliability over 27 files / 3,793 lines. The refuter confirmed **six** candidate-caused
+  findings and all six were real. R3-002 (BLOCKER) was the worst: `runOnce` sent `body: ''`
+  on a GET, Node's fetch rejects that, so **every real source fetch failed and the daily run
+  never fetched anything** — and the test fake hid it by ignoring the init object. R1-003:
+  `cli.ts` swallowed errors on `seen.json` and then overwrote it, so a corrupt file reset the
+  dedupe state (the same bug already fixed in the MCP entry point). R1-001: the Facebook
+  pattern matched every group post and shipped its text to TypeSafe. R1-002: `--dry-run`
+  still called the planner, so the documented no-token run spent a token and sent the profile
+  to the provider. R3-003: the funnel never read `countries`, `onsite_cities` or
+  `contract_types`, so those constraints were silently ignored. R3-004: `gaps: []` was
+  hardcoded, so the promised disclosure never happened. Fixed with tests that would have
+  caught each one, including a fake fetch that now records the init so a GET with a body can
+  never pass again.

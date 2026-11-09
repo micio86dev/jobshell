@@ -23,11 +23,17 @@ export const DEFAULT_MODEL = 'jev-latest';
 export type HttpResponse = { status: number; text: string };
 export type FetchLike = (
   url: string,
-  init: { method: string; headers: Record<string, string>; body: string },
+  init: { method: string; headers: Record<string, string>; body?: string },
 ) => Promise<HttpResponse>;
 
 export const defaultFetch: FetchLike = async (url, init) => {
-  const response = await fetch(url, init);
+  // Node's fetch rejects a GET or HEAD that carries a body, so an absent body must
+  // stay absent instead of being passed as an empty string.
+  const response = await fetch(url, {
+    method: init.method,
+    headers: init.headers,
+    ...(init.body === undefined ? {} : { body: init.body }),
+  });
   return { status: response.status, text: await response.text() };
 };
 
@@ -247,9 +253,19 @@ export const scoreFit = async (
  * stack stance and the fit together halves both the latency and the billed input
  * tokens compared with two round trips. This is the call the daily runner makes.
  */
+export type GapKind = 'none' | 'stack' | 'seniority' | 'domain' | 'language';
+
+const GAPS: readonly GapKind[] = ['none', 'stack', 'seniority', 'domain', 'language'];
+export const asGap = (value: string): GapKind => {
+  for (const gap of GAPS) if (gap === value) return gap;
+  return 'none';
+};
+
 export type JudgedPosting = {
   fit: { probability: number; verdict: FitVerdict; probabilities: Record<string, number> };
   stack_stance: { stance: StackStance; probabilities: Record<string, number> };
+  /** Which requirement is missing, so the match can disclose it instead of hiding it. */
+  gap: GapKind;
   usage: Usage;
 };
 
@@ -274,12 +290,25 @@ export const judgePosting = async (
             'Given the candidate state and the posting, would this person do this job credibly? Weigh what they can deliver, their domains and seniority, the stack stance of the posting, and only the gaps the candidate declares as accepted.',
           criteria: FIT_CRITERIA,
         },
+        gap: {
+          type: 'choice',
+          instructions:
+            'Which requirement, if any, does the candidate miss for this posting? Answer none when nothing important is missing.',
+          criteria: {
+            none: 'Nothing important is missing: the candidate meets what the posting asks for.',
+            stack: 'A language, framework or platform the posting asks for is missing.',
+            seniority: 'The seniority or years of experience asked for are outside the profile.',
+            domain: 'The domain or industry context asked for is missing from the profile.',
+            language: 'A spoken language the posting asks for is outside the profile.',
+          },
+        },
       },
     },
     deps,
   );
 
   const fitAnswer = response.answers['fit'];
+  const gapAnswer = response.answers['gap'];
   const fitProbabilities = fitAnswer?.type === 'choice' ? fitAnswer.probabilities : {};
   const stanceAnswer = response.answers['stack_stance'];
 
@@ -293,6 +322,7 @@ export const judgePosting = async (
       stance: asStance(stanceAnswer?.type === 'choice' ? stanceAnswer.choice : ''),
       probabilities: stanceAnswer?.type === 'choice' ? stanceAnswer.probabilities : {},
     },
+    gap: asGap(gapAnswer?.type === 'choice' ? gapAnswer.choice : ''),
     usage: response.usage,
   };
 };

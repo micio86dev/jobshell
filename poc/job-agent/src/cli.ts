@@ -16,7 +16,7 @@
  * `--dry-run` fetches and filters but buys no judgment, which is how the speed of
  * a source is measured without spending a token.
  */
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { loadRuntime, missingKeyMessage } from './bootstrap.ts';
@@ -24,6 +24,7 @@ import { defaultFetch } from './jev.ts';
 import { planQueries } from './planner.ts';
 import { resolvePolicy } from './policy.ts';
 import { runOnce, type RunEvidence } from './run.ts';
+import { loadSeen, saveSeen } from './seen.ts';
 import { readSecret } from './secrets.ts';
 import { listSources } from './sources/registry.ts';
 
@@ -39,13 +40,15 @@ const die = (message: string): never => {
   process.exit(2);
 };
 
-const readSeen = (path: string): Set<string> => {
+/**
+ * Read the memory, or stop. A corrupt file must end the run: starting from empty and
+ * then writing would replace the user's history with this run only.
+ */
+const loadSeenOrDie = (path: string): Set<string> => {
   try {
-    const parsed: unknown = JSON.parse(readFileSync(path, 'utf8'));
-    if (!Array.isArray(parsed)) return new Set();
-    return new Set(parsed.filter((value): value is string => typeof value === 'string'));
-  } catch {
-    return new Set();
+    return loadSeen(path);
+  } catch (error) {
+    return die(error instanceof Error ? error.message : String(error));
   }
 };
 
@@ -79,7 +82,9 @@ const main = async (): Promise<void> => {
   const jevKey = typesafeKey ?? 'dry-run-no-judgment';
 
   const providerKey = readSecret(config.provider);
-  const plannerDeps = providerKey === null
+  // A dry run buys nothing: no judgment and no planner call, so the profile never
+  // leaves the machine. That is what the README promises and what this enforces.
+  const plannerDeps = providerKey === null || dryRun
     ? null
     : {
         provider: config.provider,
@@ -90,13 +95,19 @@ const main = async (): Promise<void> => {
       };
 
   const queries = plannerDeps === null
-    ? { queries: { list: spec.queries, source: 'fallback' as const, reason: 'no provider key in the keyring' } }
+    ? {
+        queries: {
+          list: spec.queries,
+          source: 'fallback' as const,
+          reason: dryRun ? 'dry run: the planner is not called' : 'no provider key in the keyring',
+        },
+      }
     : await planQueries(profile, plannerDeps).then((plan) => ({
         queries: { list: plan.queries, source: plan.source, reason: plan.reason },
       }));
 
   const seenPath = join(outDir, 'seen.json');
-  const seen = readSeen(seenPath);
+  const seen = loadSeenOrDie(seenPath);
 
   const evidence: RunEvidence = await runOnce({
     config,
@@ -119,9 +130,7 @@ const main = async (): Promise<void> => {
   writeFileSync(evidencePath, `${JSON.stringify(evidence, null, 2)}\n`, 'utf8');
 
   const selectedKeys = evidence.selected.map((item) => item.key);
-  if (selectedKeys.length > 0) {
-    writeFileSync(seenPath, `${JSON.stringify([...new Set([...seen, ...selectedKeys])], null, 2)}\n`, 'utf8');
-  }
+  if (selectedKeys.length > 0) saveSeen(seenPath, selectedKeys);
 
   const lines: string[] = [];
   lines.push(`openjob run ${evidence.run_at}${dryRun ? ' (dry run: no judgment bought)' : ''}`);

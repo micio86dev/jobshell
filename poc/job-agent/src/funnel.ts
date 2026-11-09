@@ -15,6 +15,9 @@ export type DropReason =
   | 'stale'
   | 'language'
   | 'remote_mode'
+  | 'country'
+  | 'onsite_city'
+  | 'contract_type'
   | 'excluded_company'
   | 'excluded_term'
   | 'salary_below_floor';
@@ -28,6 +31,9 @@ export type FunnelResult = {
   unknown_date: number;
   unknown_language: number;
   unknown_remote: number;
+  unknown_country: number;
+  unknown_city: number;
+  unknown_contract: number;
 };
 
 /** The identity of a posting across runs, used for "already shown". */
@@ -69,6 +75,51 @@ export const detectLanguage = (text: string): string | null => {
     }
   }
   return bestHits >= MIN_MATCHES ? best : null;
+};
+
+/**
+ * Country names, so a profile constraint can be applied without guessing.
+ *
+ * Only a name we can read is a country: when the location names none of these, the
+ * posting is kept and counted as unknown. Dropping on a guess is the silent false
+ * negative this product cannot afford.
+ */
+const COUNTRY_NAMES: Record<string, readonly string[]> = {
+  AT: ['austria', 'österreich'],
+  BE: ['belgium', 'belgio', 'belgique'],
+  BR: ['brasil', 'brazil'],
+  CA: ['canada'],
+  CH: ['switzerland', 'svizzera', 'schweiz'],
+  DE: ['deutschland', 'germania', 'germany'],
+  ES: ['españa', 'espana', 'spain'],
+  FR: ['france', 'francia'],
+  GB: ['united kingdom', 'england', 'regno unito'],
+  IN: ['india'],
+  IT: ['italia', 'italy'],
+  NL: ['netherlands', 'paesi bassi', 'nederland'],
+  PL: ['poland', 'polonia', 'polska'],
+  PT: ['portugal', 'portogallo'],
+  US: ['united states', 'usa'],
+};
+
+/** The country a location names, or null when it names none we recognise. */
+export const detectCountry = (location: string): string | null => {
+  const text = location.toLowerCase();
+  for (const [code, names] of Object.entries(COUNTRY_NAMES)) {
+    if (names.some((name) => text.includes(name))) return code;
+  }
+  return null;
+};
+
+const FREELANCE_MARKERS = /freelance|contractor|contract role|partita iva|p\.\s?iva|consulenz|\bb2b\b/;
+const EMPLOYEE_MARKERS = /full[- ]time|permanent|dipendente|tempo indeterminato|contrato indefinido|\bcdi\b|unbefristet/;
+
+/** The contract shape a posting states, or null when it states none. */
+export const detectContract = (text: string): 'freelance' | 'employee' | null => {
+  const freelance = FREELANCE_MARKERS.test(text.toLowerCase());
+  const employee = EMPLOYEE_MARKERS.test(text.toLowerCase());
+  if (freelance === employee) return null;
+  return freelance ? 'freelance' : 'employee';
 };
 
 /** Approximate annualisation, documented so the comparison is not a hidden guess. */
@@ -126,6 +177,9 @@ export const applyHardFilters = (
   let unknownDate = 0;
   let unknownLanguage = 0;
   let unknownRemote = 0;
+  let unknownCountry = 0;
+  let unknownCity = 0;
+  let unknownContract = 0;
 
   for (const posting of postings) {
     if (seen.has(postingKey(posting))) {
@@ -166,6 +220,38 @@ export const applyHardFilters = (
         dropped.push({ posting, reason: 'remote_mode', detail: 'the profile accepts remote only' });
         continue;
       }
+    }
+
+    const place = posting.location ?? '';
+
+    if (spec.hard.countries.length > 0) {
+      const detected = place.length === 0 ? null : detectCountry(place);
+      if (detected === null) unknownCountry += 1;
+      else if (!spec.hard.countries.map((code) => code.toUpperCase()).includes(detected)) {
+        dropped.push({ posting, reason: 'country', detail: `detected ${detected}` });
+        continue;
+      }
+    }
+
+    // A city constraint only means something for a posting the user would attend.
+    const acceptsOnsite = spec.hard.remote_modes.some((mode) => mode !== 'remote');
+    if (acceptsOnsite && posting.remote_hint === false && spec.hard.onsite_cities.length > 0) {
+      const reachable = spec.hard.onsite_cities.some((city) => place.toLowerCase().includes(city.toLowerCase()));
+      if (reachable) {
+        // fine
+      } else if (place.length === 0) {
+        unknownCity += 1;
+      } else {
+        dropped.push({ posting, reason: 'onsite_city', detail: place });
+        continue;
+      }
+    }
+
+    const contract = detectContract(`${posting.title} ${posting.description ?? ''}`);
+    if (contract === null) unknownContract += 1;
+    else if (!spec.hard.contract_types.includes(contract)) {
+      dropped.push({ posting, reason: 'contract_type', detail: contract });
+      continue;
     }
 
     const company = (posting.company ?? '').toLowerCase();
@@ -209,6 +295,9 @@ export const applyHardFilters = (
     unknown_date: unknownDate,
     unknown_language: unknownLanguage,
     unknown_remote: unknownRemote,
+    unknown_country: unknownCountry,
+    unknown_city: unknownCity,
+    unknown_contract: unknownContract,
   };
 };
 

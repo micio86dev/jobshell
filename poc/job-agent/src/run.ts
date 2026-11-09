@@ -148,7 +148,9 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
       const pageStarted = Date.now();
       let response: HttpResponse;
       try {
-        response = await deps.fetchImpl(url, { method: 'GET', headers: { 'user-agent': 'openjob-job-agent/0.1' }, body: '' });
+        // No body: a GET with one is rejected by Node's fetch, which would make every
+        // source fail while a permissive test fake kept the suite green.
+        response = await deps.fetchImpl(url, { method: 'GET', headers: { 'user-agent': 'openjob-job-agent/0.1' } });
       } catch (error) {
         report.skipped = `fetch failed: ${error instanceof Error ? error.message : String(error)}`;
         break;
@@ -184,12 +186,16 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
   const scoringStarted = Date.now();
   let inputTokens = 0;
   const scored: Scored[] = [];
-  const verdicts = new Map<string, { verdict: string; stance: StackStance }>();
+  const verdicts = new Map<string, { verdict: string; stance: StackStance; gap: string }>();
 
   for (const posting of survivors) {
     const judged = await judgePosting(posting, deps.spec.prompt_context, deps.jev);
     inputTokens += judged.usage.input_tokens;
-    verdicts.set(postingKey(posting), { verdict: judged.fit.verdict, stance: judged.stack_stance.stance });
+    verdicts.set(postingKey(posting), {
+      verdict: judged.fit.verdict,
+      stance: judged.stack_stance.stance,
+      gap: judged.gap,
+    });
     scored.push({ posting, probability: judged.fit.probability });
   }
   const scoringMs = Date.now() - scoringStarted;
@@ -227,7 +233,8 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
         probability: item.probability,
         verdict: detail?.verdict ?? 'unknown',
         stack_stance: detail?.stance ?? 'not_specified',
-        gaps: [],
+        // The disclosure the product promises: an accepted gap is named, not hidden.
+        gaps: detail === undefined || detail.gap === 'none' ? [] : [detail.gap],
       };
     }),
     overflow: ranked.overflow.map((item) => ({ key: postingKey(item.posting), probability: item.probability })),
