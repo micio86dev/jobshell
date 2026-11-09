@@ -181,8 +181,6 @@ pub struct TokenSet {
     pub refresh_token: Option<String>,
     #[serde(default)]
     pub expires_in: Option<u64>,
-    #[serde(default)]
-    pub token_type: Option<String>,
 }
 
 /// The body of the token request. Public client, so no secret.

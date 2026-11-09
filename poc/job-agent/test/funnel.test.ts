@@ -194,6 +194,7 @@ test('country detection reads names, not codes', () => {
   assert.equal(detectCountry('Milano, Italia'), 'IT');
   assert.equal(detectCountry('Remote - Europe'), null);
   assert.equal(detectCountry(''), null);
+  assert.equal(detectCountry('Indianapolis, Indiana'), null, 'a word must not match inside another');
 });
 
 test('onsite city: a non-remote posting outside the reachable cities is dropped', () => {

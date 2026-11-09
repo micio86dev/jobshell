@@ -335,7 +335,7 @@ mod tests {
       "queries": { "list": ["desktop app"], "source": "fallback", "reason": null },
       "sources": [{ "source": "remoteok", "policy": "allowed", "url": "https://remoteok.com/api", "pages": 1, "status": 200, "postings": 99, "challenge": null, "ms": 1170, "skipped": null }],
       "funnel": { "fetched": 538, "kept": 114, "dropped": { "stale": 335, "remote_mode": 87, "language": 2 }, "unknown_date": 0, "unknown_language": 0, "unknown_remote": 0 },
-      "scoring": { "judged": 114, "budget": 120, "above_threshold": 1, "below_threshold": 113, "input_tokens": 17100, "ms": 2400 },
+      "scoring": { "threshold": 0.9, "judged": 114, "budget": 120, "above_threshold": 1, "below_threshold": 113, "input_tokens": 17100, "ms": 2400 },
       "selected": [
         { "key": "remoteok:1", "title": "Fullstack Engineer", "company": "Acme", "url": "https://example.test/1", "source": "remoteok", "probability": 0.93, "verdict": "yes_with_gap", "stack_stance": "not_specified", "gaps": ["stack"] }
       ],
@@ -351,6 +351,7 @@ mod tests {
         assert_eq!(view.summary.fetched, 538);
         assert_eq!(view.summary.kept, 114);
         assert_eq!(view.summary.judged, 114);
+        assert_eq!(view.summary.threshold, 0.9, "the window shows the threshold the run used");
         assert_eq!(view.summary.input_tokens, 17100);
         assert_eq!(view.summary.selected.len(), 1);
 

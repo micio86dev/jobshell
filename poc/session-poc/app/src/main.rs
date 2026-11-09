@@ -163,11 +163,34 @@ async fn ziprecruiter_connect(client_id: String) -> Result<String, String> {
         // The keyring, not a file: this is the same rule the API keys follow.
         secrets::store_secret("ziprecruiter", &token.access_token)
             .map_err(|error| format!("token non salvato nel portachiavi: {error}"))?;
+        // The refresh token is what makes the connection survive an hour, so it is kept too.
+        if let Some(refresh) = token.refresh_token.as_deref() {
+            secrets::store_secret("ziprecruiter-refresh", refresh)
+                .map_err(|error| format!("refresh token non salvato: {error}"))?;
+        }
 
         Ok(match token.expires_in {
             Some(seconds) => format!("ZipRecruiter collegato; il token scade in {seconds} secondi"),
             None => "ZipRecruiter collegato".to_string(),
         })
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
+/// Write the metadata document to publish, generated from the same code the client uses,
+/// so the redirect in the file and the listener in the app cannot drift apart.
+#[tauri::command]
+async fn ziprecruiter_client_document(client_id: String) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || -> Result<String, String> {
+        let path = agent::evidence_dir().join("openjob-client.json");
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)
+                .map_err(|error| format!("creo {}: {error}", parent.display()))?;
+        }
+        std::fs::write(&path, ziprecruiter::client_document(&client_id))
+            .map_err(|error| format!("scrivo {}: {error}", path.display()))?;
+        Ok(path.display().to_string())
     })
     .await
     .map_err(|error| error.to_string())?
@@ -320,7 +343,8 @@ fn main() {
             agent_open_sources,
             agent_stop_sources,
             ziprecruiter_connect,
-            ziprecruiter_fetch
+            ziprecruiter_fetch,
+            ziprecruiter_client_document
         ])
         .build(tauri::generate_context!())
         .expect("error while building the Tauri application")

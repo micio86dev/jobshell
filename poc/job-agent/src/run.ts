@@ -43,6 +43,8 @@ export type RunEvidence = {
     unknown_remote: number;
   };
   scoring: {
+    /** The threshold this run used, so the evidence explains itself. */
+    threshold: number;
     judged: number;
     budget: number;
     above_threshold: number;
@@ -260,6 +262,7 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
       unknown_remote: filtered.unknown_remote,
     },
     scoring: {
+      threshold: deps.spec.threshold,
       judged: scored.length,
       budget,
       above_threshold: ranked.selected.length + ranked.overflow.length,

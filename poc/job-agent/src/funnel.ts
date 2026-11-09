@@ -102,11 +102,15 @@ const COUNTRY_NAMES: Record<string, readonly string[]> = {
   US: ['united states', 'usa'],
 };
 
-/** The country a location names, or null when it names none we recognise. */
+/**
+ * The country a location names, or null when it names none we recognise.
+ *
+ * Matching is on whole words: `includes` would read "Indianapolis, Indiana" as India.
+ */
 export const detectCountry = (location: string): string | null => {
   const text = location.toLowerCase();
   for (const [code, names] of Object.entries(COUNTRY_NAMES)) {
-    if (names.some((name) => text.includes(name))) return code;
+    if (names.some((name) => new RegExp(`\\b${name}\\b`).test(text))) return code;
   }
   return null;
 };

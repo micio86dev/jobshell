@@ -114,6 +114,7 @@ test('one run fetches, filters, judges and selects above the threshold', async (
   assert.equal(evidence.selected[0]?.stack_stance, 'not_specified');
   assert.equal(evidence.scoring.input_tokens, 300, 'two judgments, 150 tokens each');
   assert.equal(evidence.queries.source, 'fallback');
+  assert.equal(evidence.scoring.threshold, 0.9, 'the evidence records the threshold it used');
 });
 
 test('a session-driven source is always refused by the runner', async () => {

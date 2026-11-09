@@ -317,7 +317,12 @@ onMounted(() => {
           {{ run.summary.judged }} giudicati · {{ run.summary.input_tokens }} token
         </p>
 
-        <p v-if="run.summary.selected.length === 0" class="empty">
+        <p v-if="run.summary.selected.length === 0 && run.summary.judged === 0" class="empty">
+          Nessun giudizio in questo giro: la prova a secco scarica e filtra ma non spende
+          token. Premi <strong>Cerca adesso</strong> per giudicare i {{ run.summary.kept }}
+          annunci tenuti.
+        </p>
+        <p v-else-if="run.summary.selected.length === 0" class="empty">
           Niente sopra la soglia in quel giro. È il prodotto che funziona, non un errore:
           meglio due annunci ottimi che cento inutili.
         </p>
