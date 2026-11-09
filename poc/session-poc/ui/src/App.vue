@@ -142,6 +142,23 @@ const loadKeyStatus = async (): Promise<void> => {
   }
 };
 
+const zipClientId = ref('');
+const zipMessage = ref('');
+
+const connectZipRecruiter = async (): Promise<void> => {
+  const clientId = zipClientId.value.trim();
+  if (clientId.length === 0) {
+    zipMessage.value = "serve l'URL del document che hai pubblicato";
+    return;
+  }
+  zipMessage.value = 'apro la pagina di consenso nel browser…';
+  try {
+    zipMessage.value = await invoke<string>('ziprecruiter_connect', { clientId });
+  } catch (error) {
+    zipMessage.value = `collegamento fallito: ${String(error)}`;
+  }
+};
+
 const saveKey = async (account: KeyAccount): Promise<void> => {
   const value = keyInputs.value[account].trim();
   if (value.length === 0) {
@@ -337,6 +354,18 @@ onMounted(() => {
         <button type="button" @click="saveKey(account)">Salva</button>
       </div>
       <p class="status">{{ keyMessage }}</p>
+
+      <h2>ZipRecruiter</h2>
+      <p class="meta">
+        Si collega con il tuo account: l'app apre la pagina di consenso, riceve il codice e
+        tiene il token nel portachiavi. Serve l'URL del metadata document che hai pubblicato.
+      </p>
+      <div class="keyrow">
+        <label for="zipclient">client id (URL del document)</label>
+        <input id="zipclient" v-model="zipClientId" type="text" placeholder="https://tuo-dominio/openjob-client.json" />
+        <button type="button" @click="connectZipRecruiter">Collega</button>
+      </div>
+      <p class="status">{{ zipMessage }}</p>
     </section>
 
     <section v-else>
@@ -391,6 +420,10 @@ header {
   display: flex;
   align-items: baseline;
   gap: 1rem;
+}
+h2 {
+  font-size: 0.95rem;
+  margin: 1.6rem 0 0.4rem;
 }
 h1 {
   font-size: 1.05rem;

@@ -152,3 +152,19 @@ It is never solved, never retried, never routed around.
 - The MCP connectors of Indeed and ZipRecruiter have **not** been probed with a
   third-party client. That is their policy, not a technical question, and it needs the
   maintainer's own account to answer.
+
+## ZipRecruiter (MCP, OAuth with the user's account)
+
+ZipRecruiter publishes a standard MCP endpoint behind OAuth 2.0 with PKCE. Its discovery
+metadata advertises `client_id_metadata_document_supported` and **no dynamic registration
+endpoint**, so a third-party client identifies itself with a JSON document hosted at a
+public HTTPS URL — that URL *is* the client id.
+
+1. Publish `ziprecruiter-client.example.json` at a URL you control, replacing `client_id`
+   with that exact URL. The redirect is fixed at `http://127.0.0.1:8788/callback`.
+2. In the app, tab **Impostazioni → ZipRecruiter**, paste the URL and press **Collega**.
+3. The app opens the consent page, receives the code on the loopback redirect, exchanges it
+   with PKCE, and keeps the token in the OS keyring as `ziprecruiter`.
+
+No client secret exists: `token_endpoint_auth_method` is `none`, which is what a desktop app
+can honestly use. The token is never written to a file.

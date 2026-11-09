@@ -79,7 +79,7 @@ Exit code 0 means all of this passed:
 ```
 ℹ tests 65 / ℹ pass 65 / ℹ fail 0                                     (TypeScript)
 test result: ok. 14 passed; 0 failed; 1 ignored                       (Rust core)
-wiring: UI calls 13, Rust registers 14                                  (UI ↔ Rust names)
+wiring: UI calls 14, Rust registers 15                                  (UI ↔ Rust names)
   every command the UI calls is registered
 ```
 

@@ -6,6 +6,7 @@
 //! and exposes those capabilities over Tauri commands.
 
 mod agent;
+mod ziprecruiter;
 
 use std::path::PathBuf;
 use std::process::Child;
@@ -137,6 +138,51 @@ async fn agent_run(dry_run: bool) -> Result<String, String> {
         .map_err(|error| error.to_string())
 }
 
+/// Connect ZipRecruiter: open the consent page, wait for the loopback redirect, exchange
+/// the code and keep the token in the keyring.
+///
+/// `client_id` is the URL the maintainer publishes the metadata document at; ZipRecruiter
+/// fetches it to identify this client, which is why the app needs no registered secret.
+#[tauri::command]
+async fn ziprecruiter_connect(client_id: String) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || -> Result<String, String> {
+        let pair = ziprecruiter::pkce().map_err(|error| error.to_string())?;
+        let state = uuid_like();
+        let url = ziprecruiter::authorize_url(&client_id, &state, &pair.challenge);
+
+        std::process::Command::new("open")
+            .arg(&url)
+            .status()
+            .map_err(|error| format!("non riesco ad aprire il browser: {error}"))?;
+
+        let code = ziprecruiter::wait_for_callback(&state, std::time::Duration::from_secs(180))
+            .map_err(|error| error.to_string())?;
+        let token = ziprecruiter::exchange_code(&client_id, &code, &pair.verifier)
+            .map_err(|error| error.to_string())?;
+
+        // The keyring, not a file: this is the same rule the API keys follow.
+        secrets::store_secret("ziprecruiter", &token.access_token)
+            .map_err(|error| format!("token non salvato nel portachiavi: {error}"))?;
+
+        Ok(match token.expires_in {
+            Some(seconds) => format!("ZipRecruiter collegato; il token scade in {seconds} secondi"),
+            None => "ZipRecruiter collegato".to_string(),
+        })
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
+/// A random-enough state value for one authorization attempt.
+fn uuid_like() -> String {
+    let mut bytes = [0u8; 16];
+    if let Ok(mut file) = std::fs::File::open("/dev/urandom") {
+        use std::io::Read;
+        let _ = file.read_exact(&mut bytes);
+    }
+    bytes.iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
 /// Start the bridge if needed and open the dedicated browser with the extension loaded,
 /// so the user never manages a profile, an extension or a token.
 #[tauri::command]
@@ -241,7 +287,8 @@ fn main() {
             agent_key_status,
             agent_run,
             agent_open_sources,
-            agent_stop_sources
+            agent_stop_sources,
+            ziprecruiter_connect
         ])
         .build(tauri::generate_context!())
         .expect("error while building the Tauri application")
