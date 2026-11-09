@@ -41,6 +41,9 @@ const ALLOWED: readonly string[] = [
   'workingnomads',
   'iprogrammatori',
   'hn',
+  // Fetched by the desktop app through ZipRecruiter's MCP server, with the user's OAuth;
+  // the agent only reads the file it leaves behind.
+  'ziprecruiter',
 ];
 
 /** Stricter wins: a source can be tightened by an override, never loosened. */

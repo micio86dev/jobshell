@@ -173,6 +173,37 @@ async fn ziprecruiter_connect(client_id: String) -> Result<String, String> {
     .map_err(|error| error.to_string())?
 }
 
+/// Fetch postings through ZipRecruiter's MCP server and leave them where the agent reads
+/// them, so one judging path and one evidence format stay in place.
+#[tauri::command]
+async fn ziprecruiter_fetch(query: String, location: Option<String>) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || -> Result<String, String> {
+        let token = secrets::read_secret("ziprecruiter")
+            .map_err(|error| error.to_string())?
+            .ok_or("ZipRecruiter non è collegato: usa il pulsante Collega nelle impostazioni")?;
+
+        // Every MCP session starts with initialize; the server answers with its capabilities.
+        ziprecruiter::call_mcp(&token, &ziprecruiter::initialize_request(1))
+            .map_err(|error| error.to_string())?;
+
+        let answer = ziprecruiter::call_mcp(
+            &token,
+            &ziprecruiter::search_request(2, &query, location.as_deref()),
+        )
+        .map_err(|error| error.to_string())?;
+
+        let postings = ziprecruiter::postings_from_response(&answer).map_err(|error| error.to_string())?;
+        ziprecruiter::write_postings(&postings).map_err(|error| error.to_string())?;
+
+        Ok(format!(
+            "{} annunci ZipRecruiter salvati: il prossimo giro li giudica",
+            postings.len()
+        ))
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
 /// A random-enough state value for one authorization attempt.
 fn uuid_like() -> String {
     let mut bytes = [0u8; 16];
@@ -288,7 +319,8 @@ fn main() {
             agent_run,
             agent_open_sources,
             agent_stop_sources,
-            ziprecruiter_connect
+            ziprecruiter_connect,
+            ziprecruiter_fetch
         ])
         .build(tauri::generate_context!())
         .expect("error while building the Tauri application")

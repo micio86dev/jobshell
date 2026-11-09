@@ -12,6 +12,7 @@ import { judgePosting, type FetchLike, type HttpResponse, type JeDeps, type Stac
 import { assertAutomationAllowed, Pacer, resolvePolicy } from './policy.ts';
 import type { Spec } from './profile.ts';
 import { adapterFor } from './sources/registry.ts';
+import { postingsFile, readPostings } from './sources/ziprecruiter.ts';
 import type { Challenge, Posting } from './sources/types.ts';
 
 /** How many survivors get a paid judgment in one run. The cost ceiling. */
@@ -88,7 +89,43 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
   const fetched: Posting[] = [];
   const budget = deps.scoringBudget ?? DEFAULT_SCORING_BUDGET;
 
+  // ZipRecruiter is fetched by the desktop app, with the user's OAuth, through its MCP
+  // server; the agent only reads what the app left behind. One judging path stays in place.
+  if (deps.sources.includes('ziprecruiter')) {
+    const started = Date.now();
+    const policy = resolvePolicy('ziprecruiter', deps.config);
+    const report: SourceReport = {
+      source: 'ziprecruiter',
+      policy: policy.automation,
+      url: null,
+      pages: 1,
+      status: null,
+      postings: 0,
+      challenge: null,
+      ms: 0,
+      skipped: null,
+    };
+    // The same gate as the HTTP sources: a config override can tighten this source, and
+    // skipping it must never be silent.
+    if (policy.automation !== 'allowed') {
+      report.skipped = `policy: ${policy.automation}`;
+    } else {
+      assertAutomationAllowed('ziprecruiter', policy);
+      try {
+        const postings = readPostings(postingsFile(deps.config.evidence_dir));
+        fetched.push(...postings);
+        report.postings = postings.length;
+        if (postings.length === 0) report.skipped = 'the app has not fetched ZipRecruiter yet';
+      } catch (error) {
+        report.skipped = error instanceof Error ? error.message : String(error);
+      }
+    }
+    report.ms = Date.now() - started;
+    reports.push(report);
+  }
+
   for (const sourceId of deps.sources) {
+    if (sourceId === 'ziprecruiter') continue;
     const started = Date.now();
     const adapter = adapterFor(sourceId);
     const policy = resolvePolicy(sourceId, deps.config);

@@ -159,6 +159,23 @@ const connectZipRecruiter = async (): Promise<void> => {
   }
 };
 
+const zipQuery = ref('');
+
+const fetchZipRecruiter = async (): Promise<void> => {
+  const query = zipQuery.value.trim();
+  if (query.length === 0) {
+    zipMessage.value = 'scrivi cosa cercare';
+    return;
+  }
+  zipMessage.value = 'interrogo ZipRecruiter…';
+  try {
+    zipMessage.value = await invoke<string>('ziprecruiter_fetch', { query });
+    await loadRun();
+  } catch (error) {
+    zipMessage.value = `ricerca fallita: ${String(error)}`;
+  }
+};
+
 const saveKey = async (account: KeyAccount): Promise<void> => {
   const value = keyInputs.value[account].trim();
   if (value.length === 0) {
@@ -364,6 +381,11 @@ onMounted(() => {
         <label for="zipclient">client id (URL del document)</label>
         <input id="zipclient" v-model="zipClientId" type="text" placeholder="https://tuo-dominio/openjob-client.json" />
         <button type="button" @click="connectZipRecruiter">Collega</button>
+      </div>
+      <div class="keyrow">
+        <label for="zipquery">cerca</label>
+        <input id="zipquery" v-model="zipQuery" type="text" placeholder="rust engineer" />
+        <button type="button" @click="fetchZipRecruiter">Cerca su ZipRecruiter</button>
       </div>
       <p class="status">{{ zipMessage }}</p>
     </section>

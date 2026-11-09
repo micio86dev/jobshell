@@ -258,6 +258,154 @@ pub fn wait_for_callback(expected_state: &str, timeout: std::time::Duration) -> 
     anyhow::bail!("the redirect listener stopped before an authorization arrived")
 }
 
+/// One posting as the MCP server returns it, before it becomes the agent's shape.
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct McpPosting {
+    pub id: String,
+    pub title: String,
+    #[serde(default)]
+    pub company: Option<String>,
+    #[serde(default)]
+    pub location: Option<String>,
+    #[serde(default)]
+    pub url: Option<String>,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
+    pub salary: Option<String>,
+    #[serde(default)]
+    pub published_at: Option<String>,
+}
+
+/// The JSON-RPC envelope of one MCP call. Pure, so the shape is tested.
+pub fn rpc_request(id: u64, method: &str, params: serde_json::Value) -> serde_json::Value {
+    serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": id,
+        "method": method,
+        "params": params,
+    })
+}
+
+/// `initialize`, which every MCP session starts with.
+pub fn initialize_request(id: u64) -> serde_json::Value {
+    rpc_request(
+        id,
+        "initialize",
+        serde_json::json!({
+            "protocolVersion": "2024-11-05",
+            "capabilities": {},
+            "clientInfo": { "name": "openjob.dev", "version": "0.1.0" },
+        }),
+    )
+}
+
+/// A job search through the server's own tool, using the scope the user consented to.
+pub fn search_request(id: u64, query: &str, location: Option<&str>) -> serde_json::Value {
+    let mut arguments = serde_json::json!({ "query": query });
+    if let Some(location) = location {
+        arguments["location"] = serde_json::Value::String(location.to_string());
+    }
+    rpc_request(
+        id,
+        "tools/call",
+        serde_json::json!({ "name": "job_search", "arguments": arguments }),
+    )
+}
+
+/// Pull the postings out of a `tools/call` answer.
+///
+/// MCP wraps a tool result in a content array; the server may also return a plain object.
+/// Anything else is an error, never an empty list, so a broken answer is visible.
+pub fn postings_from_response(response: &serde_json::Value) -> Result<Vec<McpPosting>> {
+    if let Some(error) = response.get("error") {
+        anyhow::bail!("the MCP server refused the call: {error}");
+    }
+    let result = response.get("result").context("the answer carries no result")?;
+
+    // A tool result: { content: [ { type: "text", text: "<json>" } ] }
+    if let Some(items) = result.get("content").and_then(|value| value.as_array()) {
+        let mut postings = Vec::new();
+        for item in items {
+            if let Some(text) = item.get("text").and_then(|value| value.as_str()) {
+                postings.extend(parse_postings(text)?);
+            }
+        }
+        return Ok(postings);
+    }
+
+    // A plain answer: the postings themselves.
+    parse_postings(&result.to_string())
+}
+
+fn parse_postings(text: &str) -> Result<Vec<McpPosting>> {
+    let value: serde_json::Value =
+        serde_json::from_str(text).context("the tool answer is not JSON")?;
+    let items = match &value {
+        serde_json::Value::Array(items) => items.clone(),
+        serde_json::Value::Object(map) => match map.get("jobs").or_else(|| map.get("results")) {
+            Some(serde_json::Value::Array(items)) => items.clone(),
+            _ => anyhow::bail!("the tool answer has no jobs array"),
+        },
+        _ => anyhow::bail!("the tool answer is neither an array nor an object"),
+    };
+    let mut postings = Vec::new();
+    for item in items {
+        // A posting without an id or a title cannot be shown or deduplicated.
+        if item.get("id").and_then(|v| v.as_str()).is_none() {
+            continue;
+        }
+        if item.get("title").and_then(|v| v.as_str()).is_none() {
+            continue;
+        }
+        postings.push(serde_json::from_value(item).context("a posting has an unexpected shape")?);
+    }
+    Ok(postings)
+}
+
+/// Where the postings wait for the agent: the same evidence directory it already reads.
+pub fn postings_path() -> std::path::PathBuf {
+    super::agent::evidence_dir().join("ziprecruiter.json")
+}
+
+/// Write the postings the agent will judge on its next run.
+pub fn write_postings(postings: &[McpPosting]) -> Result<()> {
+    let path = postings_path();
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
+    }
+    let body = serde_json::json!({
+        "source": "ziprecruiter",
+        "fetched_at": std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|elapsed| elapsed.as_secs())
+            .unwrap_or(0),
+        "postings": postings,
+    });
+    std::fs::write(&path, serde_json::to_string_pretty(&body)?)
+        .with_context(|| format!("writing {}", path.display()))
+}
+
+/// Call one MCP method with the token, and return the parsed answer.
+pub fn call_mcp(token: &str, request: &serde_json::Value) -> Result<serde_json::Value> {
+    let response = ureq::post(MCP_URL)
+        .set("authorization", &format!("Bearer {token}"))
+        .set("content-type", "application/json")
+        .set("accept", "application/json, text/event-stream")
+        .send_string(&request.to_string());
+
+    match response {
+        Ok(response) => response
+            .into_json::<serde_json::Value>()
+            .context("the MCP server answered with something unexpected"),
+        Err(ureq::Error::Status(status, response)) => {
+            let text = response.into_string().unwrap_or_default();
+            anyhow::bail!("the MCP server refused the call ({status}): {text}")
+        }
+        Err(error) => Err(error).context("calling the MCP server"),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -323,6 +471,57 @@ mod tests {
         assert!(parse_callback("GET /callback?state=x HTTP/1.1").is_err());
         assert!(parse_callback("GET /callback HTTP/1.1").is_err());
         assert!(parse_callback("garbage").is_err());
+    }
+
+    #[test]
+    fn a_search_is_a_tools_call_with_the_query() {
+        let request = search_request(2, "rust engineer", Some("Italia"));
+        assert_eq!(request["method"], "tools/call");
+        assert_eq!(request["params"]["name"], "job_search");
+        assert_eq!(request["params"]["arguments"]["query"], "rust engineer");
+        assert_eq!(request["params"]["arguments"]["location"], "Italia");
+    }
+
+    #[test]
+    fn the_session_starts_with_initialize() {
+        let request = initialize_request(1);
+        assert_eq!(request["method"], "initialize");
+        assert_eq!(request["params"]["clientInfo"]["name"], "openjob.dev");
+    }
+
+    #[test]
+    fn postings_are_read_out_of_a_tool_result() {
+        let answer = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 2,
+            "result": {
+                "content": [{
+                    "type": "text",
+                    "text": "{\"jobs\":[{\"id\":\"a1\",\"title\":\"Rust Engineer\",\"company\":\"Acme\",\"url\":\"https://example.test/a1\"},{\"title\":\"no id\"}]}"
+                }]
+            }
+        });
+        let postings = postings_from_response(&answer).expect("postings");
+        assert_eq!(postings.len(), 1, "a posting without an id is skipped");
+        assert_eq!(postings[0].id, "a1");
+        assert_eq!(postings[0].title, "Rust Engineer");
+    }
+
+    #[test]
+    fn a_plain_array_answer_is_accepted_too() {
+        let answer = serde_json::json!({
+            "result": [{ "id": "b2", "title": "Platform Engineer" }]
+        });
+        let postings = postings_from_response(&answer).expect("postings");
+        assert_eq!(postings[0].id, "b2");
+    }
+
+    #[test]
+    fn a_refusal_or_a_broken_answer_is_an_error_not_an_empty_list() {
+        assert!(postings_from_response(&serde_json::json!({ "error": { "message": "nope" } })).is_err());
+        assert!(postings_from_response(&serde_json::json!({})).is_err());
+        assert!(postings_from_response(&serde_json::json!({ "result": { "content": [{ "text": "not json" }] } })).is_err());
+        assert!(postings_from_response(&serde_json::json!({ "result": { "jobs": "nope" } })).is_err());
     }
 
     #[test]

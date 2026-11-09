@@ -238,3 +238,40 @@ test('every feed builds an absolute https URL without needing options', () => {
     assert.equal(url.protocol, 'https:', adapter.id);
   }
 });
+
+test('ziprecruiter: the app file becomes postings, and a missing file is not an error', async () => {
+  const { readPostings } = await import('../src/sources/ziprecruiter.ts');
+
+  const file = JSON.stringify({
+    source: 'ziprecruiter',
+    postings: [
+      { id: 'z1', title: 'Rust Engineer', company: 'Acme', location: 'Remote', url: 'https://example.test/z1', published_at: '2026-11-01T00:00:00Z' },
+      { title: 'no id' },
+    ],
+  });
+  const postings = readPostings('/tmp/zip.json', () => file);
+  assert.equal(postings.length, 1, 'an entry without an id is skipped');
+  assert.equal(postings[0]?.source, 'ziprecruiter');
+  assert.equal(postings[0]?.title, 'Rust Engineer');
+  assert.equal(postings[0]?.remote_hint, true);
+  assert.equal(postings[0]?.published_at, '2026-11-01T00:00:00.000Z');
+
+  assert.deepEqual(readPostings('/tmp/missing.json', () => {
+    throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+  }), []);
+
+  const unsafe = JSON.stringify({
+    postings: [
+      { id: 'z2', title: 'XSS', url: 'javascript:alert(1)' },
+      { id: 'with/slash', title: 'bad id' },
+      { id: 'z3', title: 'no url' },
+    ],
+  });
+  const safe = readPostings('/tmp/zip.json', () => unsafe);
+  assert.equal(safe.length, 2, 'an id with a slash is refused');
+  assert.match(safe[0]?.url ?? '', /^https:\/\/www\.ziprecruiter\.com\/jobs\/z2$/, 'a javascript url is replaced');
+  assert.match(safe[1]?.url ?? '', /^https:\/\/www\.ziprecruiter\.com\/jobs\/z3$/);
+
+  assert.throws(() => readPostings('/tmp/bad.json', () => 'not json'), /not valid JSON/);
+  assert.throws(() => readPostings('/tmp/bad.json', () => '{"nope":1}'), /no postings array/);
+});
