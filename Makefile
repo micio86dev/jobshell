@@ -46,19 +46,19 @@ agent-test:
 agent:
 	@test -n "$(PROFILE)" || (echo "set PROFILE=/path/to/profile.json"; exit 2)
 	cd poc/job-agent && set -a && . ../../scripts/env.sh && set +a && \
-		node src/cli.ts --profile "$(PROFILE)" $(if $(DRY),--dry-run,)
+		node src/cli.ts --profile "$(abspath $(PROFILE))" $(if $(DRY),--dry-run,)
 
 # PROFILE=/path/to/profile.json [PORT=8787] [LOG=path.jsonl] — writes the token to a 0600 file.
 agent-bridge:
 	@test -n "$(PROFILE)" || (echo "set PROFILE=/path/to/profile.json"; exit 2)
 	cd poc/job-agent && set -a && . ../../scripts/env.sh && set +a && \
-		node src/bridge-cli.ts --profile "$(PROFILE)" --port $(or $(PORT),8787) $(if $(LOG),--log $(LOG),)
+		node src/bridge-cli.ts --profile "$(abspath $(PROFILE))" --port $(or $(PORT),8787) $(if $(LOG),--log "$(abspath $(LOG))",)
 
 # PROFILE=/path/to/profile.json — MCP over stdio for the user's own assistant.
 agent-mcp:
 	@test -n "$(PROFILE)" || (echo "set PROFILE=/path/to/profile.json"; exit 2)
 	cd poc/job-agent && set -a && . ../../scripts/env.sh && set +a && \
-		node src/mcp-cli.ts --profile "$(PROFILE)"
+		node src/mcp-cli.ts --profile "$(abspath $(PROFILE))"
 
 bench:
 	cd poc/runtime-bench && set -a && . ../../scripts/env.sh && set +a && \
