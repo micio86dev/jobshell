@@ -131,19 +131,24 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
     assertAutomationAllowed(sourceId, policy);
 
     const pacer = new Pacer(policy.paceMs, () => Date.now(), deps.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms))));
-    const pages = Math.min(policy.maxPages, Math.max(1, deps.queries.list.length));
-    report.pages = pages;
 
-    for (const query of deps.queries.list.slice(0, pages)) {
-      await pacer.next();
-      let url: string;
+    // A feed ignores the query, so several queries resolve to the same URL. Fetching it
+    // once per query would multiply the load on the publisher for identical bytes.
+    const urls: string[] = [];
+    for (const query of deps.queries.list.slice(0, Math.min(policy.maxPages, Math.max(1, deps.queries.list.length)))) {
       try {
-        url = adapter.buildSearchUrl(query, {});
+        const url = adapter.buildSearchUrl(query, {});
+        if (!urls.includes(url)) urls.push(url);
       } catch (error) {
         // A board feed needs a tenant; a missing one is a skip, never a crash.
         report.skipped = `cannot build a URL: ${error instanceof Error ? error.message : String(error)}`;
         break;
       }
+    }
+    report.pages = urls.length;
+
+    for (const url of urls) {
+      await pacer.next();
       report.url = url;
       const pageStarted = Date.now();
       let response: HttpResponse;
@@ -180,7 +185,10 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
     reports.push(report);
   }
 
-  const filtered = applyHardFilters(fetched, deps.spec, deps.seen, deps.now);
+  // Two sources can carry the same posting, and without this the funnel would judge it
+  // twice and the daily cap could show it twice.
+  const unique = [...new Map(fetched.map((posting) => [postingKey(posting), posting])).values()];
+  const filtered = applyHardFilters(unique, deps.spec, deps.seen, deps.now);
   const survivors = filtered.kept.slice(0, budget);
 
   const scoringStarted = Date.now();
@@ -207,7 +215,7 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
     queries: deps.queries,
     sources: reports,
     funnel: {
-      fetched: fetched.length,
+      fetched: unique.length,
       kept: filtered.kept.length,
       dropped: countDrops(filtered.dropped.map((drop) => drop.reason)),
       unknown_date: filtered.unknown_date,

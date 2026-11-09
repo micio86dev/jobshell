@@ -215,3 +215,33 @@ test('a source request is a GET with no body, which is what Node fetch requires'
   assert.equal(seen[0]?.body, undefined, 'a GET with a body is rejected by the real fetch');
   assert.match(seen[0]?.headers['user-agent'] ?? '', /openjob/);
 });
+
+test('a URL that does not depend on the query is fetched once, not once per query', async () => {
+  let fetches = 0;
+  const route: Route = (url) => {
+    if (url.startsWith('https://remoteok.com')) {
+      fetches += 1;
+      return { status: 200, text: FEED };
+    }
+    return { status: 200, text: JUDGEMENT(0.95, 0, 'not_specified') };
+  };
+  const evidence = await runOnce(
+    deps(route, { queries: { list: ['one', 'two', 'three'], source: 'fallback', reason: null } }),
+  );
+
+  assert.equal(fetches, 1, 'the same feed URL is fetched once however many queries produced it');
+  assert.equal(evidence.sources[0]?.pages, 1);
+});
+
+test('the same posting arriving from a second fetch is judged once', async () => {
+  let judged = 0;
+  const route: Route = (url) => {
+    if (url.startsWith('https://remoteok.com')) return { status: 200, text: FEED };
+    judged += 1;
+    return { status: 200, text: JUDGEMENT(0.95, 0, 'not_specified') };
+  };
+  const evidence = await runOnce(deps(route));
+
+  assert.equal(evidence.funnel.fetched, 2, 'two distinct postings in the feed');
+  assert.equal(judged, 2, 'each distinct posting is judged once');
+});

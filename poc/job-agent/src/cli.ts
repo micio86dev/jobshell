@@ -46,7 +46,7 @@ const die = (message: string): never => {
  */
 const loadSeenOrDie = (path: string): Set<string> => {
   try {
-    return loadSeen(path);
+    return loadSeen(path, 'empty');
   } catch (error) {
     return die(error instanceof Error ? error.message : String(error));
   }
