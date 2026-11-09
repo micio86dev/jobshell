@@ -109,6 +109,15 @@ fn agent_save_key(account: String, value: String) -> Result<(), String> {
     secrets::store_secret(&account, trimmed).map_err(|error| error.to_string())
 }
 
+/// Run the agent from the window. `dry_run` fetches and filters without buying a judgment.
+#[tauri::command]
+async fn agent_run(dry_run: bool) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || agent::run_once(dry_run))
+        .await
+        .map_err(|error| error.to_string())?
+        .map_err(|error| error.to_string())
+}
+
 /// Which accounts have a key, without returning any of them.
 #[tauri::command]
 fn agent_key_status() -> Result<std::collections::BTreeMap<String, bool>, String> {
@@ -179,7 +188,8 @@ fn main() {
             task_detail,
             agent_last_run,
             agent_save_key,
-            agent_key_status
+            agent_key_status,
+            agent_run
         ])
         .run(tauri::generate_context!())
         .expect("error while running the Tauri application");

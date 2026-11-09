@@ -54,6 +54,22 @@ const loadRun = async (): Promise<void> => {
   }
 };
 
+const running = ref<'' | 'dry' | 'real'>('');
+
+const runAgent = async (dryRun: boolean): Promise<void> => {
+  running.value = dryRun ? 'dry' : 'real';
+  status.value = dryRun ? 'giro a secco in corso…' : 'giro in corso… può durare un minuto';
+  try {
+    await invoke<string>('agent_run', { dryRun });
+    status.value = dryRun ? 'giro a secco completato' : 'giro completato';
+    await loadRun();
+  } catch (error) {
+    status.value = `giro fallito: ${String(error)}`;
+  } finally {
+    running.value = '';
+  }
+};
+
 const percent = (probability: number): number => Math.round(probability * 100);
 
 const verdictLabel = (verdict: string): string => {
@@ -208,11 +224,23 @@ onMounted(() => {
     </header>
 
     <section v-if="tab === 'results'">
-      <button type="button" class="reload" @click="loadRun">Ricarica</button>
+      <div class="actions">
+        <button type="button" :disabled="running !== ''" @click="runAgent(true)">
+          {{ running === 'dry' ? 'giro a secco…' : 'Prova a secco' }}
+        </button>
+        <button type="button" :disabled="running !== ''" @click="runAgent(false)">
+          {{ running === 'real' ? 'giro in corso…' : 'Cerca adesso' }}
+        </button>
+        <button type="button" :disabled="running !== ''" @click="loadRun">Ricarica</button>
+      </div>
+      <p class="hint">
+        "Prova a secco" scarica e filtra senza spendere token. "Cerca adesso" giudica con Jev e
+        richiede la chiave TypeSafe nel tab Impostazioni.
+      </p>
 
       <p v-if="loaded && run === null" class="empty">
-        Nessun giro ancora. Lancia il primo dalla riga di comando
-        (<code>make agent PROFILE=./profile.json</code>) e premi <strong>Ricarica</strong>.
+        Nessun giro ancora. Premi <strong>Prova a secco</strong> per il primo: scarica gli
+        annunci pubblici senza spendere token.
       </p>
 
       <template v-if="run !== null">
@@ -360,14 +388,10 @@ nav button.on {
   font-size: 0.75rem;
   color: #45505f;
 }
-.reload {
-  font: inherit;
-  padding: 0.3rem 0.7rem;
-  border-radius: 6px;
-  border: 1px solid #c3c9d4;
-  background: #f6f8fb;
-  cursor: pointer;
-  margin-bottom: 0.8rem;
+.hint {
+  font-size: 0.78rem;
+  color: #8a93a1;
+  margin: 0 0 0.8rem;
 }
 .meta {
   font-size: 0.85rem;

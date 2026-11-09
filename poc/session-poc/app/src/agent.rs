@@ -6,6 +6,7 @@
 //! pure function over the file's text, so it is tested without a filesystem or a window.
 
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 use anyhow::{Context, Result};
 use serde::Serialize;
@@ -170,6 +171,77 @@ pub fn project_run(raw: &str, path: &str) -> Result<AgentRunView> {
     })
 }
 
+/// Where the agent package lives.
+///
+/// Baked in at compile time, because this is a development-stage app that runs the agent
+/// from the repository. A packaged build overrides it with `OPENJOB_AGENT_DIR`.
+pub fn agent_dir() -> PathBuf {
+    if let Ok(dir) = std::env::var("OPENJOB_AGENT_DIR") {
+        return PathBuf::from(dir);
+    }
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../job-agent")
+}
+
+/// The profile the run uses: the app's own copy, not a file the user has to place.
+pub fn profile_path() -> PathBuf {
+    if let Ok(path) = std::env::var("OPENJOB_PROFILE") {
+        return PathBuf::from(path);
+    }
+    evidence_dir().join("profile.json")
+}
+
+/// The starter profile shipped with the app, used on the very first run.
+const STARTER_PROFILE: &str = include_str!("../../../job-agent/profile.example.json");
+
+/// Write the starter profile when there is none, and never overwrite an edited one.
+pub fn ensure_profile(path: &Path) -> Result<bool> {
+    if path.exists() {
+        return Ok(false);
+    }
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
+    }
+    std::fs::write(path, STARTER_PROFILE).with_context(|| format!("writing {}", path.display()))?;
+    Ok(true)
+}
+
+/// The arguments one run needs. Pure, so the shape is tested without spawning anything.
+pub fn run_args(profile: &Path, dry_run: bool) -> Vec<String> {
+    let mut args = vec![
+        "src/cli.ts".to_string(),
+        "--profile".to_string(),
+        profile.display().to_string(),
+    ];
+    if dry_run {
+        args.push("--dry-run".to_string());
+    }
+    args
+}
+
+/// One run of the agent, as the app launches it.
+///
+/// The output is returned rather than streamed: a dry run takes seconds, and a judged run
+/// a minute, so the window shows a running state and then reloads the evidence.
+pub fn run_once(dry_run: bool) -> Result<String> {
+    let dir = agent_dir();
+    let profile = profile_path();
+    ensure_profile(&profile)?;
+
+    let output = Command::new("node")
+        .args(run_args(&profile, dry_run))
+        .current_dir(&dir)
+        .output()
+        .with_context(|| format!("starting the agent in {}", dir.display()))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    if !output.status.success() {
+        // The agent already prints a readable reason; surface it instead of a bare code.
+        anyhow::bail!("{}", if stderr.trim().is_empty() { stdout } else { stderr });
+    }
+    Ok(stdout)
+}
+
 /// Read the newest run, if there is one.
 pub fn read_latest(dir: &Path) -> Result<Option<AgentRunView>> {
     let Some(path) = latest_run(dir)? else {
@@ -246,6 +318,40 @@ mod tests {
     fn an_invalid_file_is_an_error_not_a_silent_empty_list() {
         assert!(project_run("not json", "/tmp/x.json").is_err());
         assert!(project_run("[]", "/tmp/x.json").is_err());
+    }
+
+    #[test]
+    fn a_dry_run_carries_the_profile_and_the_flag() {
+        let args = run_args(Path::new("/tmp/p.json"), true);
+        assert_eq!(args, vec!["src/cli.ts", "--profile", "/tmp/p.json", "--dry-run"]);
+    }
+
+    #[test]
+    fn a_real_run_does_not_carry_the_flag() {
+        let args = run_args(Path::new("/tmp/p.json"), false);
+        assert_eq!(args, vec!["src/cli.ts", "--profile", "/tmp/p.json"]);
+    }
+
+    #[test]
+    fn the_starter_profile_is_written_once_and_never_overwritten() {
+        let dir = std::env::temp_dir().join(format!("openjob-profile-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let path = dir.join("profile.json");
+
+        assert!(ensure_profile(&path).expect("first write"), "the first call creates it");
+        assert!(std::fs::read_to_string(&path).expect("read").contains("capabilities"));
+
+        std::fs::write(&path, "{\"headline\":\"mine\"}").expect("edit");
+        assert!(!ensure_profile(&path).expect("second call"), "an edited profile is left alone");
+        assert!(std::fs::read_to_string(&path).expect("read").contains("mine"));
+
+        std::fs::remove_dir_all(&dir).expect("cleanup");
+    }
+
+    #[test]
+    fn the_agent_directory_points_at_the_package() {
+        let dir = agent_dir();
+        assert!(dir.join("src/cli.ts").exists(), "expected the agent package at {}", dir.display());
     }
 
     #[test]
