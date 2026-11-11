@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use sqlx::{Pool, Sqlite};
 
+pub mod profile_store;
 pub mod secrets;
 
 /// SQLite pool with migrations applied. Creates the file if absent.
