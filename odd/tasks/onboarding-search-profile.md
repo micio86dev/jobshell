@@ -16,7 +16,7 @@ S11 (planned, not yet implemented): wizard UI, SQLite storage, CV intake, AI int
 
 ## Tasks
 U1 | S1, S2, S4, S8 | inline | done | commit: pending (see Log)  Profile strength (mandatory/preferred/acceptable) with default mandatory; hard/soft split in compileProfile.
-U2 | S3, S4, S5, S10 | inline | pending | Tri-state filters, UNKNOWN routed to verification, unknown_* counters in evidence, graded language check, employee vs contractor eligibility, remote scope (never defaults to worldwide).
+U2 | S4 | inline | partial | Done: unknown facts tracked per posting (`needs_verification`), unknown_country/city/contract now in RunEvidence.funnel. Pending: graded language check, employee vs contractor eligibility, remote scope (never defaults to worldwide), soft-preference rank bonus in rankAndCap, salary/seniority checks.
 U3 | S6, S9 | pending | pending | SQLite migration 0002, append-only search versions, Rust commands, apply scope.
 U4 | S7 | pending | pending | CV/intent interpretation with proposed-only items.
 U5 | S1, S8 | pending | pending | Vue wizard, zod boundary, vitest.
@@ -28,4 +28,6 @@ L2 (process note): this document was created after U1 source edits had started. 
 L3 U1 evidence: RED observed, 6 new tests failing and 9 passing before the change (TAP output). GREEN: `tsc --noEmit` exit 0; `node --test test/*.test.ts` 144 pass, 0 fail.
 L4 U1 differential: profile.example.json compiled with the base commit (git archive HEAD into a mktemp -d scratch) and with the change yields identical Spec.hard, queries, threshold, daily_cap, scoring_budget and prompt_context (32 lines each, exit 0).
 L5 U1 scope actually delivered: strengths field and parsing, DEFAULT_STRENGTHS, Spec.soft, prompt-context labels for soft fields. NOT delivered in U1: schema_version, Identity/Eligibility/Compensation split, remote_scope, migrate-on-read adapter. Those stay in U1 follow-up or move to U3.
+L7 U2 evidence (partial): RED 3 failing (needs_verification undefined) before change; GREEN `tsc` exit 0, 148 pass, 0 fail. Existing funnel tests unchanged. Diff of funnel.ts only adds tracking; the rewritten one-line counters keep the same control flow.
+L8 U2 scope decision: the "route to verification" step is recorded (needs_verification in the evidence); kept postings still go to the judge, unchanged. No verifier consumes the list yet.
 L6 Risk U1: item 3 (shared profile parser and Spec shape consumed by mcp-server and bridge). Mitigated by: additive optional field, default preserving behaviour, the differential check above. Not yet run: the mcp/bridge tests were run inside the full suite (pass).

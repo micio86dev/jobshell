@@ -41,6 +41,11 @@ export type RunEvidence = {
     unknown_date: number;
     unknown_language: number;
     unknown_remote: number;
+    unknown_country: number;
+    unknown_city: number;
+    unknown_contract: number;
+    /** Kept postings with at least one unknown fact a constraint needed. */
+    needs_verification: number;
   };
   scoring: {
     /** The threshold this run used, so the evidence explains itself. */
@@ -260,6 +265,10 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
       unknown_date: filtered.unknown_date,
       unknown_language: filtered.unknown_language,
       unknown_remote: filtered.unknown_remote,
+      unknown_country: filtered.unknown_country,
+      unknown_city: filtered.unknown_city,
+      unknown_contract: filtered.unknown_contract,
+      needs_verification: filtered.needs_verification.length,
     },
     scoring: {
       threshold: deps.spec.threshold,

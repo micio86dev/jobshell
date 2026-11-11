@@ -24,9 +24,20 @@ export type DropReason =
 
 export type Dropped = { posting: Posting; reason: DropReason; detail: string };
 
+/** A fact a hard constraint needed and the posting did not state. */
+export type UnknownFact = 'date' | 'language' | 'remote' | 'country' | 'city' | 'contract';
+
+/**
+ * A posting that passed every filter while one or more facts were unknown. It is
+ * kept, and the unknown facts are listed so verification can settle them. Unknown is
+ * never read as satisfied.
+ */
+export type NeedsVerification = { posting: Posting; unknown: UnknownFact[] };
+
 export type FunnelResult = {
   kept: Posting[];
   dropped: Dropped[];
+  needs_verification: NeedsVerification[];
   /** Counts of postings kept without the fact the filter would have used. */
   unknown_date: number;
   unknown_language: number;
@@ -184,8 +195,10 @@ export const applyHardFilters = (
   let unknownCountry = 0;
   let unknownCity = 0;
   let unknownContract = 0;
+  const needsVerification: NeedsVerification[] = [];
 
   for (const posting of postings) {
+    const unknownFacts: UnknownFact[] = [];
     if (seen.has(postingKey(posting))) {
       dropped.push({ posting, reason: 'already_seen', detail: 'shown in an earlier run' });
       continue;
@@ -193,6 +206,7 @@ export const applyHardFilters = (
 
     if (posting.published_at === null) {
       unknownDate += 1;
+      unknownFacts.push('date');
     } else {
       const age = ageInDays(posting.published_at, now);
       if (age !== null && age > spec.hard.max_age_days) {
@@ -208,8 +222,10 @@ export const applyHardFilters = (
     if (spec.hard.languages.length > 0) {
       const haystack = `${posting.title} ${posting.description ?? ''}`;
       const language = detectLanguage(haystack);
-      if (language === null) unknownLanguage += 1;
-      else if (!spec.hard.languages.includes(language)) {
+      if (language === null) {
+        unknownLanguage += 1;
+        unknownFacts.push('language');
+      } else if (!spec.hard.languages.includes(language)) {
         dropped.push({ posting, reason: 'language', detail: `detected ${language}` });
         continue;
       }
@@ -219,8 +235,10 @@ export const applyHardFilters = (
       spec.hard.remote_modes.length > 0 &&
       spec.hard.remote_modes.every((mode) => mode === 'remote');
     if (remoteOnly) {
-      if (posting.remote_hint === null) unknownRemote += 1;
-      else if (!posting.remote_hint) {
+      if (posting.remote_hint === null) {
+        unknownRemote += 1;
+        unknownFacts.push('remote');
+      } else if (!posting.remote_hint) {
         dropped.push({ posting, reason: 'remote_mode', detail: 'the profile accepts remote only' });
         continue;
       }
@@ -230,8 +248,10 @@ export const applyHardFilters = (
 
     if (spec.hard.countries.length > 0) {
       const detected = place.length === 0 ? null : detectCountry(place);
-      if (detected === null) unknownCountry += 1;
-      else if (!spec.hard.countries.map((code) => code.toUpperCase()).includes(detected)) {
+      if (detected === null) {
+        unknownCountry += 1;
+        unknownFacts.push('country');
+      } else if (!spec.hard.countries.map((code) => code.toUpperCase()).includes(detected)) {
         dropped.push({ posting, reason: 'country', detail: `detected ${detected}` });
         continue;
       }
@@ -245,6 +265,7 @@ export const applyHardFilters = (
         // fine
       } else if (place.length === 0) {
         unknownCity += 1;
+        unknownFacts.push('city');
       } else {
         dropped.push({ posting, reason: 'onsite_city', detail: place });
         continue;
@@ -259,6 +280,7 @@ export const applyHardFilters = (
       // no constraint
     } else if (contract === null) {
       unknownContract += 1;
+      unknownFacts.push('contract');
     } else if (!spec.hard.contract_types.includes(contract)) {
       dropped.push({ posting, reason: 'contract_type', detail: contract });
       continue;
@@ -296,12 +318,14 @@ export const applyHardFilters = (
       }
     }
 
+    if (unknownFacts.length > 0) needsVerification.push({ posting, unknown: unknownFacts });
     kept.push(posting);
   }
 
   return {
     kept,
     dropped,
+    needs_verification: needsVerification,
     unknown_date: unknownDate,
     unknown_language: unknownLanguage,
     unknown_remote: unknownRemote,

@@ -256,3 +256,43 @@ test('contract: an empty preference list is no constraint, not "reject everythin
   assert.deepEqual(result.kept.map(postingKey), ['remoteok:e', 'remoteok:f']);
   assert.equal(result.dropped.length, 0);
 });
+
+// --- Unknown facts are routed to verification, never read as true ---------------
+
+test('a kept posting with an unknown fact is routed to verification, naming the fact', () => {
+  const unknown = make({ id: 'xx', location: 'Anywhere', description: 'We build desktop apps with Rust and Python.' });
+  const result = applyHardFilters([unknown], spec({ countries: ['IT'], contract_types: ['freelance'] }), new Set(), NOW);
+
+  assert.deepEqual(result.kept.map(postingKey), ['remoteok:xx'], 'an unknown fact never drops the posting');
+  assert.equal(result.needs_verification.length, 1);
+  assert.equal(result.needs_verification[0]?.posting.id, 'xx');
+  assert.deepEqual(result.needs_verification[0]?.unknown, ['country', 'contract']);
+});
+
+test('a posting whose checked facts are all known is not routed to verification', () => {
+  const known = make({
+    id: 'ok',
+    location: 'Milano, Italia',
+    description: 'Partita IVA freelance con Rust e Python per il team.',
+  });
+  const result = applyHardFilters([known], spec({ countries: ['IT'], contract_types: ['freelance'] }), new Set(), NOW);
+
+  assert.deepEqual(result.kept.map(postingKey), ['remoteok:ok']);
+  assert.deepEqual(result.needs_verification, [], 'a known fact needs no verification');
+});
+
+test('an unknown fact is counted in the funnel and listed per posting, not guessed', () => {
+  const unknown = make({ id: 'xx', location: 'Anywhere', description: 'We build desktop apps with Rust and Python.' });
+  const result = applyHardFilters([unknown], spec({ countries: ['IT'], contract_types: ['freelance'] }), new Set(), NOW);
+
+  assert.equal(result.unknown_country, 1);
+  assert.equal(result.unknown_contract, 1);
+});
+
+test('a dropped posting is never also routed to verification', () => {
+  const german = make({ id: 'de', location: 'Berlin, Deutschland' });
+  const result = applyHardFilters([german], spec({ countries: ['IT'] }), new Set(), NOW);
+
+  assert.equal(result.dropped[0]?.reason, 'country');
+  assert.deepEqual(result.needs_verification, []);
+});
