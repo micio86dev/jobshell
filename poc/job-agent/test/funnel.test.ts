@@ -325,3 +325,12 @@ test('country: an accented name is recognised as a whole word', () => {
   assert.equal(detectCountry('Wien, Österreich'), 'AT');
   assert.equal(detectCountry('Vienna, Austria'), 'AT');
 });
+
+test('a malformed publish date is kept, counted as unknown and routed to verification', () => {
+  const broken = make({ id: 'bd', published_at: 'not-a-date' });
+  const result = applyHardFilters([broken], spec(), new Set(), NOW);
+
+  assert.deepEqual(result.kept.map(postingKey), ['remoteok:bd']);
+  assert.equal(result.unknown_date, 1, 'an unreadable date is unknown, not fresh');
+  assert.deepEqual(result.needs_verification[0]?.unknown, ['date']);
+});

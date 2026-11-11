@@ -226,7 +226,11 @@ export const applyHardFilters = (
       unknownFacts.push('date');
     } else {
       const age = ageInDays(posting.published_at, now);
-      if (age !== null && age > spec.hard.max_age_days) {
+      if (age === null) {
+        // An unreadable date is unknown, never fresh: count it and route it.
+        unknownDate += 1;
+        unknownFacts.push('date');
+      } else if (age > spec.hard.max_age_days) {
         dropped.push({
           posting,
           reason: 'stale',
