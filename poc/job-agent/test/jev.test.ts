@@ -139,6 +139,9 @@ const profile = {
   daily_cap: 2,
   scoring_budget: 120,
   strengths: DEFAULT_STRENGTHS,
+  language_proficiency: {},
+  eligibility: { employee: [], contractor: [], residence: null },
+  remote_scope: null,
 };
 
 test('the planner asks Anthropic with the documented headers and parses the answer', async () => {

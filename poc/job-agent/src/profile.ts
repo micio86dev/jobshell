@@ -37,6 +37,29 @@ export const STRENGTH_KEYS = [
 export type StrengthKey = (typeof STRENGTH_KEYS)[number];
 export type Strengths = Record<StrengthKey, Strength>;
 
+/** Graded command of a language, from native to beginner. */
+export const LANGUAGE_LEVELS = ['native', 'fluent', 'professional', 'intermediate', 'basic', 'beginner'] as const;
+export type LanguageLevel = (typeof LANGUAGE_LEVELS)[number];
+
+/**
+ * Whether the user will work in a language: comfortably, with limits, or not at all.
+ * `unwilling` is an exclusion; `limited` only ranks lower.
+ */
+export const LANGUAGE_USAGE = ['comfortable', 'limited', 'unwilling'] as const;
+export type LanguageUsage = (typeof LANGUAGE_USAGE)[number];
+
+export type LanguageProficiency = { level: LanguageLevel; usage: LanguageUsage };
+
+/**
+ * Where the user can work. Employee and contractor eligibility are separate, and an
+ * empty list means "not stated": no filter is applied, never "everywhere".
+ */
+export type Eligibility = { employee: string[]; contractor: string[]; residence: string | null };
+
+/** Remote work scope. Unstated (null) is never read as worldwide. */
+export const REMOTE_SCOPES = ['worldwide', 'europe', 'countries', 'residence'] as const;
+export type RemoteScope = (typeof REMOTE_SCOPES)[number];
+
 /** Every preference mandatory: the behaviour of a profile written before strengths. */
 export const DEFAULT_STRENGTHS: Strengths = {
   languages: 'mandatory',
@@ -84,6 +107,11 @@ export type UserProfile = {
   scoring_budget: number;
   /** Per-preference strength. Always complete: absent input means `mandatory`. */
   strengths: Strengths;
+  /** Graded proficiency per ISO 639-1 code. Empty means "not stated". */
+  language_proficiency: Record<string, LanguageProficiency>;
+  eligibility: Eligibility;
+  /** Null means not stated. It is never read as worldwide. */
+  remote_scope: RemoteScope | null;
 };
 
 export type Spec = {
@@ -99,6 +127,14 @@ export type Spec = {
     min_salary: SalaryFloor | null;
     /** A posting older than this is stale; null date is kept and flagged. */
     max_age_days: number;
+    /** Languages the user will not work in: a posting in one is dropped. */
+    excluded_languages: string[];
+    /** Empty means not stated, so no employee-eligibility filter applies. */
+    employee_countries: string[];
+    contractor_countries: string[];
+    remote_scope: RemoteScope | null;
+    /** Countries a remote posting must name, derived from the remote scope. */
+    remote_countries: string[];
   };
   /** Preferred and acceptable preferences: they rank, they never drop. */
   soft: {
@@ -273,8 +309,57 @@ export const parseProfile = (raw: unknown): ProfileResult => {
     }
   }
 
+  const rawProficiency = raw['language_proficiency'];
+  const proficiency: Record<string, LanguageProficiency> = {};
+  if (rawProficiency !== undefined && rawProficiency !== null) {
+    if (!isRecord(rawProficiency)) return fail('language_proficiency must be an object when present');
+    for (const [code, entry] of Object.entries(rawProficiency)) {
+      if (!isRecord(entry)) return fail(`language_proficiency.${code} must be an object`);
+      const level = entry['level'];
+      const usage = entry['usage'];
+      if (typeof level !== 'string' || !LANGUAGE_LEVELS.includes(level as LanguageLevel)) {
+        return fail(`language_proficiency.${code}.level must be one of ${LANGUAGE_LEVELS.join(', ')}`);
+      }
+      if (typeof usage !== 'string' || !LANGUAGE_USAGE.includes(usage as LanguageUsage)) {
+        return fail(`language_proficiency.${code}.usage must be one of ${LANGUAGE_USAGE.join(', ')}`);
+      }
+      proficiency[code.trim().toLowerCase()] = { level: level as LanguageLevel, usage: usage as LanguageUsage };
+    }
+  }
+
+  let eligibility: Eligibility = { employee: [], contractor: [], residence: null };
+  const rawEligibility = raw['eligibility'];
+  if (rawEligibility !== undefined && rawEligibility !== null) {
+    if (!isRecord(rawEligibility)) return fail('eligibility must be an object when present');
+    const employee = strings(rawEligibility['employee']);
+    if (employee === null) return fail('eligibility.employee must be an array of country codes');
+    const contractor = strings(rawEligibility['contractor']);
+    if (contractor === null) return fail('eligibility.contractor must be an array of country codes');
+    const residence = rawEligibility['residence'];
+    if (residence !== undefined && residence !== null && typeof residence !== 'string') {
+      return fail('eligibility.residence must be a country code when present');
+    }
+    eligibility = {
+      employee: employee.map((code) => code.toUpperCase()),
+      contractor: contractor.map((code) => code.toUpperCase()),
+      residence: typeof residence === 'string' && residence.trim().length > 0 ? residence.trim().toUpperCase() : null,
+    };
+  }
+
+  const rawScope = raw['remote_scope'];
+  let remoteScope: RemoteScope | null = null;
+  if (rawScope !== undefined && rawScope !== null) {
+    if (typeof rawScope !== 'string' || !REMOTE_SCOPES.includes(rawScope as RemoteScope)) {
+      return fail(`remote_scope must be one of ${REMOTE_SCOPES.join(', ')}`);
+    }
+    remoteScope = rawScope as RemoteScope;
+  }
+
   const profile: UserProfile = {
     strengths,
+    language_proficiency: proficiency,
+    eligibility,
+    remote_scope: remoteScope,
     headline: headline.trim(),
     capabilities,
     domains,
@@ -348,6 +433,21 @@ export const compilePromptContext = (profile: UserProfile): string => {
     .join('\n');
 };
 
+/**
+ * The countries a remote posting must name under the user's scope. `worldwide` and
+ * `europe` yield no list: they are recorded but not enforced yet.
+ */
+const remoteCountriesFor = (profile: UserProfile): string[] => {
+  switch (profile.remote_scope) {
+    case 'residence':
+      return profile.eligibility.residence === null ? [] : [profile.eligibility.residence];
+    case 'countries':
+      return profile.countries.map((code) => code.toUpperCase());
+    default:
+      return [];
+  }
+};
+
 /** Compile the profile into the spec the daily funnel runs on. */
 export const compileProfile = (
   profile: UserProfile,
@@ -367,6 +467,13 @@ export const compileProfile = (
       exclude_terms: profile.exclude_terms.map((value) => value.toLowerCase()),
       min_salary: isHard('min_salary') ? profile.min_salary : null,
       max_age_days: options.maxAgeDays ?? DEFAULT_MAX_AGE_DAYS,
+      excluded_languages: Object.entries(profile.language_proficiency)
+        .filter(([, entry]) => entry.usage === 'unwilling')
+        .map(([code]) => code),
+      employee_countries: profile.eligibility.employee,
+      contractor_countries: profile.eligibility.contractor,
+      remote_scope: profile.remote_scope,
+      remote_countries: remoteCountriesFor(profile),
     },
     soft: {
       languages: isSoft('languages') ? profile.languages : [],

@@ -63,4 +63,7 @@ export const profile: UserProfile = {
   daily_cap: 2,
   scoring_budget: 120,
   strengths: DEFAULT_STRENGTHS,
+  language_proficiency: {},
+  eligibility: { employee: [], contractor: [], residence: null },
+  remote_scope: null,
 };

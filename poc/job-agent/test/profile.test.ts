@@ -193,3 +193,62 @@ test('the prompt context states which conditions are soft', () => {
   if (!result.ok) return;
   assert.match(compilePromptContext(result.profile), /Languages \(preferred\): it; en/);
 });
+
+// --- Language proficiency, eligibility and remote scope -------------------------------
+
+test('language proficiency is graded, and an unwilling language is excluded from the spec', () => {
+  const result = parseProfile({
+    ...raw,
+    language_proficiency: {
+      en: { level: 'professional', usage: 'limited' },
+      it: { level: 'native', usage: 'comfortable' },
+      de: { level: 'basic', usage: 'unwilling' },
+    },
+  });
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  const spec = compileProfile(result.profile);
+  assert.deepEqual(spec.hard.excluded_languages, ['de'], 'a language the user will not use is a hard exclusion');
+  assert.equal(result.profile.language_proficiency['en']?.level, 'professional');
+});
+
+test('an unknown proficiency level or usage is named in the error', () => {
+  const badLevel = parseProfile({ ...raw, language_proficiency: { en: { level: 'expert', usage: 'comfortable' } } });
+  assert.equal(badLevel.ok, false);
+  if (!badLevel.ok) assert.match(badLevel.error, /language_proficiency\.en\.level/);
+
+  const badUsage = parseProfile({ ...raw, language_proficiency: { en: { level: 'fluent', usage: 'maybe' } } });
+  assert.equal(badUsage.ok, false);
+  if (!badUsage.ok) assert.match(badUsage.error, /language_proficiency\.en\.usage/);
+});
+
+test('employee and contractor eligibility are kept separate and default to unknown', () => {
+  const result = parseProfile({
+    ...raw,
+    eligibility: { employee: ['IT'], contractor: ['IT', 'DE'], residence: 'IT' },
+  });
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  const spec = compileProfile(result.profile);
+  assert.deepEqual(spec.hard.employee_countries, ['IT']);
+  assert.deepEqual(spec.hard.contractor_countries, ['IT', 'DE']);
+
+  const silent = parsed();
+  assert.deepEqual(compileProfile(silent).hard.employee_countries, [], 'not stated means no filter');
+});
+
+test('remote scope is never assumed worldwide', () => {
+  assert.equal(parsed().remote_scope, null, 'an unstated remote scope stays unstated');
+
+  const scoped = parseProfile({ ...raw, remote_scope: 'residence', eligibility: { residence: 'IT' } });
+  assert.equal(scoped.ok, true);
+  if (scoped.ok) {
+    const hard = compileProfile(scoped.profile).hard;
+    assert.equal(hard.remote_scope, 'residence');
+    assert.deepEqual(hard.remote_countries, ['IT'], 'residence scope allows the residence country only');
+  }
+
+  const bad = parseProfile({ ...raw, remote_scope: 'anywhere' });
+  assert.equal(bad.ok, false);
+  if (!bad.ok) assert.match(bad.error, /remote_scope/);
+});
