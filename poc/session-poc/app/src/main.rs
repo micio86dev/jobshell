@@ -6,7 +6,13 @@
 //! and exposes those capabilities over Tauri commands.
 
 mod agent;
+mod profile;
 mod ziprecruiter;
+
+use profile::{
+    identity_get, identity_save, onboarding_complete, onboarding_status, search_create, search_duplicate,
+    search_history, search_list, search_save, search_set_status,
+};
 
 use std::path::PathBuf;
 use std::process::Child;
@@ -344,7 +350,17 @@ fn main() {
             agent_stop_sources,
             ziprecruiter_connect,
             ziprecruiter_fetch,
-            ziprecruiter_client_document
+            ziprecruiter_client_document,
+            onboarding_status,
+            onboarding_complete,
+            identity_get,
+            identity_save,
+            search_list,
+            search_create,
+            search_save,
+            search_duplicate,
+            search_set_status,
+            search_history
         ])
         .build(tauri::generate_context!())
         .expect("error while building the Tauri application")
