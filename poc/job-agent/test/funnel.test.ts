@@ -10,7 +10,9 @@ import {
   detectLanguage,
   parseSalary,
   postingKey,
+  MAX_SOFT_BONUS,
   rankAndCap,
+  softBonus,
 } from '../src/funnel.ts';
 import { compileProfile, parseProfile } from '../src/profile.ts';
 import type { Posting } from '../src/sources/types.ts';
@@ -341,4 +343,38 @@ test('an unknown fact is counted only when its posting is kept, not when it is l
 
   assert.equal(result.dropped[0]?.reason, 'language', 'the posting is dropped for language');
   assert.equal(result.unknown_date, 0, 'a dropped posting leaves no unknown behind in the evidence');
+});
+
+// --- Soft preferences rank, they never drop -----------------------------------------
+
+test('a preferred language that matches adds a ranking bonus, and a miss is still kept', () => {
+  const italian = make({
+    id: 'it',
+    title: 'Sviluppatore Rust',
+    description: 'Lavoro con il team per la nostra azienda e la nostra esperienza con Rust.',
+  });
+  const english = make({ id: 'en' });
+  const compiled = spec({ languages: ['it'], strengths: { languages: 'preferred' } });
+
+  const result = applyHardFilters([italian, english], compiled, new Set(), NOW);
+  assert.deepEqual(result.kept.map(postingKey), ['remoteok:it', 'remoteok:en'], 'a preference never drops');
+  assert.ok(softBonus(italian, compiled.soft) > 0, 'the match ranks higher');
+  assert.equal(softBonus(english, compiled.soft), 0, 'the miss is not penalised, only not boosted');
+});
+
+test('the soft bonus is capped, so no set of preferences can outrank the threshold alone', () => {
+  const compiled = spec({ languages: ['en'], remote_modes: ['remote'], strengths: { languages: 'preferred', remote_modes: 'preferred' } });
+  const bonus = softBonus(make({ remote_hint: true }), compiled.soft);
+  assert.equal(bonus, 0.1, 'two matches, five points each');
+  assert.ok(bonus <= MAX_SOFT_BONUS);
+});
+
+test('an unknown fact earns no bonus', () => {
+  const compiled = spec({ remote_modes: ['remote'], strengths: { remote_modes: 'preferred' } });
+  assert.equal(softBonus(make({ remote_hint: null }), compiled.soft), 0, 'unknown is never read as matching');
+});
+
+test('a profile without soft preferences gets no bonus at all', () => {
+  const compiled = spec();
+  assert.equal(softBonus(make({}), compiled.soft), 0);
 });

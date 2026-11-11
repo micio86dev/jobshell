@@ -7,7 +7,7 @@
  * do and what did it cost" — every number here is measured, not estimated.
  */
 import type { AgentConfig } from './config.ts';
-import { applyHardFilters, postingKey, rankAndCap, type DropReason, type Scored } from './funnel.ts';
+import { applyHardFilters, postingKey, rankAndCap, softBonus, type DropReason, type Scored } from './funnel.ts';
 import { judgePosting, type FetchLike, type HttpResponse, type JeDeps, type StackStance } from './jev.ts';
 import { assertAutomationAllowed, Pacer, resolvePolicy } from './policy.ts';
 import type { Spec } from './profile.ts';
@@ -248,7 +248,9 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
       stance: judged.stack_stance.stance,
       gap: judged.gap,
     });
-    scored.push({ posting, probability: judged.fit.probability });
+    // Soft preferences lift the ranking; they never drop, and the bonus is capped.
+    const lifted = Math.min(1, judged.fit.probability + softBonus(posting, deps.spec.soft));
+    scored.push({ posting, probability: lifted });
   }
   const scoringMs = Date.now() - scoringStarted;
 

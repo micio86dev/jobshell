@@ -353,6 +353,51 @@ export const applyHardFilters = (
   };
 };
 
+/** Points one satisfied soft preference adds, and the most the bonus can reach. */
+export const SOFT_POINT = 0.05;
+export const MAX_SOFT_BONUS = 0.1;
+
+/**
+ * How much a posting's soft preferences lift its ranking. A preference never drops a
+ * posting, and an unknown fact never counts as a match.
+ */
+export const softBonus = (posting: Posting, soft: Spec['soft']): number => {
+  let points = 0;
+  const text = `${posting.title} ${posting.description ?? ''}`;
+
+  if (soft.languages.length > 0) {
+    const language = detectLanguage(text);
+    if (language !== null && soft.languages.includes(language)) points += 1;
+  }
+
+  if (soft.remote_modes.length > 0 && posting.remote_hint !== null) {
+    const matches = posting.remote_hint
+      ? soft.remote_modes.includes('remote')
+      : soft.remote_modes.some((mode) => mode !== 'remote');
+    if (matches) points += 1;
+  }
+
+  if (soft.countries.length > 0) {
+    const country = (posting.location ?? '').length === 0 ? null : detectCountry(posting.location ?? '');
+    if (country !== null && soft.countries.map((code) => code.toUpperCase()).includes(country)) points += 1;
+  }
+
+  if (soft.contract_types.length > 0) {
+    const contract = detectContract(text);
+    if (contract !== null && soft.contract_types.includes(contract)) points += 1;
+  }
+
+  if (soft.min_salary !== null && posting.salary !== null) {
+    const parsed = parseSalaryRange(posting.salary);
+    if (parsed !== null && parsed.currency === soft.min_salary.currency) {
+      const postingTop = annualise(parsed.high, parsed.period);
+      if (postingTop >= annualise(soft.min_salary.amount, soft.min_salary.period)) points += 1;
+    }
+  }
+
+  return Math.min(MAX_SOFT_BONUS, points * SOFT_POINT);
+};
+
 export type Scored = { posting: Posting; probability: number };
 
 export type RankResult = {
