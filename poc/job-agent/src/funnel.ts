@@ -124,7 +124,9 @@ export const detectCountry = (location: string): string | null => {
   const text = location.toLowerCase();
   for (const [code, names] of Object.entries(COUNTRY_NAMES)) {
     // `\b` is ASCII-only and misses "Österreich"; a letter lookaround is Unicode-aware.
-    if (names.some((name) => new RegExp(`(?<!\\p{L})${name}(?!\\p{L})`, 'u').test(text))) return code;
+    // Names are escaped first, so a future name with a regex metacharacter cannot break the match.
+    const escape = (name: string): string => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (names.some((name) => new RegExp(`(?<!\\p{L})${escape(name)}(?!\\p{L})`, 'u').test(text))) return code;
   }
   return null;
 };
@@ -304,6 +306,10 @@ export const applyHardFilters = (
 
     // A city constraint only means something for a posting the user would attend.
     const acceptsOnsite = spec.hard.remote_modes.some((mode) => mode !== 'remote');
+    // A posting whose mode is unknown may be onsite: its city is unknown, not satisfied.
+    if (acceptsOnsite && posting.remote_hint === null && spec.hard.onsite_cities.length > 0) {
+      unknownFacts.push('city');
+    }
     if (acceptsOnsite && posting.remote_hint === false && spec.hard.onsite_cities.length > 0) {
       const reachable = spec.hard.onsite_cities.some((city) => place.toLowerCase().includes(city.toLowerCase()));
       if (reachable) {

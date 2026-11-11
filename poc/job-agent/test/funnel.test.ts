@@ -427,3 +427,13 @@ test('an unstated remote scope is never read as worldwide, so no remote posting 
   const result = applyHardFilters([german], spec(), new Set(), NOW);
   assert.deepEqual(result.kept.map(postingKey), ['remoteok:rg']);
 });
+
+test('an onsite city the posting may not satisfy is routed to verification when remote is unknown', () => {
+  const compiled = spec({ remote_modes: ['remote', 'onsite'], onsite_cities: ['Milano'], countries: [] });
+  const unknownMode = make({ id: 'um', location: 'Anywhere', remote_hint: null });
+  const result = applyHardFilters([unknownMode], compiled, new Set(), NOW);
+
+  assert.deepEqual(result.kept.map(postingKey), ['remoteok:um'], 'an unknown mode never drops a posting');
+  assert.equal(result.unknown_city, 1);
+  assert.ok(result.needs_verification[0]?.unknown.includes('city'));
+});
