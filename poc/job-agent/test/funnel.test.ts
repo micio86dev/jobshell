@@ -378,3 +378,52 @@ test('a profile without soft preferences gets no bonus at all', () => {
   const compiled = spec();
   assert.equal(softBonus(make({}), compiled.soft), 0);
 });
+
+// --- Graded languages, separate eligibility, remote scope ----------------------------
+
+test('a language the user will not work in drops its postings, a limited one keeps them', () => {
+  const english = make({ id: 'en' });
+  const unwilling = spec({ language_proficiency: { en: { level: 'professional', usage: 'unwilling' } } });
+  const dropped = applyHardFilters([english], unwilling, new Set(), NOW);
+  assert.equal(dropped.dropped[0]?.reason, 'language');
+
+  const limited = spec({ language_proficiency: { en: { level: 'professional', usage: 'limited' } } });
+  const kept = applyHardFilters([english], limited, new Set(), NOW);
+  assert.deepEqual(kept.kept.map(postingKey), ['remoteok:en'], 'a limited language is not an exclusion');
+});
+
+test('employee and contractor postings are judged against their own eligibility', () => {
+  const eligibility = { employee: ['IT'], contractor: ['DE'], residence: null };
+  const compiled = spec({ contract_types: ['freelance', 'employee'], eligibility });
+
+  const employeeAbroad = make({ id: 'ea', location: 'Berlin, Deutschland', description: 'Full-time role with the team.' });
+  const dropped = applyHardFilters([employeeAbroad], compiled, new Set(), NOW);
+  assert.equal(dropped.dropped[0]?.reason, 'eligibility', 'an employee role outside employee eligibility is dropped');
+
+  const freelanceInside = make({ id: 'fi', location: 'Berlin, Deutschland', description: 'Freelance contract with the team.' });
+  const kept = applyHardFilters([freelanceInside], compiled, new Set(), NOW);
+  assert.deepEqual(kept.kept.map(postingKey), ['remoteok:fi'], 'contractor eligibility is not employee eligibility');
+});
+
+test('an unstated eligibility or an unknown location never drops a posting', () => {
+  const compiled = spec({ contract_types: ['freelance', 'employee'], eligibility: { employee: ['IT'], contractor: [], residence: null } });
+  const unknownPlace = make({ id: 'up', location: 'Anywhere', description: 'Full-time role with the team.' });
+  const result = applyHardFilters([unknownPlace], compiled, new Set(), NOW);
+  assert.deepEqual(result.kept.map(postingKey), ['remoteok:up']);
+});
+
+test('remote scope residence drops a remote posting outside the residence country', () => {
+  const compiled = spec({ remote_scope: 'residence', eligibility: { employee: [], contractor: [], residence: 'IT' } });
+  const german = make({ id: 'rg', location: 'Berlin, Deutschland', remote_hint: true });
+  const unknownPlace = make({ id: 'ru', location: 'Anywhere', remote_hint: true });
+  const result = applyHardFilters([german, unknownPlace], compiled, new Set(), NOW);
+
+  assert.equal(result.dropped[0]?.reason, 'remote_scope');
+  assert.deepEqual(result.kept.map(postingKey), ['remoteok:ru'], 'an unknown place is kept, never guessed');
+});
+
+test('an unstated remote scope is never read as worldwide, so no remote posting is dropped for scope', () => {
+  const german = make({ id: 'rg', location: 'Berlin, Deutschland', remote_hint: true });
+  const result = applyHardFilters([german], spec(), new Set(), NOW);
+  assert.deepEqual(result.kept.map(postingKey), ['remoteok:rg']);
+});

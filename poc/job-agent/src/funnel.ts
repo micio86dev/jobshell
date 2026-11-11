@@ -20,7 +20,9 @@ export type DropReason =
   | 'contract_type'
   | 'excluded_company'
   | 'excluded_term'
-  | 'salary_below_floor';
+  | 'salary_below_floor'
+  | 'eligibility'
+  | 'remote_scope';
 
 export type Dropped = { posting: Posting; reason: DropReason; detail: string };
 
@@ -252,6 +254,15 @@ export const applyHardFilters = (
       }
     }
 
+    // A language the user will not work in excludes; a limited one only ranks lower.
+    if (spec.hard.excluded_languages.length > 0) {
+      const language = detectLanguage(`${posting.title} ${posting.description ?? ''}`);
+      if (language !== null && spec.hard.excluded_languages.includes(language)) {
+        dropped.push({ posting, reason: 'language', detail: `${language} is not a language the profile works in` });
+        continue;
+      }
+    }
+
     const remoteOnly =
       spec.hard.remote_modes.length > 0 &&
       spec.hard.remote_modes.every((mode) => mode === 'remote');
@@ -272,6 +283,21 @@ export const applyHardFilters = (
         unknownFacts.push('country');
       } else if (!spec.hard.countries.map((code) => code.toUpperCase()).includes(detected)) {
         dropped.push({ posting, reason: 'country', detail: `detected ${detected}` });
+        continue;
+      }
+    }
+
+    // Remote work is limited to the user's scope only when a scope is stated; an
+    // unstated scope drops nothing, and an unknown place is kept.
+    if (
+      (spec.hard.remote_scope === 'residence' || spec.hard.remote_scope === 'countries') &&
+      posting.remote_hint === true &&
+      spec.hard.remote_countries.length > 0 &&
+      place.length > 0
+    ) {
+      const country = detectCountry(place);
+      if (country !== null && !spec.hard.remote_countries.includes(country)) {
+        dropped.push({ posting, reason: 'remote_scope', detail: `remote work in ${country} is outside the scope` });
         continue;
       }
     }
@@ -301,6 +327,17 @@ export const applyHardFilters = (
     } else if (!spec.hard.contract_types.includes(contract)) {
       dropped.push({ posting, reason: 'contract_type', detail: contract });
       continue;
+    }
+
+    // Employee and contractor eligibility are separate. An empty list is not stated, and an
+    // unknown contract shape or place is kept.
+    if (contract !== null && place.length > 0) {
+      const allowed = contract === 'employee' ? spec.hard.employee_countries : spec.hard.contractor_countries;
+      const country = detectCountry(place);
+      if (allowed.length > 0 && country !== null && !allowed.includes(country)) {
+        dropped.push({ posting, reason: 'eligibility', detail: `${contract} work in ${country} is outside eligibility` });
+        continue;
+      }
     }
 
     const company = (posting.company ?? '').toLowerCase();
