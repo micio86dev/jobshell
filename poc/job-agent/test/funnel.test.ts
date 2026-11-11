@@ -296,3 +296,32 @@ test('a dropped posting is never also routed to verification', () => {
   assert.equal(result.dropped[0]?.reason, 'country');
   assert.deepEqual(result.needs_verification, []);
 });
+
+// --- Review fixes: range tops and accented country names --------------------------
+
+test('salary: a range whose top meets the floor is kept, not judged by its bottom', () => {
+  const range = make({ id: 'r', salary: '90k - 120k USD' });
+  const result = applyHardFilters(
+    [range],
+    spec({ min_salary: { amount: 100000, currency: 'USD', period: 'year' } }),
+    new Set(),
+    NOW,
+  );
+  assert.deepEqual(result.kept.map(postingKey), ['remoteok:r']);
+});
+
+test('salary: a range whose top is below the floor is dropped', () => {
+  const range = make({ id: 'r', salary: '80k - 90k USD' });
+  const result = applyHardFilters(
+    [range],
+    spec({ min_salary: { amount: 100000, currency: 'USD', period: 'year' } }),
+    new Set(),
+    NOW,
+  );
+  assert.equal(result.dropped[0]?.reason, 'salary_below_floor');
+});
+
+test('country: an accented name is recognised as a whole word', () => {
+  assert.equal(detectCountry('Wien, Österreich'), 'AT');
+  assert.equal(detectCountry('Vienna, Austria'), 'AT');
+});

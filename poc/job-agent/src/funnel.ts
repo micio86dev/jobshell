@@ -121,7 +121,8 @@ const COUNTRY_NAMES: Record<string, readonly string[]> = {
 export const detectCountry = (location: string): string | null => {
   const text = location.toLowerCase();
   for (const [code, names] of Object.entries(COUNTRY_NAMES)) {
-    if (names.some((name) => new RegExp(`\\b${name}\\b`).test(text))) return code;
+    // `\b` is ASCII-only and misses "Österreich"; a letter lookaround is Unicode-aware.
+    if (names.some((name) => new RegExp(`(?<!\\p{L})${name}(?!\\p{L})`, 'u').test(text))) return code;
   }
   return null;
 };
@@ -151,6 +152,17 @@ const annualise = (amount: number, period: 'year' | 'day' | 'hour'): number =>
  * keeps the posting: an unreadable salary is not a rejection.
  */
 export const parseSalary = (raw: string): { amount: number; currency: string | null; period: 'year' | 'day' | 'hour' } | null => {
+  const range = parseSalaryRange(raw);
+  return range === null ? null : { amount: range.low, currency: range.currency, period: range.period };
+};
+
+/**
+ * The bottom and top of a published salary. A range is compared by its top when
+ * judging a floor: a posting that pays up to the floor is not a rejection.
+ */
+export const parseSalaryRange = (
+  raw: string,
+): { low: number; high: number; currency: string | null; period: 'year' | 'day' | 'hour' } | null => {
   const text = raw.toLowerCase();
   const numbers = [...text.matchAll(/(\d[\d.,]*)\s*(k)?/g)]
     .map((match) => {
@@ -171,7 +183,12 @@ export const parseSalary = (raw: string): { amount: number; currency: string | n
       ? 'hour'
       : 'year';
 
-  return { amount: numbers[0] ?? 0, currency, period };
+  return {
+    low: Math.min(...numbers),
+    high: Math.max(...numbers),
+    currency,
+    period,
+  };
 };
 
 const ageInDays = (iso: string, now: Date): number | null => {
@@ -302,16 +319,16 @@ export const applyHardFilters = (
 
     const floor = spec.hard.min_salary;
     if (floor !== null && posting.salary !== null) {
-      const parsed = parseSalary(posting.salary);
+      const parsed = parseSalaryRange(posting.salary);
       // Compare only when the currency matches; a different currency is not a drop.
       if (parsed !== null && parsed.currency !== null && parsed.currency === floor.currency) {
-        const postingAnnual = annualise(parsed.amount, parsed.period);
+        const postingTop = annualise(parsed.high, parsed.period);
         const floorAnnual = annualise(floor.amount, floor.period);
-        if (postingAnnual < floorAnnual) {
+        if (postingTop < floorAnnual) {
           dropped.push({
             posting,
             reason: 'salary_below_floor',
-            detail: `${parsed.amount} ${parsed.currency}/${parsed.period} is below ${floor.amount} ${floor.currency}/${floor.period}`,
+            detail: `${parsed.high} ${parsed.currency}/${parsed.period} is below ${floor.amount} ${floor.currency}/${floor.period}`,
           });
           continue;
         }
