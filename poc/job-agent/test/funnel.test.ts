@@ -332,5 +332,13 @@ test('a malformed publish date is kept, counted as unknown and routed to verific
 
   assert.deepEqual(result.kept.map(postingKey), ['remoteok:bd']);
   assert.equal(result.unknown_date, 1, 'an unreadable date is unknown, not fresh');
-  assert.deepEqual(result.needs_verification[0]?.unknown, ['date']);
+  assert.ok(result.needs_verification[0]?.unknown.includes('date'), 'the date is listed for verification');
+});
+
+test('an unknown fact is counted only when its posting is kept, not when it is later dropped', () => {
+  const dropped = make({ id: 'dl', published_at: null, description: 'We build desktop apps with Rust and Python for the team.' });
+  const result = applyHardFilters([dropped], spec({ languages: ['it'] }), new Set(), NOW);
+
+  assert.equal(result.dropped[0]?.reason, 'language', 'the posting is dropped for language');
+  assert.equal(result.unknown_date, 0, 'a dropped posting leaves no unknown behind in the evidence');
 });

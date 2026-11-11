@@ -206,12 +206,15 @@ export const applyHardFilters = (
 ): FunnelResult => {
   const kept: Posting[] = [];
   const dropped: Dropped[] = [];
-  let unknownDate = 0;
-  let unknownLanguage = 0;
-  let unknownRemote = 0;
-  let unknownCountry = 0;
-  let unknownCity = 0;
-  let unknownContract = 0;
+  // Counted only for postings that are kept: a dropped posting leaves no unknown behind.
+  const unknownCounts: Record<UnknownFact, number> = {
+    date: 0,
+    language: 0,
+    remote: 0,
+    country: 0,
+    city: 0,
+    contract: 0,
+  };
   const needsVerification: NeedsVerification[] = [];
 
   for (const posting of postings) {
@@ -222,13 +225,11 @@ export const applyHardFilters = (
     }
 
     if (posting.published_at === null) {
-      unknownDate += 1;
       unknownFacts.push('date');
     } else {
       const age = ageInDays(posting.published_at, now);
       if (age === null) {
         // An unreadable date is unknown, never fresh: count it and route it.
-        unknownDate += 1;
         unknownFacts.push('date');
       } else if (age > spec.hard.max_age_days) {
         dropped.push({
@@ -244,7 +245,6 @@ export const applyHardFilters = (
       const haystack = `${posting.title} ${posting.description ?? ''}`;
       const language = detectLanguage(haystack);
       if (language === null) {
-        unknownLanguage += 1;
         unknownFacts.push('language');
       } else if (!spec.hard.languages.includes(language)) {
         dropped.push({ posting, reason: 'language', detail: `detected ${language}` });
@@ -257,7 +257,6 @@ export const applyHardFilters = (
       spec.hard.remote_modes.every((mode) => mode === 'remote');
     if (remoteOnly) {
       if (posting.remote_hint === null) {
-        unknownRemote += 1;
         unknownFacts.push('remote');
       } else if (!posting.remote_hint) {
         dropped.push({ posting, reason: 'remote_mode', detail: 'the profile accepts remote only' });
@@ -270,7 +269,6 @@ export const applyHardFilters = (
     if (spec.hard.countries.length > 0) {
       const detected = place.length === 0 ? null : detectCountry(place);
       if (detected === null) {
-        unknownCountry += 1;
         unknownFacts.push('country');
       } else if (!spec.hard.countries.map((code) => code.toUpperCase()).includes(detected)) {
         dropped.push({ posting, reason: 'country', detail: `detected ${detected}` });
@@ -285,7 +283,6 @@ export const applyHardFilters = (
       if (reachable) {
         // fine
       } else if (place.length === 0) {
-        unknownCity += 1;
         unknownFacts.push('city');
       } else {
         dropped.push({ posting, reason: 'onsite_city', detail: place });
@@ -300,7 +297,6 @@ export const applyHardFilters = (
     if (spec.hard.contract_types.length === 0) {
       // no constraint
     } else if (contract === null) {
-      unknownContract += 1;
       unknownFacts.push('contract');
     } else if (!spec.hard.contract_types.includes(contract)) {
       dropped.push({ posting, reason: 'contract_type', detail: contract });
@@ -339,6 +335,7 @@ export const applyHardFilters = (
       }
     }
 
+    for (const fact of unknownFacts) unknownCounts[fact] += 1;
     if (unknownFacts.length > 0) needsVerification.push({ posting, unknown: unknownFacts });
     kept.push(posting);
   }
@@ -347,12 +344,12 @@ export const applyHardFilters = (
     kept,
     dropped,
     needs_verification: needsVerification,
-    unknown_date: unknownDate,
-    unknown_language: unknownLanguage,
-    unknown_remote: unknownRemote,
-    unknown_country: unknownCountry,
-    unknown_city: unknownCity,
-    unknown_contract: unknownContract,
+    unknown_date: unknownCounts.date,
+    unknown_language: unknownCounts.language,
+    unknown_remote: unknownCounts.remote,
+    unknown_country: unknownCounts.country,
+    unknown_city: unknownCounts.city,
+    unknown_contract: unknownCounts.contract,
   };
 };
 
