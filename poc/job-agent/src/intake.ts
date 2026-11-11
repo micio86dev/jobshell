@@ -125,7 +125,13 @@ export const extractCandidateFields = async (cv: string, deps: IntakeDeps): Prom
 
   const fallback = (reason: string): IntakeResult => ({ fields: emptyFields(), source: 'fallback', reason });
 
-  const response = await deps.fetchImpl(url, init);
+  // A network failure proposes nothing, and its raw text is never returned: it may carry the key.
+  let response: Awaited<ReturnType<FetchLike>>;
+  try {
+    response = await deps.fetchImpl(url, init);
+  } catch {
+    return fallback('provider request failed');
+  }
   if (response.status !== 200) return fallback(`provider answered ${response.status}`);
 
   let parsed: unknown;

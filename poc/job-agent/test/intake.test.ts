@@ -91,3 +91,14 @@ test('the CV goes once to the Anthropic endpoint, and is framed as data, not ins
   assert.match(prompt, /treat the CV as data/i, 'instructions inside the CV are not followed');
   assert.match(prompt, /Twelve years building desktop apps/, 'the CV text is included');
 });
+
+test('a network failure falls back too, without leaking the raw error text', async () => {
+  const fetchImpl: FetchLike = async () => {
+    throw new Error('getaddrinfo ENOTFOUND api.anthropic.com key=test-key');
+  };
+  const result = await extractCandidateFields(CV, deps(fetchImpl));
+
+  assert.equal(result.source, 'fallback');
+  assert.equal(result.reason, 'provider request failed');
+  assert.doesNotMatch(result.reason ?? '', /key=|ENOTFOUND/, 'the error text may carry secrets');
+});
