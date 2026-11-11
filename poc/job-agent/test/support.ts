@@ -1,6 +1,6 @@
 // Shared fixtures for the bridge and MCP tests. Not a test file itself.
 import type { FetchLike } from '../src/jev.ts';
-import type { UserProfile } from '../src/profile.ts';
+import { DEFAULT_STRENGTHS, type UserProfile } from '../src/profile.ts';
 
 export const posting = {
   source: 'linkedin',
@@ -62,4 +62,5 @@ export const profile: UserProfile = {
   threshold: 0.9,
   daily_cap: 2,
   scoring_budget: 120,
+  strengths: DEFAULT_STRENGTHS,
 };

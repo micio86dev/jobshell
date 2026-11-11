@@ -6,6 +6,7 @@ import { test } from 'node:test';
 import { asGap, askSystemOne, scoreFit, stackStance, type FetchLike } from '../src/jev.ts';
 import { planQueries, extractQueries } from '../src/planner.ts';
 import type { Posting } from '../src/sources/types.ts';
+import { DEFAULT_STRENGTHS } from '../src/profile.ts';
 
 const posting: Posting = {
   source: 'remoteok',
@@ -137,6 +138,7 @@ const profile = {
   threshold: 0.9,
   daily_cap: 2,
   scoring_budget: 120,
+  strengths: DEFAULT_STRENGTHS,
 };
 
 test('the planner asks Anthropic with the documented headers and parses the answer', async () => {

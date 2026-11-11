@@ -141,3 +141,55 @@ test('an empty profile context says "none declared" instead of hiding it', () =>
   const profile = { ...parsed(), accepted_gaps: [] };
   assert.match(compilePromptContext(profile), /Gaps accepted: none declared/);
 });
+
+// --- Strength (mandatory / preferred / acceptable) -------------------------------
+
+test('a profile without strengths keeps every field mandatory, as before', () => {
+  const profile = parsed();
+  const spec = compileProfile(profile);
+  assert.deepEqual(spec.hard.languages, ['it', 'en']);
+  assert.deepEqual(spec.hard.remote_modes, ['remote', 'hybrid']);
+  assert.deepEqual(spec.hard.contract_types, ['freelance']);
+  assert.deepEqual(spec.soft.languages, [], 'nothing is soft unless the user says so');
+});
+
+test('a preferred field moves out of the hard filter into the soft preferences', () => {
+  const result = parseProfile({ ...raw, strengths: { languages: 'preferred', remote_modes: 'mandatory' } });
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  const spec = compileProfile(result.profile);
+  assert.deepEqual(spec.hard.languages, [], 'a preferred language never excludes a posting');
+  assert.deepEqual(spec.soft.languages, ['it', 'en'], 'it still influences ranking');
+  assert.deepEqual(spec.hard.remote_modes, ['remote', 'hybrid']);
+});
+
+test('an acceptable salary floor is neither a filter nor a ranking input', () => {
+  const result = parseProfile({ ...raw, strengths: { min_salary: 'acceptable' } });
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  const spec = compileProfile(result.profile);
+  assert.equal(spec.hard.min_salary, null);
+  assert.equal(spec.soft.min_salary?.amount, 600);
+});
+
+test('an unknown strength key or value is named in the error', () => {
+  const badKey = parseProfile({ ...raw, strengths: { seniority: 'mandatory' } });
+  assert.equal(badKey.ok, false);
+  if (!badKey.ok) assert.match(badKey.error, /strengths/);
+
+  const badValue = parseProfile({ ...raw, strengths: { languages: 'maybe' } });
+  assert.equal(badValue.ok, false);
+  if (!badValue.ok) assert.match(badValue.error, /strengths\.languages/);
+});
+
+test('exclusions stay hard whatever strengths say', () => {
+  const result = parseProfile({ ...raw, strengths: { exclude_terms: 'preferred' } });
+  assert.equal(result.ok, false, 'exclusions are not a strength-bearing field');
+});
+
+test('the prompt context states which conditions are soft', () => {
+  const result = parseProfile({ ...raw, strengths: { languages: 'preferred' } });
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.match(compilePromptContext(result.profile), /Languages \(preferred\): it; en/);
+});

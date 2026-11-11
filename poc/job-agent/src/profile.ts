@@ -18,6 +18,35 @@ export type SalaryPeriod = 'year' | 'day' | 'hour';
 
 export type SalaryFloor = { amount: number; currency: string; period: SalaryPeriod };
 
+/**
+ * How binding a preference is. `mandatory` filters postings out; `preferred` and
+ * `acceptable` only feed ranking. A profile written before strengths existed has
+ * every field mandatory, so its behaviour does not change.
+ */
+export type Strength = 'mandatory' | 'preferred' | 'acceptable';
+
+/** The preferences that can be softened. Exclusions are never soft. */
+export const STRENGTH_KEYS = [
+  'languages',
+  'remote_modes',
+  'onsite_cities',
+  'countries',
+  'contract_types',
+  'min_salary',
+] as const;
+export type StrengthKey = (typeof STRENGTH_KEYS)[number];
+export type Strengths = Record<StrengthKey, Strength>;
+
+/** Every preference mandatory: the behaviour of a profile written before strengths. */
+export const DEFAULT_STRENGTHS: Strengths = {
+  languages: 'mandatory',
+  remote_modes: 'mandatory',
+  onsite_cities: 'mandatory',
+  countries: 'mandatory',
+  contract_types: 'mandatory',
+  min_salary: 'mandatory',
+};
+
 export type UserProfile = {
   /** What the person calls themselves, in their own words. */
   headline: string;
@@ -53,9 +82,12 @@ export type UserProfile = {
   daily_cap: number;
   /** How many survivors one run is allowed to judge. A cost ceiling, not a quality one. */
   scoring_budget: number;
+  /** Per-preference strength. Always complete: absent input means `mandatory`. */
+  strengths: Strengths;
 };
 
 export type Spec = {
+  /** Mandatory preferences only: these drop postings. A soft field is empty here. */
   hard: {
     languages: string[];
     remote_modes: RemoteMode[];
@@ -67,6 +99,15 @@ export type Spec = {
     min_salary: SalaryFloor | null;
     /** A posting older than this is stale; null date is kept and flagged. */
     max_age_days: number;
+  };
+  /** Preferred and acceptable preferences: they rank, they never drop. */
+  soft: {
+    languages: string[];
+    remote_modes: RemoteMode[];
+    onsite_cities: string[];
+    countries: string[];
+    contract_types: ContractType[];
+    min_salary: SalaryFloor | null;
   };
   /** Search strings derived from capability and seniority, not from a stack list. */
   queries: string[];
@@ -85,6 +126,7 @@ const REMOTE_MODES: readonly RemoteMode[] = ['remote', 'hybrid', 'onsite'];
 const CONTRACTS: readonly ContractType[] = ['employee', 'freelance'];
 const SENIORITIES: readonly Seniority[] = ['junior', 'mid', 'senior', 'lead'];
 const PERIODS: readonly SalaryPeriod[] = ['year', 'day', 'hour'];
+const STRENGTHS: readonly Strength[] = ['mandatory', 'preferred', 'acceptable'];
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -216,7 +258,23 @@ export const parseProfile = (raw: unknown): ProfileResult => {
     minSalary = { amount, currency: currency.trim().toUpperCase(), period: period as SalaryPeriod };
   }
 
+  const strengths: Strengths = { ...DEFAULT_STRENGTHS };
+  const rawStrengths = raw['strengths'];
+  if (rawStrengths !== undefined && rawStrengths !== null) {
+    if (!isRecord(rawStrengths)) return fail('strengths must be an object when present');
+    for (const [key, value] of Object.entries(rawStrengths)) {
+      if (!STRENGTH_KEYS.includes(key as StrengthKey)) {
+        return fail(`strengths.${key} is not a softenable preference (use ${STRENGTH_KEYS.join(', ')})`);
+      }
+      if (typeof value !== 'string' || !STRENGTHS.includes(value as Strength)) {
+        return fail(`strengths.${key} must be one of ${STRENGTHS.join(', ')}`);
+      }
+      strengths[key as StrengthKey] = value as Strength;
+    }
+  }
+
   const profile: UserProfile = {
+    strengths,
     headline: headline.trim(),
     capabilities,
     domains,
@@ -269,16 +327,19 @@ export const compilePromptContext = (profile: UserProfile): string => {
   const salary = profile.min_salary === null
     ? 'not stated'
     : `${profile.min_salary.amount} ${profile.min_salary.currency}/${profile.min_salary.period}`;
+  // A non-mandatory preference says so, so the scorer never reads it as a hard rule.
+  const tag = (key: StrengthKey, name: string): string =>
+    profile.strengths[key] === 'mandatory' ? name : `${name} (${profile.strengths[key]})`;
   return [
     `Headline: ${profile.headline}`,
     `Capabilities: ${profile.capabilities.join('; ')}`,
     `Domains: ${profile.domains.length > 0 ? profile.domains.join('; ') : 'not stated'}`,
     `Seniority: ${profile.seniority} (${profile.years_experience} years)`,
-    `Working modes accepted: ${profile.remote_modes.length > 0 ? profile.remote_modes.join('; ') : 'any'}`,
-    `Countries accepted: ${profile.countries.length > 0 ? profile.countries.join('; ') : 'any'}`,
-    `Contract: ${profile.contract_types.join('; ')}`,
-    `Languages: ${profile.languages.length > 0 ? profile.languages.join('; ') : 'any'}`,
-    `Minimum pay: ${salary}`,
+    `${tag('remote_modes', 'Working modes accepted')}: ${profile.remote_modes.length > 0 ? profile.remote_modes.join('; ') : 'any'}`,
+    `${tag('countries', 'Countries accepted')}: ${profile.countries.length > 0 ? profile.countries.join('; ') : 'any'}`,
+    `${tag('contract_types', 'Contract')}: ${profile.contract_types.join('; ')}`,
+    `${tag('languages', 'Languages')}: ${profile.languages.length > 0 ? profile.languages.join('; ') : 'any'}`,
+    `${tag('min_salary', 'Minimum pay')}: ${salary}`,
     `Gaps accepted: ${profile.accepted_gaps.length > 0 ? profile.accepted_gaps.join('; ') : 'none declared'}`,
     `CV: ${profile.cv}`,
     profile.portfolio === null ? null : `Portfolio: ${profile.portfolio}`,
@@ -291,21 +352,34 @@ export const compilePromptContext = (profile: UserProfile): string => {
 export const compileProfile = (
   profile: UserProfile,
   options: { maxAgeDays?: number; queryLimit?: number } = {},
-): Spec => ({
-  hard: {
-    languages: profile.languages,
-    remote_modes: profile.remote_modes,
-    onsite_cities: profile.onsite_cities,
-    countries: profile.countries,
-    contract_types: profile.contract_types,
-    exclude_companies: profile.exclude_companies.map((value) => value.toLowerCase()),
-    exclude_terms: profile.exclude_terms.map((value) => value.toLowerCase()),
-    min_salary: profile.min_salary,
-    max_age_days: options.maxAgeDays ?? DEFAULT_MAX_AGE_DAYS,
-  },
-  queries: compileQueries(profile, options.queryLimit ?? 8),
-  threshold: profile.threshold,
-  daily_cap: profile.daily_cap,
-  scoring_budget: profile.scoring_budget,
-  prompt_context: compilePromptContext(profile),
-});
+): Spec => {
+  const s = profile.strengths;
+  const isHard = (key: StrengthKey): boolean => s[key] === 'mandatory';
+  const isSoft = (key: StrengthKey): boolean => s[key] !== 'mandatory';
+  return {
+    hard: {
+      languages: isHard('languages') ? profile.languages : [],
+      remote_modes: isHard('remote_modes') ? profile.remote_modes : [],
+      onsite_cities: isHard('onsite_cities') ? profile.onsite_cities : [],
+      countries: isHard('countries') ? profile.countries : [],
+      contract_types: isHard('contract_types') ? profile.contract_types : [],
+      exclude_companies: profile.exclude_companies.map((value) => value.toLowerCase()),
+      exclude_terms: profile.exclude_terms.map((value) => value.toLowerCase()),
+      min_salary: isHard('min_salary') ? profile.min_salary : null,
+      max_age_days: options.maxAgeDays ?? DEFAULT_MAX_AGE_DAYS,
+    },
+    soft: {
+      languages: isSoft('languages') ? profile.languages : [],
+      remote_modes: isSoft('remote_modes') ? profile.remote_modes : [],
+      onsite_cities: isSoft('onsite_cities') ? profile.onsite_cities : [],
+      countries: isSoft('countries') ? profile.countries : [],
+      contract_types: isSoft('contract_types') ? profile.contract_types : [],
+      min_salary: isSoft('min_salary') ? profile.min_salary : null,
+    },
+    queries: compileQueries(profile, options.queryLimit ?? 8),
+    threshold: profile.threshold,
+    daily_cap: profile.daily_cap,
+    scoring_budget: profile.scoring_budget,
+    prompt_context: compilePromptContext(profile),
+  };
+};
