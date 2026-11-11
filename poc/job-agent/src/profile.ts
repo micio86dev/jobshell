@@ -407,7 +407,10 @@ export const compileQueries = (profile: UserProfile, limit = 8): string[] => {
   return unique.slice(0, limit);
 };
 
-/** A compact, human-readable state for the scorer. No secret, no PII beyond the CV. */
+/**
+ * The structured summary the scorer receives with every posting. It is built from the
+ * user's reviewed fields only: the raw CV text and the portfolio link are never sent.
+ */
 export const compilePromptContext = (profile: UserProfile): string => {
   const salary = profile.min_salary === null
     ? 'not stated'
@@ -415,6 +418,16 @@ export const compilePromptContext = (profile: UserProfile): string => {
   // A non-mandatory preference says so, so the scorer never reads it as a hard rule.
   const tag = (key: StrengthKey, name: string): string =>
     profile.strengths[key] === 'mandatory' ? name : `${name} (${profile.strengths[key]})`;
+  // Each language with its level and usage, so the judge weighs a language by how well it is spoken.
+  const codes = [...new Set([...profile.languages, ...Object.keys(profile.language_proficiency)])];
+  const languageLine = codes.length === 0
+    ? 'any'
+    : codes
+      .map((code) => {
+        const entry = profile.language_proficiency[code];
+        return entry === undefined ? code : `${code}: ${entry.level}, ${entry.usage}`;
+      })
+      .join('; ');
   return [
     `Headline: ${profile.headline}`,
     `Capabilities: ${profile.capabilities.join('; ')}`,
@@ -423,11 +436,9 @@ export const compilePromptContext = (profile: UserProfile): string => {
     `${tag('remote_modes', 'Working modes accepted')}: ${profile.remote_modes.length > 0 ? profile.remote_modes.join('; ') : 'any'}`,
     `${tag('countries', 'Countries accepted')}: ${profile.countries.length > 0 ? profile.countries.join('; ') : 'any'}`,
     `${tag('contract_types', 'Contract')}: ${profile.contract_types.join('; ')}`,
-    `${tag('languages', 'Languages')}: ${profile.languages.length > 0 ? profile.languages.join('; ') : 'any'}`,
+    `${tag('languages', 'Languages')}: ${languageLine}`,
     `${tag('min_salary', 'Minimum pay')}: ${salary}`,
     `Gaps accepted: ${profile.accepted_gaps.length > 0 ? profile.accepted_gaps.join('; ') : 'none declared'}`,
-    `CV: ${profile.cv}`,
-    profile.portfolio === null ? null : `Portfolio: ${profile.portfolio}`,
   ]
     .filter((line): line is string => line !== null)
     .join('\n');

@@ -252,3 +252,24 @@ test('remote scope is never assumed worldwide', () => {
   assert.equal(bad.ok, false);
   if (!bad.ok) assert.match(bad.error, /remote_scope/);
 });
+
+// --- The judge receives a structured summary, never the raw CV ------------------------
+
+test('the prompt context never carries the raw CV text', () => {
+  const context = compilePromptContext(parsed());
+  assert.doesNotMatch(context, /Twelve years building things/, 'the CV text stays on the device');
+  assert.doesNotMatch(context, /CV:/, 'no raw CV section is sent');
+});
+
+test('the prompt context states each language with its level and usage', () => {
+  const result = parseProfile({
+    ...raw,
+    language_proficiency: {
+      en: { level: 'fluent', usage: 'comfortable' },
+      it: { level: 'native', usage: 'comfortable' },
+    },
+  });
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.match(compilePromptContext(result.profile), /en: fluent, comfortable/);
+});
