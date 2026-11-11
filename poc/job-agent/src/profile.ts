@@ -439,9 +439,7 @@ export const compilePromptContext = (profile: UserProfile): string => {
     `${tag('languages', 'Languages')}: ${languageLine}`,
     `${tag('min_salary', 'Minimum pay')}: ${salary}`,
     `Gaps accepted: ${profile.accepted_gaps.length > 0 ? profile.accepted_gaps.join('; ') : 'none declared'}`,
-  ]
-    .filter((line): line is string => line !== null)
-    .join('\n');
+  ].join('\n');
 };
 
 /**
