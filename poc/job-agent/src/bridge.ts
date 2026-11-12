@@ -16,7 +16,7 @@ import { parsePostings } from './posting-input.ts';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 
 import { judgePosting, type JeDeps } from './jev.ts';
-import { keyStatus, readKey, type KeyringReader } from './keys.ts';
+import { readKey, type KeyringReader } from './keys.ts';
 import type { Posting } from './sources/types.ts';
 
 export type ScoreRequest = { postings: Posting[] };
@@ -46,14 +46,11 @@ export const mapWithConcurrency = async <T, R>(
   limit: number,
   run: (item: T) => Promise<R>,
 ): Promise<R[]> => {
-  const results: R[] = new Array(items.length);
-  let next = 0;
+  const results: R[] = new Array<R>(items.length);
+  // One iterator shared by every worker: each item is taken once, in order, with no index to misread.
+  const entries = items.entries();
   const worker = async (): Promise<void> => {
-    for (;;) {
-      const index = next;
-      next += 1;
-      const item = items[index];
-      if (item === undefined) return;
+    for (const [index, item] of entries) {
       results[index] = await run(item);
     }
   };
@@ -162,15 +159,13 @@ export const handleHealth = (deps: BridgeDeps): { ok: true; threshold: number } 
  *
  * A local program can still forge the header, but a program running as this user can
  * read the keyring directly, so the token never protected against it.
- */
-/**
+ *
  * The ID of this extension, fixed by the `key` in `extension/manifest.json`.
  *
  * Accepting any `chrome-extension://` origin would let any other installed extension with
  * host permission for 127.0.0.1 spend the user's tokens. A web page cannot forge an
  * extension origin at all, so this closes the remaining hole.
  */
-/** The only origin allowed to score: the openjob browser extension. */
 export const EXTENSION_ID = 'afigpbinfehpdhoolpoickipbklcogoa';
 export const EXTENSION_ORIGIN = `chrome-extension://${EXTENSION_ID}`;
 
@@ -231,7 +226,7 @@ export const startBridge = async (deps: BridgeDeps, port = 0): Promise<BridgeSer
     const origin = request.headers['origin'];
 
     if (request.method === 'OPTIONS') {
-      send(response, 204, {}, origin);
+      send(response, 204, {}, origin, boundPortFor(server));
       return;
     }
 
@@ -272,7 +267,7 @@ export const startBridge = async (deps: BridgeDeps, port = 0): Promise<BridgeSer
             boundPort,
           );
         })
-        .catch((error: unknown) => {
+        .catch(() => {
           // The request body is never quoted back: a parse error can contain a fragment of it.
           send(response, 400, { error: 'bad request' }, origin, boundPortFor(server));
         });
