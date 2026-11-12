@@ -275,3 +275,17 @@ test('ziprecruiter: the app file becomes postings, and a missing file is not an 
   assert.throws(() => readPostings('/tmp/bad.json', () => 'not json'), /not valid JSON/);
   assert.throws(() => readPostings('/tmp/bad.json', () => '{"nope":1}'), /no postings array/);
 });
+
+test('remotive: a field of the wrong type is absent, and an item that is not an object is skipped', () => {
+  const body = JSON.stringify({
+    jobs: [
+      { id: 1, title: 42, url: 'https://example.test/1' },
+      'not an object',
+      { id: 2, title: 'Rust Engineer', url: 'https://example.test/2', salary: 99 },
+    ],
+  });
+  const postings = remotive.extractPostings(body);
+  assert.equal(postings.length, 1, 'the numeric title drops its item; the string is skipped');
+  assert.equal(postings[0]?.title, 'Rust Engineer');
+  assert.equal(postings[0]?.salary, null, 'a salary that is not text is absent, not guessed');
+});
