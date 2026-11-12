@@ -67,6 +67,28 @@ export type StepStatus = { work: StepState; location: StepState; languages: Step
 /** A problem that stops the finish: a message key, with the values its message needs. */
 export type Issue = { key: MessageKey; params?: Record<string, string> };
 
+/** The steps that hold the fields the finish checks. */
+export type StepId = 'cv' | 'work' | 'location' | 'languages';
+
+const STEP_OF_ISSUE: Partial<Record<MessageKey, StepId>> = {
+  'issue.cv': 'cv',
+  'issue.headline': 'work',
+  'issue.capabilities': 'work',
+  'issue.seniority': 'work',
+  'issue.years': 'work',
+  'issue.contract': 'work',
+  'issue.remoteScope': 'location',
+  'issue.remoteCountries': 'location',
+  'issue.residence': 'location',
+  'issue.languageIncomplete': 'languages',
+  'issue.languageNone': 'languages',
+  'issue.primaryMissing': 'languages',
+  'issue.primaryNotSpoken': 'languages',
+};
+
+/** The step whose field an issue is about, so the summary can point at it. */
+export const stepOfIssue = (issue: Issue): StepId => STEP_OF_ISSUE[issue.key] ?? 'cv';
+
 /** The profile in the agent's own key names: what the validator reads. */
 export type ProfilePayload = {
   cv: string;

@@ -14,6 +14,7 @@ import {
   summaryRows,
   toUserProfile,
   STEP_LABEL_KEYS,
+  stepOfIssue,
   withDefaultPrimary,
   type WizardDraft,
 } from './wizard';
@@ -337,5 +338,20 @@ describe('step labels', () => {
       expect(MESSAGES.en[key]).toBeDefined();
       expect(MESSAGES.it[key]).toBeDefined();
     }
+  });
+});
+
+describe('the step that holds each missing field', () => {
+  it('every issue of an empty draft names a step, so the summary can point at it in red', () => {
+    const result = toUserProfile(emptyDraft());
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    for (const issue of result.issues) {
+      expect(['cv', 'work', 'location', 'languages']).toContain(stepOfIssue(issue));
+    }
+    expect(stepOfIssue({ key: 'issue.years' })).toBe('work');
+    expect(stepOfIssue({ key: 'issue.remoteScope' })).toBe('location');
+    expect(stepOfIssue({ key: 'issue.primaryMissing' })).toBe('languages');
+    expect(stepOfIssue({ key: 'issue.cv' })).toBe('cv');
   });
 });

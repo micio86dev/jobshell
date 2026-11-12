@@ -32,6 +32,7 @@ import {
   hydrateDraft,
   profileToDraft,
   STEP_LABEL_KEYS,
+  stepOfIssue,
   stepStatus,
   summaryRows,
   toUserProfile,
@@ -77,6 +78,14 @@ const stepIndex = computed(() => STEPS.indexOf(step.value));
 
 const errorText = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 const issueText = (issue: Issue): string => t(issue.key, issue.params);
+
+/** Every problem the finish would report right now, live, so the flagged steps stay current. */
+const pendingIssues = computed<Issue[]>(() => {
+  const result = toUserProfile(draft.value);
+  return result.ok ? [] : result.issues;
+});
+const issuesOf = (item: Step): Issue[] =>
+  item === 'summary' ? [] : pendingIssues.value.filter((issue) => stepOfIssue(issue) === item);
 
 const stateOf = (item: Step): string =>
   item === 'work' || item === 'location' || item === 'languages' ? status.value[item] : 'empty';
@@ -347,7 +356,7 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
           v-for="(item, index) in STEPS"
           :key="item"
           type="button"
-          :class="[{ on: step === item }, stateOf(item)]"
+          :class="[{ on: step === item, 'has-issues': issuesOf(item).length > 0 }, stateOf(item)]"
           :aria-current="step === item ? 'step' : undefined"
           @click="goTo(item)"
         >
@@ -561,6 +570,17 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
         </label>
       </fieldset>
       <p v-if="!finishable" class="hint">{{ t('summary.stillMissing') }}</p>
+      <div v-if="!finishable" class="flagged" role="alert">
+        <p>{{ t('summary.flagged') }}</p>
+        <template v-for="item in STEPS.slice(0, 4)" :key="item">
+          <div v-if="issuesOf(item).length > 0">
+            <button type="button" class="link" @click="goTo(item)">{{ t(STEP_LABEL_KEYS[item]) }}</button>
+            <ul>
+              <li v-for="issue in issuesOf(item)" :key="issue.key">{{ issueText(issue) }}</li>
+            </ul>
+          </div>
+        </template>
+      </div>
       <div class="actions">
         <button type="button" @click="back">{{ t('action.back') }}</button>
         <button type="button" :disabled="!finishable || busy" @click="finish">
@@ -572,3 +592,25 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
     </div>
   </section>
 </template>
+
+<style scoped>
+.steps button.has-issues {
+  border-color: #b42318;
+  color: #b42318;
+}
+.flagged {
+  color: #b42318;
+}
+.flagged ul {
+  margin: 0.25rem 0 0.75rem 1.25rem;
+}
+.flagged button.link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: #b42318;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+</style>
