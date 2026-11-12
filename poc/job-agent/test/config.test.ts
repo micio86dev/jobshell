@@ -140,3 +140,13 @@ test('a credential-shaped key is named by the fragment that matched, not the who
   assert.match(result.error, /api_key/);
   assert.doesNotMatch(result.error, /sk-ant-LEAK/);
 });
+
+test('a base url carrying a credential in its query is refused without echoing it', () => {
+  const secret = 'sk-ant-LEAK-in-the-url';
+  for (const url of [`https://api.example.test/v1?api_key=${secret}`, `https://${secret}@api.example.test`]) {
+    const result = parseConfig({ ...defaultConfig(), base_url: url });
+    assert.equal(result.ok, false, `${url} must be refused`);
+    if (result.ok) continue;
+    assert.doesNotMatch(result.error, /sk-ant-LEAK/);
+  }
+});

@@ -87,6 +87,9 @@ const findCredentialKey = (value: unknown): string | null => {
   return null;
 };
 
+/** A credential in a URL: a credential-shaped query key, a key prefix, or a user part before the host. */
+const URL_CREDENTIAL = /([?&](api[_-]?key|token|secret|password|key)=)|(\/\/[^/@\s]+@)|(^|[-_\/=?&])(sk|pk|ghp|xox[bp])[-_]/i;
+
 /** A source id is a plain name, so it can be shown in an error without carrying a secret. */
 const SOURCE_ID = /^[a-z0-9_-]{1,40}$/i;
 /** The prefixes API keys and tokens start with: an id that carries one is refused as a key, not a name. */
@@ -147,7 +150,7 @@ const parseSources = (raw: unknown): SourcesResult => {
   return { ok: true, sources };
 };
 
-/** The non-secret settings. Each message names its field; the values echoed are the ones the user wrote. */
+/** The non-secret settings. Each message names its field. No typed value is echoed, so a secret cannot leak through an error. */
 const configShape = z.object(
   {
     // The value typed is never echoed: a secret pasted into this field must not reach an error.
@@ -172,6 +175,10 @@ const configShape = z.object(
     base_url: z
       .string({ error: 'base_url must be a non-empty string when present' })
       .refine(notBlank, { error: 'base_url must be a non-empty string when present' })
+      // A credential in the URL (a query key or a user part) would make the file leak it when copied.
+      .refine((value) => !URL_CREDENTIAL.test(value), {
+        error: 'base_url must not carry a credential; keep keys in the keyring',
+      })
       .optional(),
   },
   { error: 'the configuration must be a JSON object' },
