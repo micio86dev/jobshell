@@ -318,3 +318,17 @@ test('a null id is absent too: the job keeps its url as identity', () => {
   assert.equal(postings.length, 1, 'JSON null means absent, not an invalid item');
   assert.equal(postings[0]?.id, 'https://example.test/null');
 });
+
+test('a ZipRecruiter file that is not JSON is reported by its position, never by its text', async () => {
+  const { readPostings } = await import('../src/sources/ziprecruiter.ts');
+  const marker = 'MARKER-ZR-7731';
+  let message = '';
+  try {
+    readPostings('/tmp/bad.json', () => `{"title": "${marker}", broken`);
+  } catch (error) {
+    message = error instanceof Error ? error.message : String(error);
+  }
+  assert.match(message, /not valid JSON/);
+  assert.match(message, /at character \d+/);
+  assert.equal(message.includes(marker), false, 'the file text must not reach the message');
+});

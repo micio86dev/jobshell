@@ -57,7 +57,9 @@ export const readPostings = (path: string, read: (path: string) => string = (p) 
   try {
     parsed = JSON.parse(raw);
   } catch (error) {
-    throw new Error(`ziprecruiter: ${path} is not valid JSON: ${error instanceof Error ? error.message : String(error)}`);
+    // Node quotes a fragment of the input in its message: keep only the position, never the text.
+    const position = error instanceof Error ? /at position (\d+)/.exec(error.message)?.[1] : undefined;
+    throw new Error(`ziprecruiter: ${path} is not valid JSON${position === undefined ? '' : ` (at character ${position})`}`);
   }
 
   const items = asRecord(parsed)?.['postings'];
