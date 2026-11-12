@@ -6,7 +6,7 @@
  * daily run uses, and answers with probabilities the extension paints on the page.
  *
  * It binds to 127.0.0.1 only and accepts a score request only from a
- * `chrome-extension://` origin, so a web page cannot spend the user's tokens. It reads the
+ * origin of this one extension (EXTENSION_ORIGIN), so a web page cannot spend the user's tokens. It reads the
  * key from the keyring on each request; writing a key is the desktop app's job.
  *
  * The handlers are mostly pure: the judgment calls and the keyring read are injected, and the
