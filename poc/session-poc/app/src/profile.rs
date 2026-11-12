@@ -63,6 +63,16 @@ pub async fn identity_get(state: State<'_, Arc<AppState>>) -> Result<Option<Vers
         .map_err(|error| error.to_string())
 }
 
+/// Extract the proposed profile fields from a CV through the agent's CLI entry. Nothing is
+/// written here: the wizard shows the proposal and the user decides field by field.
+#[tauri::command]
+pub async fn cv_extract(cv: String) -> Result<String, String> {
+    tokio::task::spawn_blocking(move || crate::agent::run_extract_cv(&cv))
+        .await
+        .map_err(|error| error.to_string())?
+        .map_err(|error| error.to_string())
+}
+
 /// Save a new identity version and carry it to the searches the apply scope reaches.
 #[tauri::command]
 pub async fn identity_save(

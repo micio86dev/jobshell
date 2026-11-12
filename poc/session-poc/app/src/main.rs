@@ -10,7 +10,7 @@ mod profile;
 mod ziprecruiter;
 
 use profile::{
-    identity_get, identity_save, onboarding_complete, onboarding_status, search_create, search_duplicate,
+    cv_extract, identity_get, identity_save, onboarding_complete, onboarding_status, search_create, search_duplicate,
     search_history, search_list, search_save, search_set_status,
 };
 
@@ -370,6 +370,7 @@ fn main() {
             onboarding_complete,
             identity_get,
             identity_save,
+            cv_extract,
             search_list,
             search_create,
             search_save,

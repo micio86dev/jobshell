@@ -272,6 +272,49 @@ pub fn run_with_profile(profile: &Path, dry_run: bool) -> Result<String> {
     Ok(stdout)
 }
 
+/// The CV extractor entry, relative to the agent package. The CV travels on stdin, never in argv.
+pub fn extract_cv_args() -> [&'static str; 1] {
+    ["src/extract-cv-cli.ts"]
+}
+
+/// Map the extractor's exit code to what the UI shows. Exit 0 (a proposal) and 1 (a fallback
+/// with its fixed reason) both return the JSON verdict; exit 2 is a refusal whose reason the
+/// CLI printed; anything else is an error, never a silent success.
+pub fn interpret_extract(exit_code: Option<i32>, stdout: &str, stderr: &str) -> Result<String> {
+    match exit_code {
+        Some(0) | Some(1) => Ok(stdout.trim().to_string()),
+        Some(2) => {
+            let reason = stderr.trim();
+            anyhow::bail!("{}", if reason.is_empty() { "the CV could not be extracted" } else { reason })
+        }
+        _ => anyhow::bail!("the CV extractor did not finish"),
+    }
+}
+
+/// Run the extractor on one CV text and return its JSON verdict.
+pub fn run_extract_cv(cv: &str) -> Result<String> {
+    use std::io::Write;
+    use std::process::Stdio;
+
+    let mut child = Command::new("node")
+        .args(extract_cv_args())
+        .current_dir(agent_dir())
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .context("starting the CV extractor")?;
+    if let Some(mut stdin) = child.stdin.take() {
+        stdin.write_all(cv.as_bytes()).context("sending the CV to the extractor")?;
+    }
+    let output = child.wait_with_output().context("waiting for the CV extractor")?;
+    interpret_extract(
+        output.status.code(),
+        &String::from_utf8_lossy(&output.stdout),
+        &String::from_utf8_lossy(&output.stderr),
+    )
+}
+
 /// The browser the app drives: a dedicated Chrome for Testing, because a branded Chrome
 /// ignores `--load-extension` (the finding recorded in the Phase 0 evidence).
 pub fn chrome_path() -> PathBuf {
@@ -516,5 +559,35 @@ mod search_profile_tests {
         assert!(search_profile_path("../profile").is_err(), "a parent path is refused");
         assert!(search_profile_path("a/b").is_err(), "a separator is refused");
         assert!(search_profile_path("").is_err(), "an empty id is refused");
+    }
+}
+
+#[cfg(test)]
+mod cv_extract_tests {
+    use super::*;
+
+    #[test]
+    fn the_extractor_is_the_cli_entry_under_the_agent_package() {
+        assert_eq!(extract_cv_args(), ["src/extract-cv-cli.ts"]);
+    }
+
+    #[test]
+    fn a_proposal_and_a_fallback_are_both_handed_back_as_the_json_verdict() {
+        let proposal = r#"{"source":"model","reason":null,"fields":{}}"#;
+        assert_eq!(interpret_extract(Some(0), proposal, "").expect("proposal"), proposal);
+        let fallback = r#"{"source":"fallback","reason":"provider answered 401","fields":{}}"#;
+        assert_eq!(interpret_extract(Some(1), fallback, "").expect("fallback"), fallback);
+    }
+
+    #[test]
+    fn a_refusal_is_an_error_carrying_the_cli_reason() {
+        let error = interpret_extract(Some(2), "", "no Anthropic key is stored\n").expect_err("refused");
+        assert!(error.to_string().contains("no Anthropic key is stored"));
+    }
+
+    #[test]
+    fn a_killed_or_unexpected_exit_is_an_error_not_a_success() {
+        assert!(interpret_extract(None, "{}", "").is_err(), "no status is not success");
+        assert!(interpret_extract(Some(99), "{}", "").is_err(), "an unknown code is not success");
     }
 }
