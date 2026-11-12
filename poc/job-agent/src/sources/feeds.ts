@@ -66,13 +66,8 @@ const bareList = (payload: unknown): unknown[] => {
   return parsed.success ? parsed.data : [];
 };
 
-const jsonChallenge = (body: string): Challenge => {
-  if (/captcha/i.test(body)) return 'captcha';
-  if (/\b429\b|too many requests/i.test(body)) return 'rate_limited';
-  return 'none';
-};
-
-const rssChallenge = (body: string): Challenge => {
+/** A feed, JSON or RSS, refuses politely; it never answers with a CAPTCHA page. */
+const feedChallenge = (body: string): Challenge => {
   if (/captcha/i.test(body)) return 'captcha';
   if (/\b429\b|too many requests/i.test(body)) return 'rate_limited';
   return 'none';
@@ -92,7 +87,7 @@ const jsonFeed = (
 ): SourceAdapter => ({
   id,
   buildSearchUrl: () => url,
-  detectChallenge: jsonChallenge,
+  detectChallenge: feedChallenge,
   extractPostings: (body) => {
     const payload = safeJson(body);
     return payload === null ? [] : map(payload);
@@ -115,7 +110,7 @@ const rssFeed = (
 ): SourceAdapter => ({
   id,
   buildSearchUrl: (query: string) => url(query),
-  detectChallenge: rssChallenge,
+  detectChallenge: feedChallenge,
   extractPostings: (body) =>
     parseRss(body)
       .map(map)
@@ -361,11 +356,11 @@ export const hn = jsonFeed(
         const firstLine = body.split(/(?<=\.)\s|\n/)[0] ?? body;
         return posting({
           source: 'hn',
-          id: String(hit.objectID ?? ''),
+          id: String(hit.objectID),
           title: firstLine.slice(0, 120),
           company: null,
           location: null,
-          url: `https://news.ycombinator.com/item?id=${String(hit.objectID ?? '')}`,
+          url: `https://news.ycombinator.com/item?id=${String(hit.objectID)}`,
           remote_hint: mentionsRemote(body),
           description: body,
           published_at: toIsoDate(hit.created_at),
