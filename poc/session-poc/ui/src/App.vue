@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { invoke } from '@tauri-apps/api/core';
 import { onMounted, ref } from 'vue';
+import OnboardingWizard from './onboarding/OnboardingWizard.vue';
 
 type SelectedView = {
   key: string;
@@ -275,14 +276,23 @@ const probeKeyring = async (): Promise<void> => {
   }
 };
 
+// Null until the first-run flag is read; the wizard opens only when onboarding is not complete.
+const onboardingDone = ref<boolean | null>(null);
+const editingProfile = ref(false);
+
 onMounted(() => {
   void loadRun();
   void loadKeyStatus();
+  invoke<boolean>('onboarding_status')
+    .then((done) => (onboardingDone.value = done))
+    .catch(() => (onboardingDone.value = true));
 });
 </script>
 
 <template>
   <main>
+    <OnboardingWizard v-if="onboardingDone === false" mode="first" @done="onboardingDone = true" />
+    <template v-else>
     <header>
       <h1>openjob.dev</h1>
       <nav>
@@ -380,6 +390,15 @@ onMounted(() => {
     </section>
 
     <section v-else-if="tab === 'settings'">
+      <div class="actions">
+        <button type="button" @click="editingProfile = true">Edit profile</button>
+      </div>
+      <OnboardingWizard
+        v-if="editingProfile"
+        mode="edit"
+        @done="editingProfile = false"
+        @cancel="editingProfile = false"
+      />
       <p class="meta">
         Le chiavi finiscono nel portachiavi di macOS, mai in un file. Il portachiavi è
         l'unico posto che l'agente legge.
@@ -462,6 +481,7 @@ onMounted(() => {
         </tbody>
       </table>
     </section>
+    </template>
   </main>
 </template>
 

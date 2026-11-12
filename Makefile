@@ -11,9 +11,9 @@ ROOT  := $(shell pwd)
 # scatter one run across several timestamped directories.
 OUT   := $(ROOT)/evidence/run/$(shell date -u +%Y%m%dT%H%M%SZ)
 
-.PHONY: test test-ts test-rs typecheck wiring agent-test agent agent-bridge agent-mcp bench probe persistence crash soak chrome spike desktop dmg phase0 clean clean-deps
+.PHONY: test test-ts test-rs typecheck wiring agent-test ui-test agent agent-bridge agent-mcp bench probe persistence crash soak chrome spike desktop dmg phase0 clean clean-deps
 
-test: test-ts test-rs typecheck wiring agent-test
+test: test-ts test-rs typecheck wiring agent-test ui-test
 
 test-ts:
 	cd poc/runtime-bench && set -a && . ../../scripts/env.sh && set +a && \
@@ -41,6 +41,11 @@ typecheck:
 # Every name the Vue UI passes to invoke() must exist in generate_handler!.
 wiring:
 	./scripts/check-tauri-wiring.sh
+
+# The onboarding wizard's pure rules and boundary schemas: offline vitest.
+ui-test:
+	cd poc/session-poc/ui && set -a && . ../../../scripts/env.sh && set +a && \
+		npx vitest run
 
 # The Phase 0.5 browser job agent: offline tests, then the three entry points.
 agent-test:
