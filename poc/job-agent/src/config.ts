@@ -269,7 +269,18 @@ export const loadConfig = (options: LoadOptions = {}): AgentConfig => {
     throw new Error(`config: ${path} is not valid JSON${position === undefined ? '' : ` (at character ${position})`}`);
   }
 
-  const result = parseConfig(isRecord(raw) ? { ...defaultConfig(), ...raw } : raw);
+  // A file that names a provider but no model gets that provider's default model, never another one's.
+  const merged = isRecord(raw)
+    ? {
+        ...defaultConfig(),
+        ...raw,
+        model:
+          raw['model'] === undefined && PROVIDERS.includes(raw['provider'] as Provider)
+            ? DEFAULT_MODEL[raw['provider'] as Provider]
+            : (raw['model'] ?? defaultConfig().model),
+      }
+    : raw;
+  const result = parseConfig(merged);
   if (!result.ok) throw new Error(result.error);
   return result.config;
 };

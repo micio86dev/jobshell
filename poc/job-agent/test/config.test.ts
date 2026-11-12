@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import {
+  DEFAULT_MODEL,
   defaultConfig,
   loadConfig,
   parseConfig,
@@ -180,4 +181,10 @@ test('an unknown field whose name looks like a secret is refused without echoing
   assert.equal(result.ok, false);
   if (result.ok) return;
   assert.doesNotMatch(result.error, /sk-ant-LEAK/);
+});
+
+test('a qwen configuration without a model gets the qwen model, not the Anthropic one', () => {
+  const config = loadConfig({ path: '/tmp/agent.json', readFile: () => '{"provider":"qwen"}' });
+  assert.equal(config.provider, 'qwen');
+  assert.equal(config.model, DEFAULT_MODEL.qwen, 'the default model belongs to the provider the file chose');
 });
