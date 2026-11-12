@@ -9,6 +9,8 @@
  * is dropped to null or to an empty list, never guessed. A failed call proposes
  * nothing and says why.
  */
+import { z } from 'zod';
+
 import { ANTHROPIC_URL, ANTHROPIC_VERSION } from './planner.ts';
 import type { FetchLike } from './jev.ts';
 import { LANGUAGE_LEVELS, type LanguageLevel, type Seniority } from './profile.ts';
@@ -50,23 +52,6 @@ const MAX_YEARS = 60;
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-/** Languages as codes: a two-letter ISO 639-1 code, deduplicated; a level outside the scale is null. */
-const languagesOf = (value: unknown): ProposedLanguage[] => {
-  if (!Array.isArray(value)) return [];
-  const out: ProposedLanguage[] = [];
-  for (const item of value as unknown[]) {
-    if (!isRecord(item) || typeof item['code'] !== 'string') continue;
-    const code = item['code'].trim().toLowerCase();
-    if (!/^[a-z]{2}$/.test(code) || out.some((existing) => existing.code === code)) continue;
-    const level = typeof item['level'] === 'string' && LANGUAGE_LEVELS.includes(item['level'] as LanguageLevel)
-      ? (item['level'] as LanguageLevel)
-      : null;
-    out.push({ code, level });
-    if (out.length === MAX_LIST) break;
-  }
-  return out;
-};
-
 const emptyFields = (): ProposedFields => ({
   headline: null,
   capabilities: [],
@@ -76,31 +61,56 @@ const emptyFields = (): ProposedFields => ({
   languages: [],
 });
 
-/** Keep only non-empty strings, trimmed, de-duplicated, and bounded in size. */
-const textList = (value: unknown): string[] => {
-  if (!Array.isArray(value)) return [];
-  const out: string[] = [];
-  for (const item of value as unknown[]) {
-    if (typeof item !== 'string') continue;
-    const text = item.trim().slice(0, MAX_TEXT);
-    if (text.length === 0 || out.some((existing) => existing.toLowerCase() === text.toLowerCase())) continue;
-    out.push(text);
-    if (out.length === MAX_LIST) break;
-  }
-  return out;
+/**
+ * The model's answer, validated field by field. A field that does not fit is dropped to its
+ * empty value (null, or an empty list), never guessed and never failing the whole answer.
+ */
+const boundedText = z.string().trim().min(1).max(MAX_TEXT);
+const textList = z
+  .array(z.unknown())
+  .catch([])
+  .transform((items) => {
+    const out: string[] = [];
+    for (const item of items) {
+      const parsed = boundedText.safeParse(item);
+      if (!parsed.success || out.some((existing) => existing.toLowerCase() === parsed.data.toLowerCase())) continue;
+      out.push(parsed.data);
+      if (out.length === MAX_LIST) break;
+    }
+    return out;
+  });
+const languageItem = z.object({
+  code: z.string().trim().toLowerCase().regex(/^[a-z]{2}$/),
+  level: z.enum(LANGUAGE_LEVELS).nullable().catch(null),
+});
+const languageList = z
+  .array(z.unknown())
+  .catch([])
+  .transform((items) => {
+    const out: ProposedLanguage[] = [];
+    for (const item of items) {
+      const parsed = languageItem.safeParse(item);
+      if (!parsed.success || out.some((existing) => existing.code === parsed.data.code)) continue;
+      out.push(parsed.data);
+      if (out.length === MAX_LIST) break;
+    }
+    return out;
+  });
+
+const modelAnswer = z.object({
+  headline: boundedText.nullable().catch(null),
+  capabilities: textList,
+  domains: textList,
+  seniority: z.enum(SENIORITIES).nullable().catch(null),
+  years_experience: z.number().min(0).max(MAX_YEARS).nullable().catch(null),
+  languages: languageList,
+});
+
+/** Validate an answer object; every field that does not fit becomes its empty value. */
+const proposedFields = (object: Record<string, unknown>): ProposedFields => {
+  const parsed = modelAnswer.safeParse(object);
+  return parsed.success ? parsed.data : emptyFields();
 };
-
-const headlineOf = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const text = value.trim().slice(0, MAX_TEXT);
-  return text.length > 0 ? text : null;
-};
-
-const seniorityOf = (value: unknown): Seniority | null =>
-  typeof value === 'string' && SENIORITIES.includes(value as Seniority) ? (value as Seniority) : null;
-
-const yearsOf = (value: unknown): number | null =>
-  typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= MAX_YEARS ? value : null;
 
 /** The first JSON object in a model answer, even when the model wrapped it in prose. */
 const extractObject = (text: string): Record<string, unknown> | null => {
@@ -178,16 +188,5 @@ export const extractCandidateFields = async (
   const object = extractObject(answerText);
   if (object === null) return fallback('provider answer had no JSON object');
 
-  return {
-    fields: {
-      headline: headlineOf(object['headline']),
-      capabilities: textList(object['capabilities']),
-      domains: textList(object['domains']),
-      seniority: seniorityOf(object['seniority']),
-      years_experience: yearsOf(object['years_experience']),
-      languages: languagesOf(object['languages']),
-    },
-    source: 'model',
-    reason: null,
-  };
+  return { fields: proposedFields(object), source: 'model', reason: null };
 };

@@ -1,3 +1,4 @@
+import { z } from 'zod';
 /**
  * Postings ZipRecruiter's MCP server returned, read from the file the desktop app wrote.
  *
@@ -27,6 +28,21 @@ export const postingsFile = (evidenceDir: string): string => `${evidenceDir}/zip
  * exists but cannot be read is an error, because silently skipping it would hide a real
  * failure behind "no postings today".
  */
+/**
+ * One posting record from the file. A field that does not fit is dropped to nothing; an id or a
+ * title that does not fit drops the whole record, because it cannot be shown or deduplicated.
+ */
+const zipRecruiterPosting = z.object({
+  id: z.string().regex(ID_PATTERN),
+  title: z.string().min(1),
+  company: z.string().nullish().catch(undefined),
+  location: z.string().nullish().catch(undefined),
+  url: z.string().nullish().catch(undefined),
+  description: z.string().nullish().catch(undefined),
+  salary: z.string().nullish().catch(undefined),
+  published_at: z.unknown().optional(),
+});
+
 export const readPostings = (path: string, read: (path: string) => string = (p) => readFileSync(p, 'utf8')): Posting[] => {
   let raw: string;
   try {
@@ -49,28 +65,25 @@ export const readPostings = (path: string, read: (path: string) => string = (p) 
 
   const postings: Posting[] = [];
   for (const item of items) {
-    const job = asRecord(item);
-    if (job === null) continue;
-    const id = typeof job['id'] === 'string' ? job['id'] : null;
-    const title = typeof job['title'] === 'string' ? job['title'] : null;
-    if (id === null || title === null) continue;
-    if (!ID_PATTERN.test(id)) continue;
-    const providedUrl = typeof job['url'] === 'string' ? job['url'] : null;
+    const parsed = zipRecruiterPosting.safeParse(item);
+    if (!parsed.success) continue;
+    const job = parsed.data;
+    const providedUrl = job.url ?? null;
     postings.push(
       posting({
         source: 'ziprecruiter',
-        id,
-        title: text(title),
-        company: typeof job['company'] === 'string' ? job['company'] : null,
-        location: typeof job['location'] === 'string' ? job['location'] : null,
+        id: job.id,
+        title: text(job.title),
+        company: job.company ?? null,
+        location: job.location ?? null,
         url:
           providedUrl !== null && isSafeUrl(providedUrl)
             ? providedUrl
-            : `https://www.ziprecruiter.com/jobs/${encodeURIComponent(id)}`,
-        remote_hint: typeof job['location'] === 'string' ? /remote|remoto/i.test(job['location']) : null,
-        description: typeof job['description'] === 'string' ? text(job['description']).slice(0, 4000) : null,
-        published_at: toIsoDate(job['published_at']),
-        salary: typeof job['salary'] === 'string' ? job['salary'] : null,
+            : `https://www.ziprecruiter.com/jobs/${encodeURIComponent(job.id)}`,
+        remote_hint: job.location === undefined || job.location === null ? null : /remote|remoto/i.test(job.location),
+        description: job.description === undefined || job.description === null ? null : text(job.description).slice(0, 4000),
+        published_at: toIsoDate(job.published_at),
+        salary: job.salary ?? null,
       }),
     );
   }
