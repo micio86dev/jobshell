@@ -39,7 +39,7 @@ A draft can be saved at any step and read back on the next start. Editing a save
 ## Validation and privacy
 
 - `identity_save` asks the agent's validator first. An invalid profile is never stored, whatever the caller.
-- The CV or portfolio text leaves the machine once, when the user asks for analysis. It goes to the Anthropic API with the key read from the keychain under the agent's own service name `openjob-agent`. The key is never an argument, an environment variable or a file, and never appears in output.
+- The CV or portfolio text leaves the machine once, when the user asks for analysis. It goes to the Anthropic API with the key read from the keychain service `dev.openjob.desktop`, which only the desktop app writes. The key is never an argument, an environment variable or a file, and never appears in output.
 - The CV text is stored locally in the profile because the agent's scorer needs it. The job judge receives the structured summary, not the CV (decision L25 in the feature log).
 
 ## How to check
@@ -67,9 +67,20 @@ On macOS the Rust tests need the toolchain 1.98.1 and `RUSTFLAGS="-C link-arg=-W
 - A level the posting states above the user's own drops the posting, whatever the setting.
 - The agent refuses a language that is not a two-letter ISO 639-1 code.
 
+## Configuration
+
+| Variable | Effect | Default |
+| --- | --- | --- |
+| `OPENJOB_EXTRACT_MODEL` | model that reads a CV or portfolio | provider default (`claude-sonnet-5-5`) |
+| `OPENJOB_EXTRACT_MAX_TOKENS` | token budget for the answer | 4000 |
+
+A value that is not a positive integer for the budget is ignored; a blank model counts as unset.
+
 ## Limits and open items
 
-- **Not run:** the real desktop window (`cargo tauri dev`) and a live extraction on a real CV. The live call sends a CV to the provider and needs explicit approval.
+- **Done live:** one extraction on the English CV (Sonnet 5.5 and Haiku 5.5), and one read-only fetch of the RemoteOK feed (98 postings, all https links).
+- **Not run:** the real desktop window (`cargo tauri dev`), by hand. Extraction on the Italian and Spanish CVs needs the user's explicit approval, since it sends the CV to the provider.
+- **Not decided:** removing the old `openjob-agent` keychain entries, which is irreversible and waits for the user's go-ahead.
 - **Not done:** PDF CV intake (only text and `.md`/`.txt`); the UI has no styling pass yet.
 - **Model limit:** strength is one value per group (contract types, remote modes), not per item, because the agent schema has no per-item strength. Languages are always a hard filter.
 - **Interface limit:** only the wizard and the navigation are translated (Italian, English). The results and task panels of `App.vue` keep their Italian labels.
