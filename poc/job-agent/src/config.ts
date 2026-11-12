@@ -40,7 +40,7 @@ const PROVIDERS: readonly Provider[] = ['anthropic', 'qwen'];
 const CREDENTIAL_KEY = /(api[_-]?key|token|secret|password)/i;
 
 export const DEFAULT_MODEL: Record<Provider, string> = {
-  anthropic: 'claude-sonnet-4-5',
+  anthropic: 'claude-sonnet-5-5',
   qwen: 'qwen3-coder-plus',
 };
 
