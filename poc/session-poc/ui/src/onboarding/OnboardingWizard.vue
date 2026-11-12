@@ -7,6 +7,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { keyOf, languageName, setPrimaryLanguage, systemLanguageCode, t } from '../i18n/store';
 import type { MessageKey } from '../i18n/locale';
 import { readCvFile } from './cv-file';
+import { isPortfolioLink, parseCheckResult } from './portfolio-link';
 import {
   cvProposalSchema,
   draftSchema,
@@ -59,7 +60,6 @@ const busy = ref(false);
 // CV and portfolio intake: the CV text lives in the draft, the portfolio text does not
 const proposal = ref<CvProposal | null>(null);
 const accepted = ref({ headline: true, capabilities: true, seniority: true, years_experience: true });
-const portfolioText = ref('');
 
 // New language row
 const newCode = ref('');
@@ -247,27 +247,27 @@ const applySelectedProposal = () => {
   goTo('work');
 };
 
-const portfolioName = ref('');
-
-const onPortfolioFile = async (event: Event) => {
-  const file = (event.target as HTMLInputElement).files?.[0];
-  if (!file) return;
-  try {
-    portfolioText.value = await readCvFile(file);
-    portfolioName.value = file.name;
-  } catch (error) {
-    portfolioName.value = '';
-    notice.value = t('notice.analysisFailed', { reason: errorText(error) });
+const checkPortfolio = async () => {
+  const link = draft.value.portfolio.trim();
+  if (!isPortfolioLink(link)) {
+    notice.value = t('portfolio.invalid');
+    return;
   }
-};
-
-const analysePortfolio = async () => {
   busy.value = true;
   try {
-    const next = readProposal(await invoke<string>('cv_extract', { cv: portfolioText.value, kind: 'portfolio' }));
-    if (next !== null && next.source === 'model') {
-      draft.value = applyPortfolioLanguages(draft.value, next);
-      notice.value = t('notice.portfolioApplied');
+    const check = parseCheckResult(await invoke<string>('portfolio_check', { link }));
+    if (check === null || !check.reachable) {
+      notice.value = t('portfolio.unreachable');
+      return;
+    }
+    // The reachability verdict stays on screen: the language notice is added to it, never replaces it.
+    notice.value = t('portfolio.reachable');
+    if (check.text.trim() !== '') {
+      const next = readProposal(await invoke<string>('cv_extract', { cv: check.text, kind: 'portfolio' }));
+      if (next !== null && next.source === 'model') {
+        draft.value = applyPortfolioLanguages(draft.value, next);
+        notice.value = `${notice.value} ${t('notice.portfolioApplied')}`;
+      }
     }
   } catch (error) {
     notice.value = t('notice.analysisFailed', { reason: errorText(error) });
@@ -275,6 +275,7 @@ const analysePortfolio = async () => {
     busy.value = false;
   }
 };
+
 
 const saveForLater = async () => {
   busy.value = true;
@@ -383,10 +384,9 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
       <fieldset>
         <legend>{{ t('portfolio.title') }}</legend>
         <p>{{ t('portfolio.intro') }}</p>
-        <input type="file" accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown" :aria-label="t('portfolio.title')" @change="onPortfolioFile" />
-        <p v-if="portfolioName" class="notice">{{ t('cv.loaded', { name: portfolioName }) }}</p>
+        <input v-model="draft.portfolio" type="url" inputmode="url" :aria-label="t('portfolio.url')" placeholder="https://" />
         <div class="actions">
-          <button type="button" :disabled="busy || portfolioText.trim() === ''" @click="analysePortfolio">{{ t('portfolio.analyse') }}</button>
+          <button type="button" :disabled="busy || draft.portfolio.trim() === ''" @click="checkPortfolio">{{ t('portfolio.check') }}</button>
         </div>
       </fieldset>
     </div>

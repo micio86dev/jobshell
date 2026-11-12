@@ -32,6 +32,8 @@ export type LanguageItem = { code: string; level: LanguageLevel | null; usage: L
 export type WizardDraft = {
   /** The CV text. The agent needs it to score postings, so a profile cannot be saved without it. */
   cv: string;
+  /** The portfolio link, or an empty string. It is checked when the user confirms it. */
+  portfolio: string;
   headline: string;
   capabilities: string[];
   seniority: Seniority | null;
@@ -84,7 +86,7 @@ export type ProfilePayload = {
   exclude_companies: string[];
   exclude_terms: string[];
   accepted_gaps: string[];
-  portfolio: null;
+  portfolio: string | null;
   threshold: number;
   daily_cap: number;
   scoring_budget: number;
@@ -102,6 +104,7 @@ const AGENT_DEFAULTS = { threshold: 0.9, daily_cap: 2, scoring_budget: 120 } as 
 
 export const emptyDraft = (): WizardDraft => ({
   cv: '',
+  portfolio: '',
   headline: '',
   capabilities: [],
   seniority: null,
@@ -247,7 +250,7 @@ export const toUserProfile = (draft: WizardDraft): ProfileResult => {
       exclude_companies: [],
       exclude_terms: [],
       accepted_gaps: [],
-      portfolio: null,
+      portfolio: draft.portfolio.trim() === '' ? null : draft.portfolio.trim(),
       ...AGENT_DEFAULTS,
       // Languages are always a hard filter, so their strength is always mandatory.
       strengths: {
@@ -335,6 +338,7 @@ export const applyPortfolioLanguages = (draft: WizardDraft, proposal: CvProposal
  */
 export const profileToDraft = (profile: StoredProfile): WizardDraft => ({
   cv: profile.cv,
+  portfolio: profile.portfolio ?? '',
   headline: profile.headline,
   capabilities: profile.capabilities,
   seniority: profile.seniority,
@@ -371,6 +375,7 @@ export const hydrateDraft = (input: DraftInput): WizardDraft => {
   const base = emptyDraft();
   return {
     cv: input.cv ?? base.cv,
+    portfolio: input.portfolio ?? base.portfolio,
     headline: input.headline ?? base.headline,
     capabilities: input.capabilities ?? base.capabilities,
     seniority: input.seniority ?? base.seniority,

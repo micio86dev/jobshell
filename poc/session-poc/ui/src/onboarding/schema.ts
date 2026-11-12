@@ -61,6 +61,7 @@ export type CvProposal = z.infer<typeof cvProposalSchema>;
  */
 export const draftSchema = z.object({
   cv: z.string().max(60_000).optional(),
+  portfolio: z.string().max(2048).optional(),
   headline: z.string().max(60).optional(),
   capabilities: textList.optional(),
   seniority: z.enum(SENIORITIES).nullable().optional(),
@@ -106,6 +107,7 @@ export type DraftInput = z.infer<typeof draftSchema>;
  */
 export const storedProfileSchema = z.object({
   cv: z.string(),
+  portfolio: z.string().max(2048).nullish(),
   headline: z.string(),
   capabilities: textList,
   seniority: z.enum(SENIORITIES),

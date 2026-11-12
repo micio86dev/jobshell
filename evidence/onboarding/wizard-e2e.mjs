@@ -32,6 +32,7 @@ window.__TAURI_INTERNALS__ = {
         headline: 'Desktop engineer', capabilities: ['Rust', 'Python'], domains: [],
         seniority: 'senior', years_experience: 12, languages: [{ code: 'en', level: 'fluent' }] } });
       case 'agent_key_status': return { typesafe: false, anthropic: false, qwen: false };
+      case 'portfolio_check': return JSON.stringify({ reachable: true, status: 200, text: 'English and Italian' });
       default: return null;
     }
   },
@@ -66,11 +67,22 @@ const languageRow = (page, text) => page.locator('li').filter({ hasText: text })
   check('A0 the CV step has no paste field', (await page.locator('textarea').count()) === 0);
   await page.locator('input[type=file]').first().setInputFiles(`${OUT}/cv-fixture.pdf`);
   await page.getByText('Loaded: cv-fixture.pdf').waitFor({ timeout: 10000 });
+  const portfolioInput = page.getByLabel('Portfolio link', { exact: true });
+  await portfolioInput.fill('http://192.168.1.10/portfolio');
+  await page.getByRole('button', { name: 'Check the link', exact: true }).click();
+  await page.getByText('Use a public https address, without a password.').waitFor({ timeout: 5000 });
+  check('A1c a private or plain link is refused before any request', (await callsOf(page, 'portfolio_check')).length === 0);
+  await portfolioInput.fill('https://example.test/portfolio');
+  await page.getByRole('button', { name: 'Check the link', exact: true }).click();
+  await page.getByText('The link answers.').waitFor({ timeout: 10000 });
+  const checks = await callsOf(page, 'portfolio_check');
+  check('A1d a public https link is checked once, and the answer is shown', checks.length === 1 && checks[0].args.link === 'https://example.test/portfolio');
   await page.getByRole('button', { name: 'Analyse', exact: true }).click();
   await page.getByText('CV proposal: choose what to apply').waitFor({ timeout: 10000 });
   await page.getByRole('button', { name: 'Apply the chosen fields' }).click();
   const extracted = await callsOf(page, 'cv_extract');
-  check('A1b the PDF text reaches the extractor as the CV', extracted.length === 1 && extracted[0].args.cv === CV_TEXT && extracted[0].args.kind === 'cv', `calls=${extracted.length}`);
+  const cvCalls = extracted.filter((call) => call.args.kind === 'cv');
+  check('A1b the PDF text reaches the extractor as the CV', cvCalls.length === 1 && cvCalls[0].args.cv === CV_TEXT, `cv calls=${cvCalls.length}`);
   const headline = await page.getByLabel('Headline', { exact: false }).first().inputValue();
   check('A2 CV proposal fills the empty headline', headline === 'Desktop engineer', `headline="${headline}"`);
 
@@ -117,6 +129,7 @@ const languageRow = (page, text) => page.locator('li').filter({ hasText: text })
       profile.strengths?.languages === 'mandatory' &&
       profile.eligibility?.residence === null &&
       profile.threshold === 0.9 &&
+      profile.portfolio === 'https://example.test/portfolio' &&
       typeof profile.cv === 'string' && profile.cv.length > 0,
     `scope=${profile.remote_scope} primary=${profile.primary_language}`);
   check('A11 onboarding is marked complete once', (await callsOf(page, 'onboarding_complete')).length === 1);

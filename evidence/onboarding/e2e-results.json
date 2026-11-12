@@ -1,5 +1,5 @@
 {
-  "total": 22,
+  "total": 24,
   "failed": 0,
   "results": [
     {
@@ -13,9 +13,19 @@
       "detail": ""
     },
     {
+      "name": "A1c a private or plain link is refused before any request",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A1d a public https link is checked once, and the answer is shown",
+      "ok": true,
+      "detail": ""
+    },
+    {
       "name": "A1b the PDF text reaches the extractor as the CV",
       "ok": true,
-      "detail": "calls=1"
+      "detail": "cv calls=1"
     },
     {
       "name": "A2 CV proposal fills the empty headline",

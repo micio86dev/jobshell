@@ -25,7 +25,7 @@
   "exclude_companies": [],
   "exclude_terms": [],
   "accepted_gaps": [],
-  "portfolio": null,
+  "portfolio": "https://example.test/portfolio",
   "threshold": 0.9,
   "daily_cap": 2,
   "scoring_budget": 120,

@@ -84,6 +84,6 @@ A value that is not a positive integer for the budget is ignored; a blank model 
 - **Limit:** a scanned PDF with no text layer is not read (no OCR). The UI has no styling pass yet.
 - **Model limit:** strength is one value per group (contract types, remote modes), not per item, because the agent schema has no per-item strength. Languages are always a hard filter.
 - **Interface limit:** only the wizard and the navigation are translated (Italian, English). The results and task panels of `App.vue` keep their Italian labels.
-- **Portfolio limit:** the portfolio is an uploaded file (PDF, `.txt`, `.md`), not fetched from a link.
+- **Portfolio:** a public https link, checked when the user confirms it. The check is read-only: one GET per hop, a 10-second timeout, a bounded body, and redirects checked hop by hop. Private, loopback and reserved addresses are refused by their text; a public name that points at a private address is not caught (no DNS lookup).
 - **Open product decision:** how seniority and minimum salary act in the funnel (hard filter or ranking). Not implemented; the feature log records it as open.
 - **Open technical item:** a zod boundary for external posting fields inside the agent package.
