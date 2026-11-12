@@ -45,7 +45,10 @@ const number = z
  * list, a boolean) makes the whole item invalid, so it is skipped rather than stored under a
  * meaningless key such as "[object Object]".
  */
-const idValue = z.union([z.string().trim().min(1), z.number().finite()]).optional();
+// A blank identifier is absent, so the fallback to the url applies; any other type is invalid.
+const idValue = z
+  .union([z.string().trim().transform((value) => (value.length > 0 ? value : undefined)), z.number().finite()])
+  .optional();
 
 /** Every item that fits its schema; an item that does not fit is skipped, never guessed. */
 const parseEach = <T extends z.ZodType>(items: unknown[], schema: T): Array<z.output<T>> =>

@@ -304,3 +304,10 @@ test('an item whose id is not text or a number is skipped, never stored as "[obj
   const hnPostings = hn.extractPostings(hnBody);
   assert.deepEqual(hnPostings.map((p) => p.id), ['99'], 'a comment without an id is not a posting with an empty key');
 });
+
+test('a blank id is treated as missing: the job keeps its url as identity', () => {
+  const body = JSON.stringify({ jobs: [{ id: '   ', title: 'Rust Engineer', url: 'https://example.test/blank' }] });
+  const postings = remotive.extractPostings(body);
+  assert.equal(postings.length, 1, 'a blank id is not a reason to lose the job');
+  assert.equal(postings[0]?.id, 'https://example.test/blank');
+});
