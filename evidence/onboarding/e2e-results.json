@@ -1,11 +1,21 @@
 {
-  "total": 20,
+  "total": 22,
   "failed": 0,
   "results": [
     {
       "name": "A1 first run shows the wizard on the CV step",
       "ok": true,
       "detail": ""
+    },
+    {
+      "name": "A0 the CV step has no paste field",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A1b the PDF text reaches the extractor as the CV",
+      "ok": true,
+      "detail": "calls=1"
     },
     {
       "name": "A2 CV proposal fills the empty headline",

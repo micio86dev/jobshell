@@ -62,11 +62,15 @@ const languageRow = (page, text) => page.locator('li').filter({ hasText: text })
 {
   const { context, page } = await open({ onboarding: false }, 'en-US');
   await page.getByText('Set up your profile').waitFor({ timeout: 15000 });
-  check('A1 first run shows the wizard on the CV step', await page.getByText('Upload or paste your CV').isVisible());
-  await page.locator('textarea').first().fill(CV_TEXT);
+  check('A1 first run shows the wizard on the CV step', await page.getByText('Upload your CV as a PDF').isVisible());
+  check('A0 the CV step has no paste field', (await page.locator('textarea').count()) === 0);
+  await page.locator('input[type=file]').first().setInputFiles(`${OUT}/cv-fixture.pdf`);
+  await page.getByText('Loaded: cv-fixture.pdf').waitFor({ timeout: 10000 });
   await page.getByRole('button', { name: 'Analyse', exact: true }).click();
   await page.getByText('CV proposal: choose what to apply').waitFor({ timeout: 10000 });
   await page.getByRole('button', { name: 'Apply the chosen fields' }).click();
+  const extracted = await callsOf(page, 'cv_extract');
+  check('A1b the PDF text reaches the extractor as the CV', extracted.length === 1 && extracted[0].args.cv === CV_TEXT && extracted[0].args.kind === 'cv', `calls=${extracted.length}`);
   const headline = await page.getByLabel('Headline', { exact: false }).first().inputValue();
   check('A2 CV proposal fills the empty headline', headline === 'Desktop engineer', `headline="${headline}"`);
 

@@ -6,6 +6,7 @@ import { invoke } from '@tauri-apps/api/core';
 
 import { keyOf, languageName, setPrimaryLanguage, systemLanguageCode, t } from '../i18n/store';
 import type { MessageKey } from '../i18n/locale';
+import { readCvFile } from './cv-file';
 import {
   cvProposalSchema,
   draftSchema,
@@ -211,9 +212,20 @@ const analyseCv = async () => {
   }
 };
 
+const cvFileName = ref('');
+
 const onCvFile = async (event: Event) => {
   const file = (event.target as HTMLInputElement).files?.[0];
-  if (file) draft.value.cv = await file.text();
+  if (!file) return;
+  try {
+    draft.value.cv = await readCvFile(file);
+    cvFileName.value = file.name;
+    proposal.value = null;
+    notice.value = '';
+  } catch (error) {
+    cvFileName.value = '';
+    notice.value = t('notice.analysisFailed', { reason: errorText(error) });
+  }
 };
 
 const applySelectedProposal = () => {
@@ -233,6 +245,20 @@ const applySelectedProposal = () => {
   draft.value = applyProposal(draft.value, chosen);
   notice.value = t('notice.applied');
   goTo('work');
+};
+
+const portfolioName = ref('');
+
+const onPortfolioFile = async (event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  try {
+    portfolioText.value = await readCvFile(file);
+    portfolioName.value = file.name;
+  } catch (error) {
+    portfolioName.value = '';
+    notice.value = t('notice.analysisFailed', { reason: errorText(error) });
+  }
 };
 
 const analysePortfolio = async () => {
@@ -337,8 +363,8 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
     <!-- CV first: required to finish; the analysis proposes fields the user can refuse -->
     <div v-if="step === 'cv'" class="pane">
       <p>{{ t('cv.intro') }}</p>
-      <input type="file" accept=".txt,.md,text/plain,text/markdown" :aria-label="t('cv.file')" @change="onCvFile" />
-      <textarea v-model="draft.cv" rows="8" :placeholder="t('cv.placeholder')"></textarea>
+      <input type="file" accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown" :aria-label="t('cv.file')" @change="onCvFile" />
+      <p v-if="cvFileName" class="notice">{{ t('cv.loaded', { name: cvFileName }) }}</p>
       <div class="actions">
         <button type="button" :disabled="busy || draft.cv.trim() === ''" @click="analyseCv">{{ t('action.analyse') }}</button>
         <button type="button" @click="next">{{ t('action.next') }}</button>
@@ -357,7 +383,8 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
       <fieldset>
         <legend>{{ t('portfolio.title') }}</legend>
         <p>{{ t('portfolio.intro') }}</p>
-        <textarea v-model="portfolioText" rows="4"></textarea>
+        <input type="file" accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown" :aria-label="t('portfolio.title')" @change="onPortfolioFile" />
+        <p v-if="portfolioName" class="notice">{{ t('cv.loaded', { name: portfolioName }) }}</p>
         <div class="actions">
           <button type="button" :disabled="busy || portfolioText.trim() === ''" @click="analysePortfolio">{{ t('portfolio.analyse') }}</button>
         </div>

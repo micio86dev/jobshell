@@ -4,7 +4,7 @@ Status: implemented up to the open items at the end. Evidence is in `evidence/on
 
 ## What the user does
 
-1. **CV (required to finish).** Paste the text or load a `.txt` or `.md` file. Analysis is optional: the extractor proposes headline, capabilities, seniority, years and languages, and each proposal is applied only to a field the user has not typed. A portfolio text can be read the same way; it only adds languages.
+1. **CV (required to finish).** Upload the file: PDF, `.txt` or `.md`. Nothing is typed or pasted. Analysis is optional: the extractor proposes headline, capabilities, seniority, years and languages, and each proposal is applied only to a field the user has not typed. A portfolio text can be read the same way; it only adds languages.
 2. **Work.** Headline, capabilities, seniority, years, contract type (employee, freelance), and how strict that preference is.
 3. **Where.** Work modes (remote, hybrid, onsite). Remote needs an explicit scope: `europe`, `countries`, `residence`, or `worldwide` chosen on purpose. An unstated scope is never read as worldwide. Employee and freelance country lists are separate; an empty list means not stated.
 4. **Languages.** Search only looks at postings in the languages you speak, at the level you give. Each language has a level and a usage (comfortable, limited, unwilling); one is the **primary language**, which is the language the app navigates in. The primary language defaults to the operating system language. A CV or a portfolio can pre-fill languages with their level; the usage is always yours to choose.
@@ -81,9 +81,9 @@ A value that is not a positive integer for the budget is ignored; a blank model 
 - **Done live:** one extraction on the English CV (Sonnet 5.5 and Haiku 5.5), and one read-only fetch of the RemoteOK feed (98 postings, all https links).
 - **Not run:** the real desktop window (`cargo tauri dev`), by hand. Extraction on the Italian and Spanish CVs needs the user's explicit approval, since it sends the CV to the provider.
 - **Not decided:** removing the old `openjob-agent` keychain entries, which is irreversible and waits for the user's go-ahead.
-- **Not done:** PDF CV intake (only text and `.md`/`.txt`); the UI has no styling pass yet.
+- **Limit:** a scanned PDF with no text layer is not read (no OCR). The UI has no styling pass yet.
 - **Model limit:** strength is one value per group (contract types, remote modes), not per item, because the agent schema has no per-item strength. Languages are always a hard filter.
 - **Interface limit:** only the wizard and the navigation are translated (Italian, English). The results and task panels of `App.vue` keep their Italian labels.
-- **Portfolio limit:** the portfolio is read as pasted or uploaded text, not fetched from a link.
+- **Portfolio limit:** the portfolio is an uploaded file (PDF, `.txt`, `.md`), not fetched from a link.
 - **Open product decision:** how seniority and minimum salary act in the funnel (hard filter or ranking). Not implemented; the feature log records it as open.
 - **Open technical item:** a zod boundary for external posting fields inside the agent package.
