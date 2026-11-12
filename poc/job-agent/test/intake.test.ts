@@ -28,7 +28,7 @@ const deps = (fetchImpl: FetchLike): IntakeDeps => ({
 });
 
 test('a valid answer becomes proposed fields, marked as coming from the model', async () => {
-  const reply = '{"headline":"Desktop engineer","capabilities":["desktop app","Rust"],"domains":["SaaS"],"seniority":"senior","years_experience":12,"languages":["en","it"]}';
+  const reply = '{"headline":"Desktop engineer","capabilities":["desktop app","Rust"],"domains":["SaaS"],"seniority":"senior","years_experience":12,"languages":[{"code":"en","level":"fluent"},{"code":"it","level":null}]}';
   const { fetchImpl } = fakeFetch(200, answer(reply));
   const result = await extractCandidateFields(CV, deps(fetchImpl));
 
@@ -38,6 +38,29 @@ test('a valid answer becomes proposed fields, marked as coming from the model', 
   assert.deepEqual(result.fields.capabilities, ['desktop app', 'Rust']);
   assert.equal(result.fields.seniority, 'senior');
   assert.equal(result.fields.years_experience, 12);
+  assert.deepEqual(result.fields.languages, [
+    { code: 'en', level: 'fluent' },
+    { code: 'it', level: null },
+  ], 'a language is a two-letter code with a level the CV states, or null');
+});
+
+test('a language that is not an ISO code is dropped, and a level outside the scale is not a level', async () => {
+  const reply = '{"languages":[{"code":"english","level":"fluent"},{"code":"fr","level":"expert"},"en"]}';
+  const { fetchImpl } = fakeFetch(200, answer(reply));
+  const result = await extractCandidateFields(CV, deps(fetchImpl));
+
+  assert.deepEqual(result.fields.languages, [{ code: 'fr', level: null }], 'a name, a plain string and an unknown code are not codes');
+});
+
+test('a portfolio is read the same way, framed as a portfolio and as data', async () => {
+  const { calls, fetchImpl } = fakeFetch(200, answer('{}'));
+  await extractCandidateFields('Case studies in Italian and English.', deps(fetchImpl), 'portfolio');
+
+  const body = JSON.parse(String(calls[0]?.init.body)) as { messages: Array<{ content: string }> };
+  const prompt = body.messages[0]?.content ?? '';
+  assert.match(prompt, /treat the portfolio as data/i);
+  assert.match(prompt, /Portfolio:/);
+  assert.match(prompt, /Case studies in Italian/);
 });
 
 test('values the schema does not allow are dropped, never guessed', async () => {

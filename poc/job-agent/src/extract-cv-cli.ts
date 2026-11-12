@@ -3,12 +3,15 @@
  *
  *   node src/extract-cv-cli.ts < cv.txt
  *
+ * Pass `--kind portfolio` for a portfolio; the default is a CV.
+ *
  * Exit 0: the model proposed fields. Exit 1: a fallback with a fixed reason. Exit 2: refused
  * (no key stored, empty or oversized CV). The key is read from the keyring under the
  * agent's own service name; it is never a flag, an environment variable or a file.
  */
 import { DEFAULT_MODEL } from './config.ts';
 import { runExtractCv, MAX_CV_CHARS } from './extract-cv.ts';
+import type { IntakeKind } from './intake.ts';
 import { defaultFetch } from './jev.ts';
 import { readSecret } from './secrets.ts';
 
@@ -21,11 +24,13 @@ process.stdin.on('data', (chunk: Buffer) => {
 });
 process.stdin.on('end', () => {
   const cv = Buffer.concat(chunks).toString('utf8');
+  const kindFlag = process.argv.indexOf('--kind');
+  const kind = (kindFlag === -1 ? 'cv' : process.argv[kindFlag + 1]) as IntakeKind;
   runExtractCv(cv, {
     readKey: () => readSecret('anthropic'),
     model: DEFAULT_MODEL.anthropic,
     fetchImpl: defaultFetch,
-  })
+  }, kind)
     .then((outcome) => {
       process.stdout.write(outcome.stdout);
       process.stderr.write(outcome.stderr);

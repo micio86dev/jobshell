@@ -38,6 +38,9 @@ export type StrengthKey = (typeof STRENGTH_KEYS)[number];
 export type Strengths = Record<StrengthKey, Strength>;
 
 /** Graded command of a language, from native to beginner. */
+/** A two-letter ISO 639-1 code, the only form the agent reads a language in. */
+const ISO_639_1 = /^[a-z]{2}$/i;
+
 export const LANGUAGE_LEVELS = ['native', 'fluent', 'professional', 'intermediate', 'basic', 'beginner'] as const;
 export type LanguageLevel = (typeof LANGUAGE_LEVELS)[number];
 
@@ -236,7 +239,9 @@ export const parseProfile = (raw: unknown): ProfileResult => {
   }
 
   const languages = strings(raw['languages']);
-  if (languages === null) return fail('languages must be an array of ISO 639-1 codes');
+  if (languages === null || languages.some((code) => !ISO_639_1.test(code.trim()))) {
+    return fail('languages must be an array of ISO 639-1 codes');
+  }
   const rawPrimary = raw['primary_language'];
   let primaryLanguage: string | null = null;
   if (rawPrimary !== undefined && rawPrimary !== null) {
@@ -336,6 +341,7 @@ export const parseProfile = (raw: unknown): ProfileResult => {
       if (typeof usage !== 'string' || !LANGUAGE_USAGE.includes(usage as LanguageUsage)) {
         return fail(`language_proficiency.${code}.usage must be one of ${LANGUAGE_USAGE.join(', ')}`);
       }
+      if (!ISO_639_1.test(code.trim())) return fail(`language_proficiency.${code} must be keyed by an ISO 639-1 code`);
       proficiency[code.trim().toLowerCase()] = { level: level as LanguageLevel, usage: usage as LanguageUsage };
     }
   }

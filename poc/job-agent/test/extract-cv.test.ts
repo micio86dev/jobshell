@@ -109,3 +109,16 @@ test('a network failure is a fallback whose raw error text is never printed', as
   assert.equal((JSON.parse(result.stdout) as { reason: string }).reason, 'provider request failed');
   assert.ok(!result.stdout.includes(KEY) && !result.stderr.includes(KEY));
 });
+
+test('a portfolio is sent framed as a portfolio, and an unknown kind is refused before any key is read', async () => {
+  const { calls, fetchImpl } = fakeFetch(200, answer(modelJson));
+  const result = await runExtractCv('Case studies in English.', { readKey: () => KEY, model: 'claude-test', fetchImpl }, 'portfolio');
+  assert.equal(result.exitCode, 0);
+  const body = JSON.parse(String(calls[0]?.init.body)) as { messages: Array<{ content: string }> };
+  assert.match(body.messages[0]?.content ?? '', /Portfolio:/);
+
+  let keyReads = 0;
+  const refused = await runExtractCv(CV, { readKey: () => { keyReads += 1; return KEY; }, model: 'claude-test', fetchImpl }, 'resume' as never);
+  assert.equal(refused.exitCode, 2);
+  assert.equal(keyReads, 0);
+});

@@ -283,3 +283,13 @@ test('the primary language is optional, must be one the user speaks, and default
   const notSpoken = parseProfile({ ...raw, primary_language: 'fr' });
   assert.ok(!notSpoken.ok && notSpoken.error.includes('primary_language'), 'a primary language must be one of the languages');
 });
+
+test('a language that is not a two-letter ISO code is refused, in the list and in the proficiency keys', () => {
+  const inList = parseProfile({ ...raw, languages: ['english'] });
+  assert.ok(!inList.ok && inList.error.includes('languages'), 'a language name is not a code');
+  const inProficiency = parseProfile({
+    ...raw,
+    language_proficiency: { english: { level: 'fluent', usage: 'comfortable' } },
+  });
+  assert.ok(!inProficiency.ok && inProficiency.error.includes('language_proficiency'), 'a proficiency key must be a code');
+});

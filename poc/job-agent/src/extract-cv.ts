@@ -5,7 +5,7 @@
  * account in production and from a fake in tests. Output carries only the proposal or a
  * fixed reason: never the key, never the CV text, never a raw provider or network error.
  */
-import { extractCandidateFields, type IntakeResult } from './intake.ts';
+import { extractCandidateFields, type IntakeKind, type IntakeResult } from './intake.ts';
 import type { FetchLike } from './jev.ts';
 
 export const MAX_CV_CHARS = 60_000;
@@ -21,7 +21,14 @@ export type ExtractOutcome = { exitCode: number; stdout: string; stderr: string 
 
 const refuse = (message: string): ExtractOutcome => ({ exitCode: 2, stdout: '', stderr: `${message}\n` });
 
-export const runExtractCv = async (cv: string, deps: ExtractDeps): Promise<ExtractOutcome> => {
+const KINDS: readonly IntakeKind[] = ['cv', 'portfolio'];
+
+export const runExtractCv = async (
+  cv: string,
+  deps: ExtractDeps,
+  kind: IntakeKind = 'cv',
+): Promise<ExtractOutcome> => {
+  if (!KINDS.includes(kind)) return refuse('the kind must be cv or portfolio');
   if (cv.trim().length === 0) return refuse('the CV is empty');
   if (cv.length > MAX_CV_CHARS) return refuse(`the CV is too long (more than ${MAX_CV_CHARS} characters)`);
 
@@ -33,11 +40,11 @@ export const runExtractCv = async (cv: string, deps: ExtractDeps): Promise<Extra
     );
   }
 
-  const result: IntakeResult = await extractCandidateFields(cv, {
-    apiKey,
-    model: deps.model,
-    fetchImpl: deps.fetchImpl,
-  });
+  const result: IntakeResult = await extractCandidateFields(
+    cv,
+    { apiKey, model: deps.model, fetchImpl: deps.fetchImpl },
+    kind,
+  );
   // The reason is produced by the intake module as a fixed string, so it is safe to print.
   const verdict = { source: result.source, reason: result.reason, fields: result.fields };
   return {
