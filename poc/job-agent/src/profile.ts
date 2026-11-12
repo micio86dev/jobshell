@@ -11,6 +11,8 @@
  * Stack matters as a modality of the posting (see `jev.ts`), never as a gate.
  */
 
+import { z } from 'zod';
+
 export type RemoteMode = 'remote' | 'hybrid' | 'onsite';
 export type ContractType = 'employee' | 'freelance';
 export type Seniority = 'junior' | 'mid' | 'senior' | 'lead';
@@ -39,7 +41,6 @@ export type Strengths = Record<StrengthKey, Strength>;
 
 /** Graded command of a language, from native to beginner. */
 /** A two-letter ISO 639-1 code, the only form the agent reads a language in. */
-const ISO_639_1 = /^[a-z]{2}$/i;
 
 export const LANGUAGE_LEVELS = ['native', 'fluent', 'professional', 'intermediate', 'basic', 'beginner'] as const;
 export type LanguageLevel = (typeof LANGUAGE_LEVELS)[number];
@@ -176,232 +177,222 @@ const STRENGTHS: readonly Strength[] = ['mandatory', 'preferred', 'acceptable'];
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const strings = (value: unknown): string[] | null => {
-  if (value === undefined) return [];
-  if (!Array.isArray(value)) return null;
-  const out: string[] = [];
-  for (const item of value) {
-    if (typeof item !== 'string') return null;
-    if (item.trim().length > 0) out.push(item.trim());
-  }
-  return out;
-};
+const clean = (values: string[]): string[] => values.map((value) => value.trim()).filter((value) => value.length > 0);
+const notBlank = (value: string): boolean => value.trim().length > 0;
+const nonNegativeFinite = (value: number): boolean => Number.isFinite(value) && value >= 0;
+
+/** A list of strings: absent is empty, a non-list or a non-string item fails with `message`. */
+const textList = (message: string) =>
+  z
+    .array(z.string({ error: message }), { error: message })
+    .optional()
+    .transform((values) => clean(values ?? []));
+
+const LANGUAGE_CODE = /^[a-z]{2}$/i;
+
+const PROFILE_TYPE = 'the profile must be a JSON object';
+
+/** The shape of a profile payload. Each message names its field, and is the one the tests pin. */
+const profileShape = z.object(
+  {
+    headline: z
+      .string({ error: 'headline must be a non-empty string' })
+      .refine(notBlank, { error: 'headline must be a non-empty string' })
+      .transform((value) => value.trim()),
+    capabilities: textList('capabilities must be a non-empty array of strings').refine(
+      (list) => list.length > 0,
+      { error: 'capabilities must be a non-empty array of strings' },
+    ),
+    domains: textList('domains must be an array of strings'),
+    seniority: z.enum(SENIORITIES, { error: `seniority must be one of ${SENIORITIES.join(', ')}` }),
+    years_experience: z
+      .number({ error: 'years_experience must be a non-negative number' })
+      .refine(nonNegativeFinite, { error: 'years_experience must be a non-negative number' }),
+    remote_modes: z
+      .array(z.enum(REMOTE_MODES, { error: `remote_modes must contain only ${REMOTE_MODES.join(', ')}` }), {
+        error: 'remote_modes must be an array of strings',
+      })
+      .optional()
+      .transform((values) => values ?? []),
+    onsite_cities: textList('onsite_cities must be an array of strings'),
+    countries: textList('countries must be an array of strings'),
+    contract_types: z
+      .array(z.enum(CONTRACTS, { error: `contract_types must contain only ${CONTRACTS.join(', ')}` }), {
+        error: 'contract_types must be a non-empty array of strings',
+      })
+      .refine((list) => list.length > 0, { error: 'contract_types must be a non-empty array of strings' }),
+    languages: textList('languages must be an array of ISO 639-1 codes').refine(
+      (list) => list.every((code) => LANGUAGE_CODE.test(code)),
+      { error: 'languages must be an array of ISO 639-1 codes' },
+    ),
+    primary_language: z.string({ error: 'primary_language must be one of the languages the profile lists' }).nullish(),
+    exclude_companies: textList('exclude_companies must be an array of strings'),
+    exclude_terms: textList('exclude_terms must be an array of strings'),
+    accepted_gaps: textList('accepted_gaps must be an array of strings'),
+    cv: z
+      .string({ error: 'cv must be a non-empty string' })
+      .refine(notBlank, { error: 'cv must be a non-empty string' })
+      .transform((value) => value.trim()),
+    portfolio: z.string({ error: 'portfolio must be a string when present' }).nullish(),
+    threshold: z
+      .number({ error: 'threshold must be a number between 0 and 1' })
+      .refine((value) => Number.isFinite(value) && value >= 0 && value <= 1, {
+        error: 'threshold must be a number between 0 and 1',
+      }),
+    daily_cap: z
+      .number({ error: 'daily_cap must be a positive integer' })
+      .refine((value) => Number.isInteger(value) && value > 0, { error: 'daily_cap must be a positive integer' }),
+    // Optional, so a profile written before this field existed still loads.
+    scoring_budget: z
+      .number({ error: 'scoring_budget must be a positive integer when present' })
+      .refine((value) => Number.isInteger(value) && value > 0, {
+        error: 'scoring_budget must be a positive integer when present',
+      })
+      .optional(),
+    timezone_overlap_hours: z
+      .number({ error: 'timezone_overlap_hours must be a non-negative number when present' })
+      .refine(nonNegativeFinite, { error: 'timezone_overlap_hours must be a non-negative number when present' })
+      .nullish(),
+    min_salary: z
+      .object(
+        {
+          amount: z
+            .number({ error: 'min_salary.amount must be a non-negative number' })
+            .refine(nonNegativeFinite, { error: 'min_salary.amount must be a non-negative number' }),
+          currency: z
+            .string({ error: 'min_salary.currency must be a three-letter code' })
+            .refine((value) => value.trim().length === 3, { error: 'min_salary.currency must be a three-letter code' })
+            .transform((value) => value.trim().toUpperCase()),
+          period: z.enum(PERIODS, { error: `min_salary.period must be one of ${PERIODS.join(', ')}` }),
+        },
+        { error: 'min_salary must be an object when present' },
+      )
+      .nullish()
+      .transform((value): SalaryFloor | null => value ?? null),
+    // Each key and value is checked in superRefine below, so the message can name the key.
+    strengths: z.record(z.string(), z.unknown(), { error: 'strengths must be an object when present' }).nullish(),
+    language_proficiency: z
+      .record(z.string(), z.unknown(), { error: 'language_proficiency must be an object when present' })
+      .nullish(),
+    eligibility: z
+      .object(
+        {
+          employee: textList('eligibility.employee must be an array of country codes'),
+          contractor: textList('eligibility.contractor must be an array of country codes'),
+          residence: z.string({ error: 'eligibility.residence must be a country code when present' }).nullish(),
+        },
+        { error: 'eligibility must be an object when present' },
+      )
+      .nullish(),
+    remote_scope: z
+      .enum(REMOTE_SCOPES, { error: `remote_scope must be one of ${REMOTE_SCOPES.join(', ')}` })
+      .nullish(),
+  },
+  { error: PROFILE_TYPE },
+);
+
+const LANGUAGE_PROFICIENCY_ENTRY = (code: string) =>
+  z.object(
+    {
+      level: z.enum(LANGUAGE_LEVELS, {
+        error: `language_proficiency.${code}.level must be one of ${LANGUAGE_LEVELS.join(', ')}`,
+      }),
+      usage: z.enum(LANGUAGE_USAGE, {
+        error: `language_proficiency.${code}.usage must be one of ${LANGUAGE_USAGE.join(', ')}`,
+      }),
+    },
+    { error: `language_proficiency.${code} must be an object` },
+  );
 
 const fail = (message: string): ProfileResult => ({ ok: false, error: `profile: ${message}` });
 
-/** Validate a raw profile, naming the offending field. */
+/** Validate a raw profile, naming the offending field. The first problem found is reported. */
 export const parseProfile = (raw: unknown): ProfileResult => {
-  if (!isRecord(raw)) return fail('the profile must be a JSON object');
+  const shaped = profileShape.safeParse(raw);
+  if (!shaped.success) return fail(shaped.error.issues[0]?.message ?? PROFILE_TYPE);
+  const data = shaped.data;
+  const issues: string[] = [];
 
-  const headline = raw['headline'];
-  if (typeof headline !== 'string' || headline.trim().length === 0) {
-    return fail('headline must be a non-empty string');
-  }
-
-  const capabilities = strings(raw['capabilities']);
-  if (capabilities === null || capabilities.length === 0) {
-    return fail('capabilities must be a non-empty array of strings');
-  }
-
-  const domains = strings(raw['domains']);
-  if (domains === null) return fail('domains must be an array of strings');
-
-  const seniority = raw['seniority'];
-  if (typeof seniority !== 'string' || !SENIORITIES.includes(seniority as Seniority)) {
-    return fail(`seniority must be one of ${SENIORITIES.join(', ')}`);
-  }
-
-  const years = raw['years_experience'];
-  if (typeof years !== 'number' || !Number.isFinite(years) || years < 0) {
-    return fail('years_experience must be a non-negative number');
-  }
-
-  const remoteModes = strings(raw['remote_modes']);
-  if (remoteModes === null) return fail('remote_modes must be an array of strings');
-  for (const mode of remoteModes) {
-    if (!REMOTE_MODES.includes(mode as RemoteMode)) {
-      return fail(`remote_modes must contain only ${REMOTE_MODES.join(', ')}`);
+  const spoken = data.languages.map((code) => code.toLowerCase());
+  if (data.primary_language !== undefined && data.primary_language !== null) {
+    if (!spoken.includes(data.primary_language.toLowerCase())) {
+      issues.push('primary_language must be one of the languages the profile lists');
     }
-  }
-
-  const onsiteCities = strings(raw['onsite_cities']);
-  if (onsiteCities === null) return fail('onsite_cities must be an array of strings');
-
-  const countries = strings(raw['countries']);
-  if (countries === null) return fail('countries must be an array of strings');
-
-  const contracts = strings(raw['contract_types']);
-  if (contracts === null || contracts.length === 0) {
-    return fail('contract_types must be a non-empty array of strings');
-  }
-  for (const contract of contracts) {
-    if (!CONTRACTS.includes(contract as ContractType)) {
-      return fail(`contract_types must contain only ${CONTRACTS.join(', ')}`);
-    }
-  }
-
-  const languages = strings(raw['languages']);
-  if (languages === null || languages.some((code) => !ISO_639_1.test(code.trim()))) {
-    return fail('languages must be an array of ISO 639-1 codes');
-  }
-  const rawPrimary = raw['primary_language'];
-  let primaryLanguage: string | null = null;
-  if (rawPrimary !== undefined && rawPrimary !== null) {
-    const spoken = languages.map((code) => code.toLowerCase());
-    if (typeof rawPrimary !== 'string' || !spoken.includes(rawPrimary.toLowerCase())) {
-      return fail('primary_language must be one of the languages the profile lists');
-    }
-    primaryLanguage = rawPrimary.toLowerCase();
-  }
-
-  const excludeCompanies = strings(raw['exclude_companies']);
-  if (excludeCompanies === null) return fail('exclude_companies must be an array of strings');
-
-  const excludeTerms = strings(raw['exclude_terms']);
-  if (excludeTerms === null) return fail('exclude_terms must be an array of strings');
-
-  const acceptedGaps = strings(raw['accepted_gaps']);
-  if (acceptedGaps === null) return fail('accepted_gaps must be an array of strings');
-
-  const cv = raw['cv'];
-  if (typeof cv !== 'string' || cv.trim().length === 0) {
-    return fail('cv must be a non-empty string');
-  }
-
-  const portfolio = raw['portfolio'];
-  if (portfolio !== undefined && portfolio !== null && typeof portfolio !== 'string') {
-    return fail('portfolio must be a string when present');
-  }
-
-  const threshold = raw['threshold'];
-  if (typeof threshold !== 'number' || !Number.isFinite(threshold) || threshold < 0 || threshold > 1) {
-    return fail('threshold must be a number between 0 and 1');
-  }
-
-  const dailyCap = raw['daily_cap'];
-  if (typeof dailyCap !== 'number' || !Number.isInteger(dailyCap) || dailyCap <= 0) {
-    return fail('daily_cap must be a positive integer');
-  }
-
-  // Optional, so a profile written before this field existed still loads.
-  const rawBudget = raw['scoring_budget'];
-  if (rawBudget !== undefined && (typeof rawBudget !== 'number' || !Number.isInteger(rawBudget) || rawBudget <= 0)) {
-    return fail('scoring_budget must be a positive integer when present');
-  }
-  const scoringBudget = typeof rawBudget === 'number' ? rawBudget : DEFAULT_SCORING_BUDGET;
-
-  const overlap = raw['timezone_overlap_hours'];
-  if (overlap !== undefined && overlap !== null && (typeof overlap !== 'number' || overlap < 0)) {
-    return fail('timezone_overlap_hours must be a non-negative number when present');
-  }
-
-  let minSalary: SalaryFloor | null = null;
-  const rawSalary = raw['min_salary'];
-  if (rawSalary !== undefined && rawSalary !== null) {
-    if (!isRecord(rawSalary)) return fail('min_salary must be an object when present');
-    const amount = rawSalary['amount'];
-    const currency = rawSalary['currency'];
-    const period = rawSalary['period'];
-    if (typeof amount !== 'number' || !Number.isFinite(amount) || amount < 0) {
-      return fail('min_salary.amount must be a non-negative number');
-    }
-    if (typeof currency !== 'string' || currency.trim().length !== 3) {
-      return fail('min_salary.currency must be a three-letter code');
-    }
-    if (typeof period !== 'string' || !PERIODS.includes(period as SalaryPeriod)) {
-      return fail(`min_salary.period must be one of ${PERIODS.join(', ')}`);
-    }
-    minSalary = { amount, currency: currency.trim().toUpperCase(), period: period as SalaryPeriod };
   }
 
   const strengths: Strengths = { ...DEFAULT_STRENGTHS };
-  const rawStrengths = raw['strengths'];
-  if (rawStrengths !== undefined && rawStrengths !== null) {
-    if (!isRecord(rawStrengths)) return fail('strengths must be an object when present');
-    for (const [key, value] of Object.entries(rawStrengths)) {
+  if (data.strengths !== undefined && data.strengths !== null) {
+    for (const [key, value] of Object.entries(data.strengths)) {
       if (!STRENGTH_KEYS.includes(key as StrengthKey)) {
-        return fail(`strengths.${key} is not a softenable preference (use ${STRENGTH_KEYS.join(', ')})`);
+        issues.push(`strengths.${key} is not a softenable preference (use ${STRENGTH_KEYS.join(', ')})`);
+        continue;
       }
       if (typeof value !== 'string' || !STRENGTHS.includes(value as Strength)) {
-        return fail(`strengths.${key} must be one of ${STRENGTHS.join(', ')}`);
+        issues.push(`strengths.${key} must be one of ${STRENGTHS.join(', ')}`);
+        continue;
       }
       strengths[key as StrengthKey] = value as Strength;
     }
   }
 
-  const rawProficiency = raw['language_proficiency'];
   const proficiency: Record<string, LanguageProficiency> = {};
-  if (rawProficiency !== undefined && rawProficiency !== null) {
-    if (!isRecord(rawProficiency)) return fail('language_proficiency must be an object when present');
-    for (const [code, entry] of Object.entries(rawProficiency)) {
-      if (!isRecord(entry)) return fail(`language_proficiency.${code} must be an object`);
-      const level = entry['level'];
-      const usage = entry['usage'];
-      if (typeof level !== 'string' || !LANGUAGE_LEVELS.includes(level as LanguageLevel)) {
-        return fail(`language_proficiency.${code}.level must be one of ${LANGUAGE_LEVELS.join(', ')}`);
+  if (data.language_proficiency !== undefined && data.language_proficiency !== null) {
+    for (const [code, entry] of Object.entries(data.language_proficiency)) {
+      const checked = LANGUAGE_PROFICIENCY_ENTRY(code).safeParse(entry);
+      if (!checked.success) {
+        issues.push(checked.error.issues[0]?.message ?? `language_proficiency.${code} must be an object`);
+        continue;
       }
-      if (typeof usage !== 'string' || !LANGUAGE_USAGE.includes(usage as LanguageUsage)) {
-        return fail(`language_proficiency.${code}.usage must be one of ${LANGUAGE_USAGE.join(', ')}`);
+      if (!LANGUAGE_CODE.test(code.trim())) {
+        issues.push(`language_proficiency.${code} must be keyed by an ISO 639-1 code`);
+        continue;
       }
-      if (!ISO_639_1.test(code.trim())) return fail(`language_proficiency.${code} must be keyed by an ISO 639-1 code`);
-      proficiency[code.trim().toLowerCase()] = { level: level as LanguageLevel, usage: usage as LanguageUsage };
+      proficiency[code.trim().toLowerCase()] = checked.data;
     }
   }
 
-  let eligibility: Eligibility = { employee: [], contractor: [], residence: null };
-  const rawEligibility = raw['eligibility'];
-  if (rawEligibility !== undefined && rawEligibility !== null) {
-    if (!isRecord(rawEligibility)) return fail('eligibility must be an object when present');
-    const employee = strings(rawEligibility['employee']);
-    if (employee === null) return fail('eligibility.employee must be an array of country codes');
-    const contractor = strings(rawEligibility['contractor']);
-    if (contractor === null) return fail('eligibility.contractor must be an array of country codes');
-    const residence = rawEligibility['residence'];
-    if (residence !== undefined && residence !== null && typeof residence !== 'string') {
-      return fail('eligibility.residence must be a country code when present');
-    }
-    eligibility = {
-      employee: employee.map((code) => code.toUpperCase()),
-      contractor: contractor.map((code) => code.toUpperCase()),
-      residence: typeof residence === 'string' && residence.trim().length > 0 ? residence.trim().toUpperCase() : null,
-    };
-  }
+  if (issues.length > 0) return fail(issues[0] ?? PROFILE_TYPE);
 
-  const rawScope = raw['remote_scope'];
-  let remoteScope: RemoteScope | null = null;
-  if (rawScope !== undefined && rawScope !== null) {
-    if (typeof rawScope !== 'string' || !REMOTE_SCOPES.includes(rawScope as RemoteScope)) {
-      return fail(`remote_scope must be one of ${REMOTE_SCOPES.join(', ')}`);
-    }
-    remoteScope = rawScope as RemoteScope;
-  }
+  const eligibility: Eligibility =
+    data.eligibility === undefined || data.eligibility === null
+      ? { employee: [], contractor: [], residence: null }
+      : {
+          employee: data.eligibility.employee.map((code) => code.toUpperCase()),
+          contractor: data.eligibility.contractor.map((code) => code.toUpperCase()),
+          residence:
+            typeof data.eligibility.residence === 'string' && notBlank(data.eligibility.residence)
+              ? data.eligibility.residence.trim().toUpperCase()
+              : null,
+        };
 
+  const portfolio = data.portfolio;
   const profile: UserProfile = {
     strengths,
     language_proficiency: proficiency,
     eligibility,
-    remote_scope: remoteScope,
-    headline: headline.trim(),
-    capabilities,
-    domains,
-    seniority: seniority as Seniority,
-    years_experience: years,
-    remote_modes: remoteModes as RemoteMode[],
-    onsite_cities: onsiteCities,
-    countries,
-    contract_types: contracts as ContractType[],
-    languages: languages.map((code) => code.toLowerCase()),
-    primary_language: primaryLanguage,
-    min_salary: minSalary,
-    timezone_overlap_hours: typeof overlap === 'number' ? overlap : null,
-    exclude_companies: excludeCompanies,
-    exclude_terms: excludeTerms,
-    accepted_gaps: acceptedGaps,
-    cv: cv.trim(),
-    portfolio: typeof portfolio === 'string' && portfolio.trim().length > 0 ? portfolio.trim() : null,
-    threshold,
-    daily_cap: dailyCap,
-    scoring_budget: scoringBudget,
+    remote_scope: data.remote_scope ?? null,
+    headline: data.headline,
+    capabilities: data.capabilities,
+    domains: data.domains,
+    seniority: data.seniority,
+    years_experience: data.years_experience,
+    remote_modes: data.remote_modes as RemoteMode[],
+    onsite_cities: data.onsite_cities,
+    countries: data.countries,
+    contract_types: data.contract_types as ContractType[],
+    languages: spoken,
+    primary_language:
+      data.primary_language === undefined || data.primary_language === null ? null : data.primary_language.toLowerCase(),
+    min_salary: data.min_salary,
+    timezone_overlap_hours: data.timezone_overlap_hours ?? null,
+    exclude_companies: data.exclude_companies,
+    exclude_terms: data.exclude_terms,
+    accepted_gaps: data.accepted_gaps,
+    cv: data.cv,
+    portfolio: typeof portfolio === 'string' && notBlank(portfolio) ? portfolio.trim() : null,
+    threshold: data.threshold,
+    daily_cap: data.daily_cap,
+    scoring_budget: data.scoring_budget ?? DEFAULT_SCORING_BUDGET,
   };
   return { ok: true, profile };
 };
