@@ -168,3 +168,11 @@ test('mcp: an unknown tool is refused with a fixed message, never echoing the na
   assert.equal(response.error?.message, 'unknown tool');
   assert.doesNotMatch(JSON.stringify(response), /sk-ant-LEAK/);
 });
+
+test('mcp: a tool call without a name is invalid params, not an unknown tool', async () => {
+  const response = await handleMcpRequest(
+    { jsonrpc: '2.0', id: 12, method: 'tools/call', params: { arguments: {} } },
+    mcpDeps(),
+  );
+  assert.equal(response.error?.code, -32602, 'JSON-RPC calls a malformed call invalid params');
+});

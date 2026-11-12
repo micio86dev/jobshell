@@ -149,8 +149,11 @@ export const handleMcpRequest = async (request: McpRequest, deps: McpDeps): Prom
     case 'tools/call': {
       // The call is a zod shape: a tool name that is text, and arguments that are an object.
       const call = toolCall.safeParse(request.params);
-      const name = call.success ? call.data.name : undefined;
-      const args = call.success ? (call.data.arguments ?? {}) : {};
+      if (!call.success) {
+        return { jsonrpc: '2.0', id, error: { code: -32602, message: 'invalid params: a tool call needs a name' } };
+      }
+      const name = call.data.name;
+      const args = call.data.arguments ?? {};
 
       if (name === 'profile') {
         return {
