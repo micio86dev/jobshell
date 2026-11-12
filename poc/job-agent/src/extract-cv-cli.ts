@@ -41,7 +41,12 @@ process.stdin.on('end', () => {
     process.exitCode = 2;
     return;
   }
-  const kind = named as IntakeKind;
+  if (named !== 'cv' && named !== 'portfolio') {
+    process.stderr.write('--kind must be cv or portfolio\n');
+    process.exitCode = 2;
+    return;
+  }
+  const kind: IntakeKind = named;
   runExtractCv(cv, {
     readKey: () => readSecret('anthropic'),
     model: modelForExtraction(process.env),

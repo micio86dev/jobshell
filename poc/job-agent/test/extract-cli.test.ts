@@ -23,3 +23,10 @@ test('an input past the byte bound is refused whole, as too long, and nothing is
   assert.match(result.stderr, /the CV is too long/);
   assert.equal(result.stdout, '');
 });
+
+test('a --kind that is neither cv nor portfolio is refused by the CLI itself, before any key is read', () => {
+  const result = run(['--kind', 'resume'], 'some cv text');
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /--kind must be cv or portfolio/);
+  assert.equal(result.stdout, '');
+});
