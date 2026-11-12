@@ -123,3 +123,17 @@ test('mcp: a seen file that was asked for and cannot be read is an error, not an
 
   assert.deepEqual([...loadSeen(null)], [], 'no path at all is a legitimate first run');
 });
+
+test('mcp: a posting with a non-web url is refused before any judgment, as the bridge refuses it', async () => {
+  const response = await handleMcpRequest(
+    {
+      jsonrpc: '2.0',
+      id: 9,
+      method: 'tools/call',
+      params: { name: 'score_posting', arguments: { posting: { ...posting, url: 'javascript:alert(1)' } } },
+    },
+    mcpDeps(),
+  );
+  assert.equal(response.error?.code, -32602, 'a javascript url is not a posting');
+  assert.equal(response.result, undefined);
+});

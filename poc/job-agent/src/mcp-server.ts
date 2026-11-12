@@ -12,13 +12,13 @@
  */
 import { createInterface } from 'node:readline';
 
+import { judgePosting, type JeDeps } from './jev.ts';
+import { parsePosting } from './posting-input.ts';
+import type { UserProfile } from './profile.ts';
 import { loadSeen } from './seen.ts';
+import type { Posting } from './sources/types.ts';
 
 export { loadSeen };
-
-import { judgePosting, type JeDeps } from './jev.ts';
-import type { UserProfile } from './profile.ts';
-import type { Posting } from './sources/types.ts';
 
 export const PROTOCOL_VERSION = '2024-11-05';
 export const SERVER_INFO = { name: 'openjob-agent', version: '0.1.0' };
@@ -108,25 +108,6 @@ const TOOLS = [
   },
 ];
 
-const asPosting = (raw: unknown): Posting | null => {
-  if (!isRecord(raw)) return null;
-  const { source, id, title, url } = raw;
-  if (typeof source !== 'string' || typeof id !== 'string') return null;
-  if (typeof title !== 'string' || typeof url !== 'string') return null;
-  return {
-    source,
-    id,
-    title,
-    url,
-    company: typeof raw['company'] === 'string' ? raw['company'] : null,
-    location: typeof raw['location'] === 'string' ? raw['location'] : null,
-    remote_hint: typeof raw['remote_hint'] === 'boolean' ? raw['remote_hint'] : null,
-    description: typeof raw['description'] === 'string' ? raw['description'].slice(0, 4000) : null,
-    published_at: typeof raw['published_at'] === 'string' ? raw['published_at'] : null,
-    salary: typeof raw['salary'] === 'string' ? raw['salary'] : null,
-  };
-};
-
 const toolResult = (value: unknown): { content: Array<{ type: 'text'; text: string }> } => ({
   content: [{ type: 'text', text: JSON.stringify(value) }],
 });
@@ -174,7 +155,7 @@ export const handleMcpRequest = async (request: McpRequest, deps: McpDeps): Prom
       }
 
       if (name === 'score_posting') {
-        const posting = asPosting(args['posting']);
+        const posting = parsePosting(args['posting']);
         if (posting === null) {
           return { jsonrpc: '2.0', id, error: { code: -32602, message: 'posting needs source, id, title and url' } };
         }
