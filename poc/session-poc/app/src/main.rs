@@ -144,6 +144,21 @@ async fn agent_run(dry_run: bool) -> Result<String, String> {
         .map_err(|error| error.to_string())
 }
 
+/// Run the agent on one saved search. Only an active search runs: a paused or deleted one
+/// is refused before anything is written or launched.
+#[tauri::command]
+async fn agent_run_search(state: State<'_, Arc<AppState>>, id: String, dry_run: bool) -> Result<String, String> {
+    let listed = profile::search_list_active(&state.pool, &id).await?;
+    let payload = listed.ok_or_else(|| "this search is paused or deleted, so it does not run".to_string())?;
+    tauri::async_runtime::spawn_blocking(move || -> anyhow::Result<String> {
+        let path = agent::write_search_profile(&id, &payload)?;
+        agent::run_with_profile(&path, dry_run)
+    })
+    .await
+    .map_err(|error| error.to_string())?
+    .map_err(|error| error.to_string())
+}
+
 /// Connect ZipRecruiter: open the consent page, wait for the loopback redirect, exchange
 /// the code and keep the token in the keyring.
 ///
@@ -360,7 +375,8 @@ fn main() {
             search_save,
             search_duplicate,
             search_set_status,
-            search_history
+            search_history,
+            agent_run_search
         ])
         .build(tauri::generate_context!())
         .expect("error while building the Tauri application")

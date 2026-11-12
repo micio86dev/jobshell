@@ -228,12 +228,37 @@ pub fn run_args(profile: &Path, dry_run: bool) -> Vec<String> {
 /// The output is returned rather than streamed: a dry run takes seconds, and a judged run
 /// a minute, so the window shows a running state and then reloads the evidence.
 pub fn run_once(dry_run: bool) -> Result<String> {
-    let dir = agent_dir();
     let profile = profile_path();
     ensure_profile(&profile)?;
+    run_with_profile(&profile, dry_run)
+}
+
+/// The file a search runs from: one per search id, inside the evidence folder. The id is
+/// a plain token, so it cannot name a path outside that folder.
+pub fn search_profile_path(id: &str) -> Result<PathBuf> {
+    if id.is_empty() || !id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
+        anyhow::bail!("a search id may contain only letters, digits and dashes");
+    }
+    Ok(evidence_dir().join("searches").join(format!("{id}.json")))
+}
+
+/// Write a search's stored payload where the agent can read it. The agent validates it
+/// when it loads, so a malformed payload stops the run with a readable reason.
+pub fn write_search_profile(id: &str, payload: &str) -> Result<PathBuf> {
+    let path = search_profile_path(id)?;
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
+    }
+    std::fs::write(&path, payload).with_context(|| format!("writing {}", path.display()))?;
+    Ok(path)
+}
+
+/// One run of the agent from an explicit profile file.
+pub fn run_with_profile(profile: &Path, dry_run: bool) -> Result<String> {
+    let dir = agent_dir();
 
     let output = Command::new("node")
-        .args(run_args(&profile, dry_run))
+        .args(run_args(profile, dry_run))
         .current_dir(&dir)
         .output()
         .with_context(|| format!("starting the agent in {}", dir.display()))?;
@@ -473,5 +498,23 @@ mod tests {
         );
 
         std::fs::remove_dir_all(&dir).expect("cleanup");
+    }
+}
+
+#[cfg(test)]
+mod search_profile_tests {
+    use super::*;
+
+    #[test]
+    fn a_search_profile_lives_in_the_searches_folder_under_its_id() {
+        let path = search_profile_path("9f2c1a7b3d4e5f60").expect("a plain id is accepted");
+        assert!(path.ends_with("searches/9f2c1a7b3d4e5f60.json"), "got {}", path.display());
+    }
+
+    #[test]
+    fn an_id_that_could_leave_the_folder_is_refused() {
+        assert!(search_profile_path("../profile").is_err(), "a parent path is refused");
+        assert!(search_profile_path("a/b").is_err(), "a separator is refused");
+        assert!(search_profile_path("").is_err(), "an empty id is refused");
     }
 }

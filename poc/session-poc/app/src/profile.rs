@@ -116,3 +116,16 @@ pub async fn search_history(state: State<'_, Arc<AppState>>, id: String) -> Resu
         .map(|found| found.into_iter().map(VersionView::from).collect())
         .map_err(|error| error.to_string())
 }
+
+/// The latest payload of a search, only when that search is active. `None` means the search
+/// is paused, deleted, or unknown, and it must not run.
+pub async fn search_list_active(
+    pool: &sqlx::Pool<sqlx::Sqlite>,
+    id: &str,
+) -> Result<Option<String>, String> {
+    let listed = profile_store::list_searches(pool).await.map_err(|error| error.to_string())?;
+    Ok(listed
+        .into_iter()
+        .find(|search| search.id == id && search.status == "active")
+        .map(|search| search.payload))
+}
