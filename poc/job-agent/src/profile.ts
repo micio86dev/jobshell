@@ -40,7 +40,6 @@ export type StrengthKey = (typeof STRENGTH_KEYS)[number];
 export type Strengths = Record<StrengthKey, Strength>;
 
 /** Graded command of a language, from native to beginner. */
-/** A two-letter ISO 639-1 code, the only form the agent reads a language in. */
 
 export const LANGUAGE_LEVELS = ['native', 'fluent', 'professional', 'intermediate', 'basic', 'beginner'] as const;
 export type LanguageLevel = (typeof LANGUAGE_LEVELS)[number];
