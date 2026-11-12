@@ -49,6 +49,7 @@ export type CvProposal = z.infer<typeof cvProposalSchema>;
  * "not stated", never a default preference.
  */
 export const draftSchema = z.object({
+  cv: z.string().max(60_000).optional(),
   headline: z.string().max(60).optional(),
   capabilities: textList.optional(),
   seniority: z.enum(SENIORITIES).nullable().optional(),
@@ -93,6 +94,7 @@ export type DraftInput = z.infer<typeof draftSchema>;
  * saved; this shape check guards the fields the wizard reads. Unknown keys are ignored.
  */
 export const storedProfileSchema = z.object({
+  cv: z.string(),
   headline: z.string(),
   capabilities: textList,
   seniority: z.enum(SENIORITIES),

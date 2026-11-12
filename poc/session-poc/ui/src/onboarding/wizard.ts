@@ -24,6 +24,8 @@ import type {
 export type LanguageItem = { code: string; level: LanguageLevel; usage: LanguageUsage };
 
 export type WizardDraft = {
+  /** The CV text. The agent needs it to score postings, so a profile cannot be saved without it. */
+  cv: string;
   headline: string;
   capabilities: string[];
   seniority: Seniority | null;
@@ -80,6 +82,7 @@ export type ProfilePayload = {
 const AGENT_DEFAULTS = { threshold: 0.9, daily_cap: 2, scoring_budget: 120 } as const;
 
 export const emptyDraft = (): WizardDraft => ({
+  cv: '',
   headline: '',
   capabilities: [],
   seniority: null,
@@ -102,6 +105,7 @@ const filled = (text: string): boolean => text.trim().length > 0;
 
 const profileIssues = (draft: WizardDraft): string[] => {
   const issues: string[] = [];
+  if (!filled(draft.cv)) issues.push('Add your CV: upload it or paste its text.');
   if (!filled(draft.headline)) issues.push('Write a headline.');
   if (draft.capabilities.length === 0) issues.push('Add at least one capability.');
   if (draft.seniority === null) issues.push('Choose the seniority.');
@@ -209,7 +213,7 @@ export const toUserProfile = (draft: WizardDraft): ProfileResult => {
       exclude_companies: [],
       exclude_terms: [],
       accepted_gaps: [],
-      cv: '',
+      cv: draft.cv,
       portfolio: null,
       ...AGENT_DEFAULTS,
       strengths: {
@@ -260,6 +264,7 @@ const STRENGTH_LABELS: Record<Strength, string> = {
 
 /** The profile as the user reads it back: one line per field, unstated shown as such. */
 export const summaryLines = (draft: WizardDraft): SummaryLine[] => [
+  { label: 'CV', value: filled(draft.cv) ? `${draft.cv.trim().length} characters` : NOT_STATED },
   { label: 'Headline', value: filled(draft.headline) ? draft.headline.trim() : NOT_STATED },
   { label: 'Capabilities', value: listOrNotStated(draft.capabilities) },
   { label: 'Seniority', value: draft.seniority ?? NOT_STATED },
@@ -328,6 +333,7 @@ export const applyProposal = (draft: WizardDraft, proposal: CvProposal): WizardD
  * or invented on the way back.
  */
 export const profileToDraft = (profile: StoredProfile): WizardDraft => ({
+  cv: profile.cv,
   headline: profile.headline,
   capabilities: profile.capabilities,
   seniority: profile.seniority,
@@ -362,6 +368,7 @@ export const profileToDraft = (profile: StoredProfile): WizardDraft => ({
 export const hydrateDraft = (input: DraftInput): WizardDraft => {
   const base = emptyDraft();
   return {
+    cv: input.cv ?? base.cv,
     headline: input.headline ?? base.headline,
     capabilities: input.capabilities ?? base.capabilities,
     seniority: input.seniority ?? base.seniority,

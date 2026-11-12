@@ -46,6 +46,11 @@ describe('draft boundary', () => {
     expect(unstated.location?.remote_scope ?? null).toBe(null);
   });
 
+  it('keeps the CV text as a string, the one field the agent cannot do without', () => {
+    expect(draftSchema.safeParse({ cv: 'Twelve years of Rust' }).success).toBe(true);
+    expect(draftSchema.safeParse({ cv: 42 }).success).toBe(false);
+  });
+
   it('refuses a language level the agent does not know', () => {
     const parsed = draftSchema.safeParse({
       languages: { items: [{ code: 'en', level: 'expert', usage: 'comfortable' }] },

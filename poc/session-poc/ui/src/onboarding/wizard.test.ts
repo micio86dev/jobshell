@@ -16,8 +16,11 @@ import {
 } from './wizard';
 import { draftSchema, type CvProposal } from './schema';
 
+const CV_TEXT = 'Twelve years building desktop apps with Rust and Python. Led a team of four.';
+
 const completeDraft = (): WizardDraft => ({
   ...emptyDraft(),
+  cv: CV_TEXT,
   headline: 'Desktop engineer',
   capabilities: ['Rust', 'Python'],
   seniority: 'senior',
@@ -107,6 +110,19 @@ describe('the profile the agent validates', () => {
     expect(profile.language_proficiency).toEqual({ en: { level: 'fluent', usage: 'comfortable' } });
     expect(profile.eligibility).toEqual({ employee: ['IT'], contractor: [], residence: null });
     expect(profile.strengths.languages).toBe('mandatory');
+  });
+
+  it('the CV text is carried into the profile unchanged, because the agent needs it to score postings', () => {
+    const result = toUserProfile(completeDraft());
+    expect(result.ok && result.profile.cv).toBe(CV_TEXT);
+  });
+
+  it('a draft without the CV text cannot finish, because the agent refuses a profile without it', () => {
+    const draft = completeDraft();
+    draft.cv = '   ';
+    const result = toUserProfile(draft);
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.issues.some((issue) => issue.includes('CV'))).toBe(true);
   });
 
   it('an unstated employee or contractor list stays empty, which the agent reads as no filter', () => {

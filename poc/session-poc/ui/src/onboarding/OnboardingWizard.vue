@@ -82,8 +82,7 @@ const notice = ref('');
 const issues = ref<string[]>([]);
 const busy = ref(false);
 
-// CV intake
-const cvText = ref('');
+// CV intake: the text lives in the draft, because the profile needs it
 const proposal = ref<CvProposal | null>(null);
 const accepted = ref<Record<'headline' | 'capabilities' | 'seniority' | 'years_experience', boolean>>({
   headline: true,
@@ -213,7 +212,7 @@ const analyseCv = async () => {
   busy.value = true;
   notice.value = '';
   try {
-    const raw = await invoke<string>('cv_extract', { cv: cvText.value });
+    const raw = await invoke<string>('cv_extract', { cv: draft.value.cv });
     const parsed = cvProposalSchema.safeParse(JSON.parse(raw));
     if (!parsed.success) {
       notice.value = 'The extractor answer is not valid: nothing is proposed.';
@@ -234,7 +233,7 @@ const analyseCv = async () => {
 
 const onCvFile = async (event: Event) => {
   const file = (event.target as HTMLInputElement).files?.[0];
-  if (file) cvText.value = await file.text();
+  if (file) draft.value.cv = await file.text();
 };
 
 const applySelectedProposal = () => {
@@ -321,12 +320,12 @@ const finish = async () => {
 
     <!-- Step 0: CV, optional, pre-fills only what the user has not written -->
     <div v-if="step === 'cv'" class="pane">
-      <p>Upload or paste your CV: I propose headline, capabilities, seniority and years. You can skip this step.</p>
+      <p>Upload or paste your CV. It is required: I can also propose headline, capabilities, seniority and years from it.</p>
       <input type="file" accept=".txt,.md,text/plain,text/markdown" @change="onCvFile" />
-      <textarea v-model="cvText" rows="8" placeholder="Paste the CV text here"></textarea>
+      <textarea v-model="draft.cv" rows="8" placeholder="Paste the CV text here"></textarea>
       <div class="actions">
-        <button type="button" :disabled="busy || cvText.trim() === ''" @click="analyseCv">Analyse the CV</button>
-        <button type="button" @click="next">Skip</button>
+        <button type="button" :disabled="busy || draft.cv.trim() === ''" @click="analyseCv">Analyse the CV</button>
+        <button type="button" @click="next">Next</button>
       </div>
       <fieldset v-if="proposal && proposal.source === 'model'">
         <legend>CV proposal: choose what to apply</legend>
@@ -380,9 +379,9 @@ const finish = async () => {
         </select>
       </label>
       <div class="actions">
-        <button type="button" @click="back">Indietro</button>
-        <button type="button" @click="next">Avanti</button>
-        <button type="button" :disabled="busy" @click="saveForLater">Salva e continua dopo</button>
+        <button type="button" @click="back">Back</button>
+        <button type="button" @click="next">Next</button>
+        <button type="button" :disabled="busy" @click="saveForLater">Save and continue later</button>
       </div>
     </div>
 
@@ -427,9 +426,9 @@ const finish = async () => {
       </label>
       <p class="hint">Employee and freelance stay separate. An empty field means not stated, never “everywhere”.</p>
       <div class="actions">
-        <button type="button" @click="back">Indietro</button>
-        <button type="button" @click="next">Avanti</button>
-        <button type="button" :disabled="busy" @click="saveForLater">Salva e continua dopo</button>
+        <button type="button" @click="back">Back</button>
+        <button type="button" @click="next">Next</button>
+        <button type="button" :disabled="busy" @click="saveForLater">Save and continue later</button>
       </div>
     </div>
 
@@ -464,9 +463,9 @@ const finish = async () => {
         </select>
       </label>
       <div class="actions">
-        <button type="button" @click="back">Indietro</button>
+        <button type="button" @click="back">Back</button>
         <button type="button" @click="next">Summary</button>
-        <button type="button" :disabled="busy" @click="saveForLater">Salva e continua dopo</button>
+        <button type="button" :disabled="busy" @click="saveForLater">Save and continue later</button>
       </div>
     </div>
 
@@ -488,11 +487,11 @@ const finish = async () => {
       </fieldset>
       <p v-if="!finishable" class="hint">Some fields are still missing: go back to the steps flagged.</p>
       <div class="actions">
-        <button type="button" @click="back">Indietro</button>
+        <button type="button" @click="back">Back</button>
         <button type="button" :disabled="!finishable || busy" @click="finish">
           {{ mode === 'first' ? 'Complete and save' : 'Save the change' }}
         </button>
-        <button type="button" :disabled="busy" @click="saveForLater">Salva e continua dopo</button>
+        <button type="button" :disabled="busy" @click="saveForLater">Save and continue later</button>
         <button v-if="mode === 'edit'" type="button" @click="emit('cancel')">Cancel</button>
       </div>
     </div>
