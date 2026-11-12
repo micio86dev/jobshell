@@ -293,3 +293,9 @@ test('a language that is not a two-letter ISO code is refused, in the list and i
   });
   assert.ok(!inProficiency.ok && inProficiency.error.includes('language_proficiency'), 'a proficiency key must be a code');
 });
+
+test('a profile keeps its portfolio only as a public https link', () => {
+  assert.equal(parseProfile({ ...raw, portfolio: 'https://example.test/portfolio' }).ok, true);
+  assert.equal(parseProfile({ ...raw, portfolio: 'http://example.test/portfolio' }).ok, false, 'plain http is refused');
+  assert.equal(parseProfile({ ...raw, portfolio: 'https://192.168.1.10/portfolio' }).ok, false, 'a private address is refused');
+});

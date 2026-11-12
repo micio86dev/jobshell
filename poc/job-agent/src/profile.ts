@@ -12,6 +12,7 @@
  */
 
 import { z } from 'zod';
+import { portfolioLinkShape } from './portfolio-link.ts';
 
 export type RemoteMode = 'remote' | 'hybrid' | 'onsite';
 export type ContractType = 'employee' | 'freelance';
@@ -232,7 +233,7 @@ const profileShape = z.object(
       .string({ error: 'cv must be a non-empty string' })
       .refine(notBlank, { error: 'cv must be a non-empty string' })
       .transform((value) => value.trim()),
-    portfolio: z.string({ error: 'portfolio must be a string when present' }).nullish(),
+    portfolio: portfolioLinkShape.nullish(),
     threshold: z
       .number({ error: 'threshold must be a number between 0 and 1' })
       .refine((value) => Number.isFinite(value) && value >= 0 && value <= 1, {
