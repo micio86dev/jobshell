@@ -10,11 +10,10 @@ mod profile;
 mod ziprecruiter;
 
 use profile::{
-    cv_extract, identity_get, identity_save, onboarding_complete, onboarding_status, search_create, search_duplicate,
+    cv_extract, draft_get, draft_save, profile_validate, identity_get, identity_save, onboarding_complete, onboarding_status, search_create, search_duplicate,
     search_history, search_list, search_save, search_set_status,
 };
 
-use std::path::PathBuf;
 use std::process::Child;
 use std::sync::{Arc, Mutex};
 
@@ -331,7 +330,7 @@ async fn task_detail(state: State<'_, Arc<AppState>>, id: i64) -> Result<TaskVie
 
 /// The data directory is created by `open_database`; logging it makes the spike
 /// honest about where a candidate's local state lives.
-fn tracing_hint(data_dir: &PathBuf) {
+fn tracing_hint(data_dir: &std::path::Path) {
     eprintln!("phase0 spike data directory: {}", data_dir.display());
 }
 
@@ -371,6 +370,9 @@ fn main() {
             identity_get,
             identity_save,
             cv_extract,
+            profile_validate,
+            draft_save,
+            draft_get,
             search_list,
             search_create,
             search_save,

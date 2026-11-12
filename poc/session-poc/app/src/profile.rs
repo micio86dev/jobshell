@@ -74,14 +74,45 @@ pub async fn cv_extract(cv: String) -> Result<String, String> {
 }
 
 /// Save a new identity version and carry it to the searches the apply scope reaches.
+/// Ask the agent, the single validator, whether a profile payload is valid.
+#[tauri::command]
+pub async fn profile_validate(payload: String) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || crate::agent::run_validate_profile(&payload))
+        .await
+        .map_err(|error| error.to_string())?
+        .map_err(|error| error.to_string())
+}
+
+/// Save a new identity version. The agent validates the profile first, so an invalid one is
+/// never stored; then the apply scope decides which searches receive it.
 #[tauri::command]
 pub async fn identity_save(
     state: State<'_, Arc<AppState>>,
     payload: String,
     apply_scope: String,
 ) -> Result<i64, String> {
+    let to_validate = payload.clone();
+    tokio::task::spawn_blocking(move || crate::agent::run_validate_profile(&to_validate))
+        .await
+        .map_err(|error| error.to_string())?
+        .map_err(|error| error.to_string())?;
     profile_store::save_identity_with_scope(&state.pool, &payload, &apply_scope)
         .await
+        .map_err(|error| error.to_string())
+}
+
+/// Keep a partial wizard draft, so it survives a restart.
+#[tauri::command]
+pub async fn draft_save(state: State<'_, Arc<AppState>>, payload: String) -> Result<i64, String> {
+    profile_store::save_draft(&state.pool, &payload).await.map_err(|error| error.to_string())
+}
+
+/// The newest wizard draft, if the user has left one.
+#[tauri::command]
+pub async fn draft_get(state: State<'_, Arc<AppState>>) -> Result<Option<VersionView>, String> {
+    profile_store::latest_draft(&state.pool)
+        .await
+        .map(|found| found.map(VersionView::from))
         .map_err(|error| error.to_string())
 }
 

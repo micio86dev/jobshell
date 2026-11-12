@@ -309,6 +309,31 @@ fn carry_identity(search_payload: &str, identity_payload: &str) -> Result<String
     Ok(serde_json::Value::Object(search).to_string())
 }
 
+/// Append a wizard draft and return its number. A partial profile is kept here until it can be
+/// saved as an identity version.
+pub async fn save_draft(pool: &Pool<Sqlite>, payload: &str) -> Result<i64> {
+    require_object(payload)?;
+    let result = sqlx::query("INSERT INTO wizard_drafts (payload) VALUES (?)")
+        .bind(payload)
+        .execute(pool)
+        .await
+        .context("appending a wizard draft")?;
+    Ok(result.last_insert_rowid())
+}
+
+/// The newest wizard draft, if the user has left one.
+pub async fn latest_draft(pool: &Pool<Sqlite>) -> Result<Option<Versioned>> {
+    let row = sqlx::query("SELECT version, payload FROM wizard_drafts ORDER BY version DESC LIMIT 1")
+        .fetch_optional(pool)
+        .await
+        .context("reading the wizard draft")?;
+    Ok(row.map(|row| Versioned {
+        version: row.get("version"),
+        payload: row.get("payload"),
+        identity_version: None,
+    }))
+}
+
 /// Whether the first-run wizard has been completed.
 pub async fn onboarding_complete(pool: &Pool<Sqlite>) -> Result<bool> {
     let completed: Option<Option<String>> =
@@ -498,6 +523,25 @@ mod tests {
         assert!(save_identity_with_scope(&pool, r#"{"headline":"Lead"}"#, "everywhere").await.is_err());
         assert_eq!(current_identity(&pool).await.expect("read").expect("present").version, identity);
         assert_eq!(search_history(&pool, &search).await.expect("history").len(), 1);
+    }
+
+    #[tokio::test]
+    async fn a_partial_wizard_draft_is_kept_and_the_newest_one_is_read_back() {
+        let (_dir, pool) = store().await;
+        assert!(latest_draft(&pool).await.expect("read").is_none());
+        let first = save_draft(&pool, r#"{"headline":"Dev"}"#).await.expect("first draft");
+        let second = save_draft(&pool, r#"{"headline":"Dev","work":{}}"#).await.expect("second draft");
+        assert!(second > first, "a new draft gets a new number");
+        let latest = latest_draft(&pool).await.expect("read").expect("present");
+        assert_eq!(latest.version, second);
+        assert_eq!(latest.payload, r#"{"headline":"Dev","work":{}}"#);
+    }
+
+    #[tokio::test]
+    async fn a_draft_that_is_not_a_json_object_is_refused() {
+        let (_dir, pool) = store().await;
+        assert!(save_draft(&pool, "[]").await.is_err());
+        assert!(latest_draft(&pool).await.expect("read").is_none(), "nothing was written");
     }
 
     #[tokio::test]

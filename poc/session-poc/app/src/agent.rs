@@ -82,7 +82,7 @@ pub fn latest_run(dir: &Path) -> Result<Option<PathBuf>> {
         let is_newer = newest
             .as_ref()
             .and_then(|current| current.file_name())
-            .map(|current| name > current.to_string_lossy().to_string())
+            .map(|current| name.as_str() > current.to_string_lossy().as_ref())
             .unwrap_or(true);
         if is_newer {
             newest = Some(path);
@@ -291,28 +291,57 @@ pub fn interpret_extract(exit_code: Option<i32>, stdout: &str, stderr: &str) -> 
     }
 }
 
-/// Run the extractor on one CV text and return its JSON verdict.
-pub fn run_extract_cv(cv: &str) -> Result<String> {
+/// Run one agent script with `input` on stdin, from the agent package. Returns the exit code,
+/// stdout and stderr. The input never goes in argv.
+fn pipe_to_agent_script(script: &[&str], input: &str) -> Result<(Option<i32>, String, String)> {
     use std::io::Write;
     use std::process::Stdio;
 
     let mut child = Command::new("node")
-        .args(extract_cv_args())
+        .args(script)
         .current_dir(agent_dir())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .context("starting the CV extractor")?;
+        .context("starting an agent script")?;
     if let Some(mut stdin) = child.stdin.take() {
-        stdin.write_all(cv.as_bytes()).context("sending the CV to the extractor")?;
+        stdin.write_all(input.as_bytes()).context("sending input to the agent script")?;
     }
-    let output = child.wait_with_output().context("waiting for the CV extractor")?;
-    interpret_extract(
+    let output = child.wait_with_output().context("waiting for the agent script")?;
+    Ok((
         output.status.code(),
-        &String::from_utf8_lossy(&output.stdout),
-        &String::from_utf8_lossy(&output.stderr),
-    )
+        String::from_utf8_lossy(&output.stdout).to_string(),
+        String::from_utf8_lossy(&output.stderr).to_string(),
+    ))
+}
+
+/// Run the extractor on one CV text and return its JSON verdict.
+pub fn run_extract_cv(cv: &str) -> Result<String> {
+    let (code, stdout, stderr) = pipe_to_agent_script(&extract_cv_args(), cv)?;
+    interpret_extract(code, &stdout, &stderr)
+}
+
+/// Read the validator's verdict: Ok only for an explicit `{"ok":true}` with exit 0.
+pub fn interpret_validation(exit_code: Option<i32>, stdout: &str) -> Result<()> {
+    let verdict: serde_json::Value = match serde_json::from_str(stdout.trim()) {
+        Ok(value) => value,
+        Err(_) => anyhow::bail!("the profile validator did not return a verdict"),
+    };
+    match (exit_code, verdict.get("ok").and_then(Value::as_bool)) {
+        (Some(0), Some(true)) => Ok(()),
+        (Some(1), Some(false)) => {
+            let reason = verdict.get("error").and_then(Value::as_str).unwrap_or("the profile is not valid");
+            anyhow::bail!("{reason}")
+        }
+        _ => anyhow::bail!("the profile validator did not return a verdict"),
+    }
+}
+
+/// Ask the agent, the single validator, whether a profile payload is valid.
+pub fn run_validate_profile(payload: &str) -> Result<()> {
+    let (code, stdout, _stderr) = pipe_to_agent_script(&["src/validate-profile-cli.ts"], payload)?;
+    interpret_validation(code, &stdout)
 }
 
 /// The browser the app drives: a dedicated Chrome for Testing, because a branded Chrome
@@ -589,5 +618,28 @@ mod cv_extract_tests {
     fn a_killed_or_unexpected_exit_is_an_error_not_a_success() {
         assert!(interpret_extract(None, "{}", "").is_err(), "no status is not success");
         assert!(interpret_extract(Some(99), "{}", "").is_err(), "an unknown code is not success");
+    }
+}
+
+#[cfg(test)]
+mod validate_profile_tests {
+    use super::*;
+
+    #[test]
+    fn a_valid_profile_is_accepted() {
+        assert!(interpret_validation(Some(0), r#"{"ok":true}"#).is_ok());
+    }
+
+    #[test]
+    fn an_invalid_profile_returns_the_validators_reason() {
+        let error = interpret_validation(Some(1), r#"{"ok":false,"error":"headline must be a non-empty string"}"#)
+            .expect_err("invalid");
+        assert_eq!(error.to_string(), "headline must be a non-empty string");
+    }
+
+    #[test]
+    fn an_unreadable_verdict_is_an_error_not_a_pass() {
+        assert!(interpret_validation(Some(0), "not json").is_err());
+        assert!(interpret_validation(None, "").is_err());
     }
 }
