@@ -18,7 +18,7 @@ const USER_AGENT = 'openjob-agent (portfolio link check)';
 const PRIVATE_V4 = [
   /^10\./, /^127\./, /^0\./, /^169\.254\./, /^192\.168\./, /^172\.(1[6-9]|2\d|3[01])\./,
   /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./,
-  /^198\.(1[89])\./, /^(2[2-5]\d)\./,
+  /^198\.(1[89])\./, /^(22[4-9]|23\d|24\d|25[0-5])\./,
 ];
 
 const isPrivateHost = (host: string): boolean => {
@@ -74,6 +74,7 @@ const readBounded = async (response: Response): Promise<string> => {
     total += value.byteLength;
     out += decoder.decode(value, { stream: true });
   }
+  out += decoder.decode();
   await reader.cancel();
   return out;
 };
@@ -113,7 +114,14 @@ export const checkPortfolioLink = async (link: string, fetchImpl: Fetch): Promis
     }
 
     if (response.status < 200 || response.status >= 300) return NOT_REACHABLE(response.status);
-    return { reachable: true, status: response.status, text: text(await readBounded(response)) };
+    // A body that fails part-way is a link that does not answer; the error text is never returned.
+    let body: string;
+    try {
+      body = await readBounded(response);
+    } catch {
+      return NOT_REACHABLE(response.status);
+    }
+    return { reachable: true, status: response.status, text: text(body) };
   }
   return NOT_REACHABLE(0);
 };

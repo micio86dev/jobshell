@@ -73,3 +73,21 @@ test('the IPv6 forms that resolve to loopback or unspecified, and the reserved I
   assert.equal(parsePortfolioLink('https://224.0.0.1/me').ok, false, 'a multicast address is refused');
   assert.equal(parsePortfolioLink('https://255.255.255.255/me').ok, false, 'the broadcast address is refused');
 });
+
+test('a public unicast address just below multicast is accepted', () => {
+  assert.equal(parsePortfolioLink('https://220.1.2.3/me').ok, true, '220 to 223 are public unicast');
+  assert.equal(parsePortfolioLink('https://223.255.0.1/me').ok, true);
+  assert.equal(parsePortfolioLink('https://224.0.0.1/me').ok, false, 'multicast starts at 224');
+});
+
+test('a body that fails while it is read ends as not reachable, without the error text', async () => {
+  const stream = new ReadableStream<Uint8Array>({
+    pull() {
+      throw new Error('socket reset by internal-host.corp');
+    },
+  });
+  const fetchImpl = async () => new Response(stream, { status: 200 });
+  const result = await checkPortfolioLink('https://example.com/broken', fetchImpl);
+  assert.equal(result.reachable, false);
+  assert.equal(JSON.stringify(result).includes('internal-host'), false);
+});
