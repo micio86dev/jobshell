@@ -35,3 +35,33 @@ test('a redirect to a private or non-https address is not followed', async () =>
   const result = await checkPortfolioLink('https://example.com/me', redirecting);
   assert.equal(result.reachable, false);
 });
+
+test('a public name that starts like an IPv6 prefix is accepted, and more private forms are refused', () => {
+  assert.equal(parsePortfolioLink('https://fcbarcelona.com/me').ok, true, 'a public name is not a private address');
+  assert.equal(parsePortfolioLink('https://fdroid.org/').ok, true);
+  assert.equal(parsePortfolioLink('https://localhost./me').ok, false, 'a trailing dot does not hide localhost');
+  assert.equal(parsePortfolioLink('https://[::ffff:127.0.0.1]/me').ok, false, 'an IPv4-mapped address is refused');
+  assert.equal(parsePortfolioLink('https://100.64.1.1/me').ok, false, 'a carrier-grade NAT address is refused');
+});
+
+test('the body read is bounded: a large page is not read to the end', async () => {
+  let pulled = 0;
+  const chunk = new Uint8Array(10_000).fill(97);
+  // A 10 MB page, sent in 1 000 chunks: a reader that takes it all pulls every one of them.
+  let sent = 0;
+  const stream = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      if (sent >= 1000) {
+        controller.close();
+        return;
+      }
+      sent += 1;
+      pulled += chunk.byteLength;
+      controller.enqueue(chunk);
+    },
+  });
+  const fetchImpl = async () => new Response(stream, { status: 200, headers: { 'content-type': 'text/html' } });
+  const result = await checkPortfolioLink('https://example.com/big', fetchImpl);
+  assert.equal(result.reachable, true);
+  assert.equal(pulled <= 1_100_000, true, `read ${pulled} bytes of a 10 MB stream`);
+});

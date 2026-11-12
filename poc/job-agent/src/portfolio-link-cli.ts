@@ -35,8 +35,11 @@ process.stdin.on('end', () => {
     process.exitCode = 2;
     return;
   }
-  checkPortfolioLink(parsed.link, (url, init) => fetch(url, init)).then((result) => {
-    process.stdout.write(`${JSON.stringify(result)}\n`);
-    process.exitCode = result.reachable ? 0 : 1;
-  });
+  // Any failure after the input is accepted is a link that does not answer: one JSON line, exit 1.
+  checkPortfolioLink(parsed.link, (url, init) => fetch(url, init))
+    .catch(() => ({ reachable: false, status: 0, text: '' }))
+    .then((result) => {
+      process.stdout.write(`${JSON.stringify(result)}\n`);
+      process.exitCode = result.reachable ? 0 : 1;
+    });
 });

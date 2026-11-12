@@ -12,17 +12,21 @@ import { text } from './sources/types.ts';
 
 const TIMEOUT_MS = 10_000;
 const MAX_HOPS = 3;
-const MAX_BODY_CHARS = 1_000_000;
+const MAX_BODY_BYTES = 1_000_000;
 const USER_AGENT = 'openjob-agent (portfolio link check)';
 
 const PRIVATE_V4 = [
   /^10\./, /^127\./, /^0\./, /^169\.254\./, /^192\.168\./, /^172\.(1[6-9]|2\d|3[01])\./,
+  /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./,
 ];
 
 const isPrivateHost = (host: string): boolean => {
-  const name = host.toLowerCase().replace(/^\[|\]$/g, '');
+  const name = host.toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
   if (name === 'localhost' || name.endsWith('.localhost') || name.endsWith('.local')) return true;
-  if (name === '::1' || /^f[cd]/.test(name) || /^fe80:/.test(name)) return true;
+  if (name.includes(':')) {
+    // An IPv6 literal: loopback, unique-local, link-local, and every IPv4-mapped form.
+    return name === '::1' || /^f[cd][0-9a-f]{2}:/.test(name) || /^fe80:/.test(name) || name.startsWith('::ffff:');
+  }
   return PRIVATE_V4.some((pattern) => pattern.test(name));
 };
 
@@ -54,6 +58,23 @@ export type PortfolioCheck = { reachable: boolean; status: number; text: string 
 type Fetch = (url: string, init: RequestInit) => Promise<Response>;
 
 const NOT_REACHABLE = (status: number): PortfolioCheck => ({ reachable: false, status, text: '' });
+
+/** Read at most MAX_BODY_BYTES of the body, then stop: a large page is never read to its end. */
+const readBounded = async (response: Response): Promise<string> => {
+  if (response.body === null) return '';
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let total = 0;
+  let out = '';
+  while (total < MAX_BODY_BYTES) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    out += decoder.decode(value, { stream: true });
+  }
+  await reader.cancel();
+  return out;
+};
 
 const redirectTarget = (location: string, from: URL): URL | null => {
   try {
@@ -90,8 +111,7 @@ export const checkPortfolioLink = async (link: string, fetchImpl: Fetch): Promis
     }
 
     if (response.status < 200 || response.status >= 300) return NOT_REACHABLE(response.status);
-    const body = (await response.text()).slice(0, MAX_BODY_CHARS);
-    return { reachable: true, status: response.status, text: text(body) };
+    return { reachable: true, status: response.status, text: text(await readBounded(response)) };
   }
   return NOT_REACHABLE(0);
 };
