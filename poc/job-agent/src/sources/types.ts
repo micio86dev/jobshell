@@ -41,15 +41,24 @@ export type SourceAdapter = {
 };
 
 /** Decode the few entities these pages use, strip tags, collapse whitespace. */
+const ENTITIES: Record<string, string> = {
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  '#39': "'",
+  nbsp: ' ',
+  amp: '&',
+};
+
+/**
+ * Plain text from a description: markup is removed first, on the raw HTML, and the entities are
+ * decoded afterwards in one pass. Decoding first would turn an escaped tag such as &lt;b&gt; into
+ * markup and delete it.
+ */
 export const text = (html: string): string =>
   html
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
     .replace(/<[^>]*>/g, ' ')
+    .replace(/&(lt|gt|quot|#39|nbsp|amp);/g, (_match, name: string) => ENTITIES[name] ?? '')
     .replace(/\s+/g, ' ')
     .trim();
 
