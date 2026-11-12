@@ -7,7 +7,7 @@
  * `jev.ts`. That split is what keeps the daily loop free of model calls and keeps
  * every rejection auditable.
  */
-import type { Spec } from './profile.ts';
+import { LANGUAGE_LEVELS, type LanguageLevel, type Spec } from './profile.ts';
 import type { Posting } from './sources/types.ts';
 
 export type DropReason =
@@ -68,6 +68,62 @@ const STOPWORDS: Record<string, readonly string[]> = {
 };
 
 const MIN_MATCHES = 2;
+
+/** Words a posting uses for a language, by ISO 639-1 code. */
+const LANGUAGE_WORDS: Record<string, readonly string[]> = {
+  en: ['english', 'inglese'],
+  it: ['italian', 'italiano'],
+  de: ['german', 'deutsch', 'tedesco'],
+  fr: ['french', 'français', 'francese'],
+  es: ['spanish', 'español', 'spagnolo'],
+};
+
+/** Words a posting uses for a level. CEFR codes map onto the same scale. */
+const LEVEL_WORDS: Record<LanguageLevel, readonly string[]> = {
+  native: ['native', 'madrelingua', 'mother tongue'],
+  fluent: ['fluent', 'fluente'],
+  professional: ['professional', 'professionale', 'business'],
+  intermediate: ['intermediate', 'intermedio'],
+  basic: ['basic'],
+  beginner: ['beginner', 'principiante'],
+};
+const CEFR_LEVELS: Record<string, LanguageLevel> = {
+  c2: 'fluent',
+  c1: 'professional',
+  b2: 'intermediate',
+  b1: 'basic',
+  a2: 'beginner',
+  a1: 'beginner',
+};
+
+export type LanguageRequirement = { language: string; level: LanguageLevel | null };
+
+/**
+ * A language the posting states together with a level, read from the text near the
+ * language name. A language with no stated level is not a requirement and returns null:
+ * the posting's own language is judged by the ordinary language filter instead.
+ */
+export const detectLanguageRequirement = (text: string): LanguageRequirement | null => {
+  const lower = text.toLowerCase();
+  for (const [code, words] of Object.entries(LANGUAGE_WORDS)) {
+    for (const word of words) {
+      const at = lower.indexOf(word);
+      if (at === -1) continue;
+      const window = lower.slice(Math.max(0, at - 40), at + word.length + 40);
+      for (const [level, levelWords] of Object.entries(LEVEL_WORDS) as Array<[LanguageLevel, readonly string[]]>) {
+        if (levelWords.some((levelWord) => new RegExp(`\\b${levelWord}\\b`).test(window))) {
+          return { language: code, level };
+        }
+      }
+      const cefr = /\b(c[12]|b[12]|a[12])\b/.exec(window);
+      if (cefr?.[1] !== undefined) return { language: code, level: CEFR_LEVELS[cefr[1]] ?? null };
+    }
+  }
+  return null;
+};
+
+/** Lower index means a higher level: native is 0, beginner is the last. */
+const levelRank = (level: LanguageLevel): number => LANGUAGE_LEVELS.indexOf(level);
 
 export const detectLanguage = (text: string): string | null => {
   const words = text.toLowerCase().match(/[\p{L}']+/gu) ?? [];
@@ -261,6 +317,25 @@ export const applyHardFilters = (
       const language = detectLanguage(`${posting.title} ${posting.description ?? ''}`);
       if (language !== null && spec.hard.excluded_languages.includes(language)) {
         dropped.push({ posting, reason: 'language', detail: `${language} is not a language the profile works in` });
+        continue;
+      }
+    }
+
+    // A stated language and level must be met by the user's own level for it. Only a mandatory
+    // language setting drops; a preferred one ranks, as every other soft preference does.
+    const requirement = detectLanguageRequirement(`${posting.title} ${posting.description ?? ''}`);
+    if (requirement !== null && requirement.level !== null && spec.hard.languages_mandatory) {
+      const proficiency = spec.hard.language_proficiency[requirement.language];
+      const met =
+        proficiency !== undefined &&
+        proficiency.usage !== 'unwilling' &&
+        levelRank(proficiency.level) <= levelRank(requirement.level);
+      if (!met) {
+        dropped.push({
+          posting,
+          reason: 'language',
+          detail: `requires ${requirement.level} ${requirement.language}`,
+        });
         continue;
       }
     }

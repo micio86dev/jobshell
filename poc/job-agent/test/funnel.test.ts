@@ -8,6 +8,7 @@ import {
   detectContract,
   detectCountry,
   detectLanguage,
+  detectLanguageRequirement,
   parseSalary,
   postingKey,
   MAX_SOFT_BONUS,
@@ -436,4 +437,46 @@ test('an onsite city the posting may not satisfy is routed to verification when 
   assert.deepEqual(result.kept.map(postingKey), ['remoteok:um'], 'an unknown mode never drops a posting');
   assert.equal(result.unknown_city, 1);
   assert.ok(result.needs_verification[0]?.unknown.includes('city'));
+});
+
+// --- Language requirements: a stated language and level must be met -----------------
+
+test('a stated language requirement is read with its level, in English, Italian or the CEFR code', () => {
+  assert.deepEqual(detectLanguageRequirement('We need fluent English for the role.'), { language: 'en', level: 'fluent' });
+  assert.deepEqual(detectLanguageRequirement('Italiano madrelingua richiesto.'), { language: 'it', level: 'native' });
+  assert.deepEqual(detectLanguageRequirement('Deutsch C1 required.'), { language: 'de', level: 'professional' });
+  assert.equal(detectLanguageRequirement('We write in English.'), null, 'a language without a level is not a requirement');
+});
+
+test('a posting requiring a higher level than the user has is dropped for that language', () => {
+  const posting = make({ id: 'lv', description: 'Team in English. We need fluent English for daily work with the team.' });
+  const compiled = spec({ language_proficiency: { en: { level: 'professional', usage: 'comfortable' } } });
+  const result = applyHardFilters([posting], compiled, new Set(), NOW);
+
+  assert.equal(result.dropped[0]?.reason, 'language');
+  assert.match(result.dropped[0]?.detail ?? '', /fluent/);
+});
+
+test('a posting whose required level the user meets is kept', () => {
+  const posting = make({ id: 'ok', description: 'Team in English. We need fluent English for daily work with the team.' });
+  const compiled = spec({ language_proficiency: { en: { level: 'fluent', usage: 'comfortable' } } });
+  const result = applyHardFilters([posting], compiled, new Set(), NOW);
+  assert.deepEqual(result.kept.map(postingKey), ['remoteok:ok']);
+});
+
+test('a required language the user does not speak at all drops the posting', () => {
+  const posting = make({ id: 'no', description: 'Team in German. We need Deutsch C1 for daily work with the team.' });
+  const compiled = spec({ languages: ['it', 'en'], language_proficiency: { it: { level: 'native', usage: 'comfortable' } } });
+  const result = applyHardFilters([posting], compiled, new Set(), NOW);
+  assert.equal(result.dropped[0]?.reason, 'language');
+});
+
+test('a preferred language requirement is ranked, never a reason to drop', () => {
+  const posting = make({ id: 'pf', description: 'Team in English. We need fluent English for daily work with the team.' });
+  const compiled = spec({
+    language_proficiency: { en: { level: 'basic', usage: 'comfortable' } },
+    strengths: { languages: 'preferred' },
+  });
+  const result = applyHardFilters([posting], compiled, new Set(), NOW);
+  assert.deepEqual(result.kept.map(postingKey), ['remoteok:pf'], 'a preference does not exclude');
 });

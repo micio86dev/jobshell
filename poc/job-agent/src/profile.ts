@@ -135,6 +135,10 @@ export type Spec = {
     remote_scope: RemoteScope | null;
     /** Countries a remote posting must name, derived from the remote scope. */
     remote_countries: string[];
+    /** The user's graded languages, used to check a posting's stated requirement. */
+    language_proficiency: Record<string, LanguageProficiency>;
+    /** True only when languages are mandatory: a stated requirement then drops postings. */
+    languages_mandatory: boolean;
   };
   /** Preferred and acceptable preferences: they rank, they never drop. */
   soft: {
@@ -483,6 +487,8 @@ export const compileProfile = (
       contractor_countries: profile.eligibility.contractor,
       remote_scope: profile.remote_scope,
       remote_countries: remoteCountriesFor(profile),
+      language_proficiency: profile.language_proficiency,
+      languages_mandatory: profile.strengths.languages === 'mandatory',
     },
     soft: {
       languages: isSoft('languages') ? profile.languages : [],
