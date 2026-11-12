@@ -73,6 +73,16 @@ pub async fn cv_extract(cv: String, kind: String) -> Result<String, String> {
         .map_err(|error| error.to_string())
 }
 
+/// Check that the portfolio link is public and answers, and read the text it carries. Read-only:
+/// one GET per hop. The wizard calls it when the user confirms the link, never per keystroke.
+#[tauri::command]
+pub async fn portfolio_check(link: String) -> Result<String, String> {
+    tokio::task::spawn_blocking(move || crate::agent::run_check_portfolio(&link))
+        .await
+        .map_err(|error| error.to_string())?
+        .map_err(|error| error.to_string())
+}
+
 /// Save a new identity version and carry it to the searches the apply scope reaches.
 /// Ask the agent, the single validator, whether a profile payload is valid.
 #[tauri::command]

@@ -326,6 +326,26 @@ pub fn run_extract_cv(cv: &str, kind: &str) -> Result<String> {
     interpret_extract(code, &stdout, &stderr)
 }
 
+/// Map the portfolio check's exit code to what the UI shows. Exit 0 (the link answers) and 1 (it
+/// does not answer) both return the JSON verdict; exit 2 is a refusal whose reason the CLI printed;
+/// anything else is an error, never a silent success.
+pub fn interpret_portfolio_check(exit_code: Option<i32>, stdout: &str, stderr: &str) -> Result<String> {
+    match exit_code {
+        Some(0) | Some(1) => Ok(stdout.trim().to_string()),
+        Some(2) => {
+            let reason = stderr.trim();
+            anyhow::bail!("{}", if reason.is_empty() { "the portfolio link was refused" } else { reason })
+        }
+        _ => anyhow::bail!("the portfolio check did not finish"),
+    }
+}
+
+/// Check that a portfolio link is public and answers. The link goes in on stdin, never in argv.
+pub fn run_check_portfolio(link: &str) -> Result<String> {
+    let (code, stdout, stderr) = pipe_to_agent_script(&["src/portfolio-link-cli.ts".to_string()], link)?;
+    interpret_portfolio_check(code, &stdout, &stderr)
+}
+
 /// Read the validator's verdict: Ok only for an explicit `{"ok":true}` with exit 0.
 pub fn interpret_validation(exit_code: Option<i32>, stdout: &str) -> Result<()> {
     let verdict: serde_json::Value = match serde_json::from_str(stdout.trim()) {
@@ -446,6 +466,17 @@ mod tests {
       ],
       "overflow": []
     }"#;
+
+    #[test]
+    fn a_portfolio_check_answers_or_refuses_and_never_invents_a_verdict() {
+        // Exit 0 and 1 both carry the JSON verdict: an answering link, or one that does not answer.
+        assert!(interpret_portfolio_check(Some(0), r#"{"reachable":true,"status":200,"text":"x"}"#, "").is_ok());
+        assert!(interpret_portfolio_check(Some(1), r#"{"reachable":false,"status":404,"text":""}"#, "").is_ok());
+        // Exit 2 is a refusal whose reason the CLI printed; anything else is an error.
+        let refused = interpret_portfolio_check(Some(2), "", "the portfolio link must be a public https address");
+        assert!(refused.unwrap_err().to_string().contains("public https address"));
+        assert!(interpret_portfolio_check(None, "", "").is_err());
+    }
 
     #[test]
     fn a_run_is_projected_into_what_the_window_shows() {
