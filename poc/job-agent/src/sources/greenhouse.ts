@@ -60,10 +60,12 @@ const extractPostings = (body: string): Posting[] => {
     if (absoluteUrl === null) continue;
 
     let id: string;
+    let link: string;
     try {
       const url = new URL(absoluteUrl);
       // Only an https link is a posting: javascript:, data: and plain http are not shown.
       if (url.protocol !== 'https:') continue;
+      link = url.href;
       id = url.pathname.split('/').filter((part) => part.length > 0).pop() ?? '';
     } catch {
       continue;
@@ -78,7 +80,7 @@ const extractPostings = (body: string): Posting[] => {
       title: job.data.title ?? '',
       company: null,
       location,
-      url: absoluteUrl,
+      url: link,
       remote_hint: mentionsRemote(location),
       description: content === null ? null : text(content),
       published_at: toIsoDate(job.data.updated_at),

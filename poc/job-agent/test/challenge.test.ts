@@ -49,3 +49,9 @@ test('hacker news: a comment id that is not digits is refused, so it cannot chan
   const body = JSON.stringify({ hits: [{ objectID: '1&x=y', comment_text: 'We are hiring.' }] });
   assert.equal(hn.extractPostings(body).length, 0, 'an id that is not a number is not an id');
 });
+
+test('greenhouse: a link with surrounding spaces is saved as the normalised link, not the raw text', () => {
+  const body = JSON.stringify({ jobs: [{ absolute_url: '  https://boards.example.test/acme/jobs/45  ', title: 'Padded' }] });
+  const postings = greenhouse.extractPostings(body);
+  assert.equal(postings[0]?.url, 'https://boards.example.test/acme/jobs/45');
+});
