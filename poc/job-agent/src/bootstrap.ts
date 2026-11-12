@@ -33,4 +33,4 @@ export const loadRuntime = (options: RuntimeOptions): Runtime => {
 
 /** The message every entry point prints when a key is missing, in one place. */
 export const missingKeyMessage = (account: string): string =>
-  `no ${account} key in the keyring. Add one with: security add-generic-password -a ${account} -s openjob-agent -w`;
+  `no ${account} key in the keyring. Add one in the desktop app, or with: security add-generic-password -a ${account} -s dev.openjob.desktop -w`;

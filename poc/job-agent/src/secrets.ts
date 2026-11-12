@@ -3,7 +3,7 @@
  *
  * There is deliberately no write path. The user adds a key once with
  *
- *   security add-generic-password -a anthropic -s openjob-agent -w
+ *   security add-generic-password -a anthropic -s dev.openjob.desktop -w
  *
  * which prompts for the value, so the secret never lands in argv, in shell
  * history or in a file this process can read. Reading is all the agent needs, and
@@ -15,7 +15,7 @@ export type RunnerResult = { status: number; stdout: string; stderr: string };
 export type Runner = (command: string, args: string[]) => RunnerResult;
 
 /** Keychain service shared by every account the agent uses. */
-export const SERVICE = 'openjob-agent';
+export const SERVICE = 'dev.openjob.desktop';
 
 /** Accounts the agent reads: `anthropic`, `qwen`, `typesafe`. */
 export const ACCOUNTS = ['anthropic', 'qwen', 'typesafe'] as const;

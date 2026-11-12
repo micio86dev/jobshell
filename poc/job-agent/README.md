@@ -20,9 +20,9 @@ touches a source whose policy forbids automation.
 Keys live in the macOS keyring, never in a file:
 
 ```bash
-security add-generic-password -a typesafe -s openjob-agent -w     # required to score
-security add-generic-password -a anthropic -s openjob-agent -w    # optional: query planner
-security add-generic-password -a qwen -s openjob-agent -w         # or this one
+security add-generic-password -a typesafe -s dev.openjob.desktop -w     # required to score
+security add-generic-password -a anthropic -s dev.openjob.desktop -w    # optional: query planner
+security add-generic-password -a qwen -s dev.openjob.desktop -w         # or this one
 ```
 
 `-w` with no value prompts, so the secret never enters argv or shell history.

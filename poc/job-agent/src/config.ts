@@ -211,7 +211,7 @@ export const parseConfig = (raw: unknown): ParseResult => {
   if (credential !== null) {
     return fail(
       `field "${credential}" looks like a credential; keep keys out of this file and store them in the keyring ` +
-        `(security add-generic-password -a <account> -s openjob-agent -w)`,
+        `(security add-generic-password -a <account> -s dev.openjob.desktop -w)`,
     );
   }
 

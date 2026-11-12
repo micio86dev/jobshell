@@ -35,8 +35,8 @@ export const runExtractCv = async (
   const apiKey = deps.readKey();
   if (apiKey === null || apiKey.length === 0) {
     return refuse(
-      'no Anthropic key is stored under the openjob-agent service. Add it once with: ' +
-        'security add-generic-password -a anthropic -s openjob-agent -w',
+      'no Anthropic key is stored under the dev.openjob.desktop service. Add it in the desktop app, or once with: ' +
+        'security add-generic-password -a anthropic -s dev.openjob.desktop -w',
     );
   }
 

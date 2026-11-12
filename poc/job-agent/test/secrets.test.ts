@@ -24,7 +24,7 @@ test('the CLI is asked for the fixed service and the named account', () => {
   assert.equal(calls.length, 1);
   assert.equal(calls[0]?.cmd, 'security');
   assert.deepEqual(calls[0]?.args, ['find-generic-password', '-s', SERVICE, '-a', 'typesafe', '-w']);
-  assert.equal(SERVICE, 'openjob-agent');
+  assert.equal(SERVICE, 'dev.openjob.desktop', 'the desktop app writes these keys under its own service');
 });
 
 test('a missing entry returns null instead of throwing', () => {

@@ -35,7 +35,7 @@ test('with no stored key it refuses, says where to add one, and reads no network
   const result = await runExtractCv(CV, { readKey: () => null, model: 'claude-test', fetchImpl });
 
   assert.equal(result.exitCode, 2);
-  assert.match(result.stderr, /openjob-agent/);
+  assert.match(result.stderr, /dev.openjob.desktop/);
   assert.match(result.stderr, /anthropic/);
   assert.equal(calls.length, 0, 'no request is sent without a key');
 });
