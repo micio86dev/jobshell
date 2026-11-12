@@ -18,14 +18,16 @@ const USER_AGENT = 'openjob-agent (portfolio link check)';
 const PRIVATE_V4 = [
   /^10\./, /^127\./, /^0\./, /^169\.254\./, /^192\.168\./, /^172\.(1[6-9]|2\d|3[01])\./,
   /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./,
+  /^198\.(1[89])\./, /^(2[2-5]\d)\./,
 ];
 
 const isPrivateHost = (host: string): boolean => {
   const name = host.toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
   if (name === 'localhost' || name.endsWith('.localhost') || name.endsWith('.local')) return true;
   if (name.includes(':')) {
-    // An IPv6 literal: loopback, unique-local, link-local, and every IPv4-mapped form.
-    return name === '::1' || /^f[cd][0-9a-f]{2}:/.test(name) || /^fe80:/.test(name) || name.startsWith('::ffff:');
+    // An IPv6 literal. Public addresses never start with "::": that covers loopback, the unspecified
+    // address and every IPv4-compatible or IPv4-mapped form. Unique-local and link-local follow.
+    return name.startsWith('::') || /^f[cd][0-9a-f]{2}:/.test(name) || /^fe80:/.test(name);
   }
   return PRIVATE_V4.some((pattern) => pattern.test(name));
 };
@@ -59,7 +61,7 @@ type Fetch = (url: string, init: RequestInit) => Promise<Response>;
 
 const NOT_REACHABLE = (status: number): PortfolioCheck => ({ reachable: false, status, text: '' });
 
-/** Read at most MAX_BODY_BYTES of the body, then stop: a large page is never read to its end. */
+/** Read the body until it passes MAX_BODY_BYTES, then stop: a large page is never read to its end. */
 const readBounded = async (response: Response): Promise<string> => {
   if (response.body === null) return '';
   const reader = response.body.getReader();

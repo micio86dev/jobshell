@@ -65,3 +65,11 @@ test('the body read is bounded: a large page is not read to the end', async () =
   assert.equal(result.reachable, true);
   assert.equal(pulled <= 1_100_000, true, `read ${pulled} bytes of a 10 MB stream`);
 });
+
+test('the IPv6 forms that resolve to loopback or unspecified, and the reserved IPv4 ranges, are refused', () => {
+  assert.equal(parsePortfolioLink('https://[::127.0.0.1]/me').ok, false, 'an IPv4-compatible loopback is refused');
+  assert.equal(parsePortfolioLink('https://[::]/me').ok, false, 'the unspecified address is refused');
+  assert.equal(parsePortfolioLink('https://198.18.0.1/me').ok, false, 'a benchmarking address is refused');
+  assert.equal(parsePortfolioLink('https://224.0.0.1/me').ok, false, 'a multicast address is refused');
+  assert.equal(parsePortfolioLink('https://255.255.255.255/me').ok, false, 'the broadcast address is refused');
+});
