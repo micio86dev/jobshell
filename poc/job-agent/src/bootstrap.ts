@@ -21,7 +21,15 @@ export type RuntimeOptions = { profilePath: string; configPath?: string };
 export const loadRuntime = (options: RuntimeOptions): Runtime => {
   const config = options.configPath === undefined ? loadConfig() : loadConfig({ path: options.configPath });
 
-  const raw: unknown = JSON.parse(readFileSync(options.profilePath, 'utf8'));
+  // A profile is personal data, and the parser's own message can quote the text it failed on: only
+  // the position is kept, the same rule the configuration loader follows.
+  let raw: unknown;
+  try {
+    raw = JSON.parse(readFileSync(options.profilePath, 'utf8'));
+  } catch (error) {
+    const position = error instanceof Error ? /position (\d+)/.exec(error.message)?.[1] : undefined;
+    throw new Error(`profile file is not valid JSON${position === undefined ? '' : ` (at character ${position})`}`);
+  }
   const parsed = parseProfile(raw);
   if (!parsed.ok) throw new Error(parsed.error);
 
