@@ -449,7 +449,7 @@ export const compilePromptContext = (profile: UserProfile): string => {
     `${tag('remote_modes', 'Working modes accepted')}: ${profile.remote_modes.length > 0 ? profile.remote_modes.join('; ') : 'any'}`,
     `${tag('countries', 'Countries accepted')}: ${profile.countries.length > 0 ? profile.countries.join('; ') : 'any'}`,
     `${tag('contract_types', 'Contract')}: ${profile.contract_types.join('; ')}`,
-    `${tag('languages', 'Languages')}: ${languageLine}`,
+    `Languages (a hard filter, always): ${languageLine}`,
     `${tag('min_salary', 'Minimum pay')}: ${salary}`,
     `Gaps accepted: ${profile.accepted_gaps.length > 0 ? profile.accepted_gaps.join('; ') : 'none declared'}`,
   ].join('\n');

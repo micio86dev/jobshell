@@ -188,11 +188,13 @@ test('exclusions stay hard whatever strengths say', () => {
   assert.equal(result.ok, false, 'exclusions are not a strength-bearing field');
 });
 
-test('the prompt context states which conditions are soft', () => {
-  const result = parseProfile({ ...raw, strengths: { languages: 'preferred' } });
+test('the prompt context states which conditions are soft, and never the languages', () => {
+  const result = parseProfile({ ...raw, strengths: { languages: 'preferred', remote_modes: 'preferred' } });
   assert.equal(result.ok, true);
   if (!result.ok) return;
-  assert.match(compilePromptContext(result.profile), /Languages \(preferred\): it; en/);
+  const context = compilePromptContext(result.profile);
+  assert.match(context, /Languages \(a hard filter, always\): it; en/);
+  assert.doesNotMatch(context, /Languages \(preferred\)/);
 });
 
 // --- Language proficiency, eligibility and remote scope -------------------------------
@@ -298,4 +300,11 @@ test('a profile keeps its portfolio only as a public https link', () => {
   assert.equal(parseProfile({ ...raw, portfolio: 'https://example.test/portfolio' }).ok, true);
   assert.equal(parseProfile({ ...raw, portfolio: 'http://example.test/portfolio' }).ok, false, 'plain http is refused');
   assert.equal(parseProfile({ ...raw, portfolio: 'https://192.168.1.10/portfolio' }).ok, false, 'a private address is refused');
+});
+
+test('the scorer is told the languages are a hard requirement, whatever the language setting says', () => {
+  const result = parseProfile({ ...raw, strengths: { languages: 'acceptable' } });
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.doesNotMatch(compilePromptContext(result.profile), /Languages \(acceptable\)/, 'the scorer must not read languages as soft');
 });
