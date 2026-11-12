@@ -8,7 +8,7 @@
  */
 import { z } from 'zod';
 
-import { mentionsRemote, text, toIsoDate, type Challenge, type Posting, type SearchOptions, type SourceAdapter } from './types.ts';
+import { challengeOf, mentionsRemote, text, toIsoDate, type Challenge, type Posting, type SearchOptions, type SourceAdapter } from './types.ts';
 
 const BOARD_URL = 'https://boards-api.greenhouse.io/v1/boards';
 
@@ -31,11 +31,7 @@ const buildSearchUrl = (_query: string, options: SearchOptions): string => {
   return `${BOARD_URL}/${encodeURIComponent(options.tenant)}/jobs?content=true`;
 };
 
-const detectChallenge = (body: string): Challenge => {
-  if (/captcha/i.test(body)) return 'captcha';
-  if (/\b429\b|too many requests/i.test(body)) return 'rate_limited';
-  return 'none';
-};
+const detectChallenge = challengeOf;
 
 const extractPostings = (body: string): Posting[] => {
   let parsed: unknown;
@@ -57,6 +53,8 @@ const extractPostings = (body: string): Posting[] => {
     let id: string;
     try {
       const url = new URL(absoluteUrl);
+      // Only an https link is a posting: javascript:, data: and plain http are not shown.
+      if (url.protocol !== 'https:') continue;
       id = url.pathname.split('/').filter((part) => part.length > 0).pop() ?? '';
     } catch {
       continue;

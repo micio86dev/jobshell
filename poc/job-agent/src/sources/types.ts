@@ -106,3 +106,31 @@ export const posting = (fields: Partial<Posting> & Pick<Posting, 'source' | 'id'
   salary: null,
   ...fields,
 });
+
+/**
+ * A body that is a feed document is data: a job may mention any word, including the ones a
+ * challenge page uses. XML is always a feed. JSON is a feed unless it is an error envelope (an
+ * object with `error` or `message`) or a bare value, because those are how a service says
+ * "too many requests" in JSON.
+ */
+export const isFeedDocument = (body: string): boolean => {
+  if (/^\s*(<\?xml|<rss|<feed)/i.test(body)) return true;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(body);
+  } catch {
+    return false;
+  }
+  if (Array.isArray(parsed)) return true;
+  // A bare number, string, boolean or null is not a feed; neither is an error envelope.
+  if (typeof parsed === 'object' && parsed !== null) return !('error' in parsed || 'message' in parsed);
+  return false;
+};
+
+/** The challenge a non-feed page shows, checked against the patterns the adapter knows. */
+export const challengeOf = (body: string): Challenge => {
+  if (isFeedDocument(body)) return 'none';
+  if (/captcha/i.test(body)) return 'captcha';
+  if (/\b429\b|too many requests/i.test(body)) return 'rate_limited';
+  return 'none';
+};

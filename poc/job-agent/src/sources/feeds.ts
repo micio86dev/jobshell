@@ -13,6 +13,7 @@ import { z } from 'zod';
 
 import { parseRss } from './rss.ts';
 import {
+  challengeOf,
   mentionsRemote,
   posting,
   text,
@@ -70,12 +71,8 @@ const bareList = (payload: unknown): unknown[] => {
   return parsed.success ? parsed.data : [];
 };
 
-/** A feed, JSON or RSS, refuses politely; it never answers with a CAPTCHA page. */
-const feedChallenge = (body: string): Challenge => {
-  if (/captcha/i.test(body)) return 'captcha';
-  if (/\b429\b|too many requests/i.test(body)) return 'rate_limited';
-  return 'none';
-};
+/** A feed, JSON or RSS, is data; only a page that is not a feed can be a challenge. */
+const feedChallenge = challengeOf;
 
 const salaryRange = (min: number | null, max: number | null, currency: string): string | null => {
   if (min === null && max === null) return null;
