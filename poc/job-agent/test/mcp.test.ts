@@ -116,8 +116,10 @@ test('mcp: a seen file that was asked for and cannot be read is an error, not an
   assert.throws(() => loadSeen(notAnArray), /not a JSON array/);
 
   const good = join(dir, 'good.json');
+  writeFileSync(good, '["remoteok:1","hn:2"]', 'utf8');
+  assert.deepEqual([...loadSeen(good)].sort(), ['hn:2', 'remoteok:1']);
   writeFileSync(good, '["remoteok:1","hn:2",7]', 'utf8');
-  assert.deepEqual([...loadSeen(good)].sort(), ['hn:2', 'remoteok:1'], 'non-string entries are dropped');
+  assert.throws(() => loadSeen(good), /not a JSON array of keys/, 'a non-string entry is corruption, not a skip');
 
   assert.deepEqual([...loadSeen(null)], [], 'no path at all is a legitimate first run');
 });

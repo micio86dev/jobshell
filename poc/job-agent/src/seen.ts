@@ -7,6 +7,13 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 
+import { z } from 'zod';
+
+/** The memory file is a JSON array of keys, and nothing else: any other entry is corruption. */
+const seenKeys = z.array(z.string(), {
+  error: (issue) => `not a JSON array of keys (${issue.code})`,
+});
+
 /**
  * What a missing file means, which depends on who is asking.
  *
@@ -35,8 +42,9 @@ export const loadSeen = (path: string | null, missing: MissingMode = 'error'): S
     // a corrupt memory resets the user's history.
     throw new Error(`seen file ${path} is unreadable: ${error instanceof Error ? error.message : String(error)}`);
   }
-  if (!Array.isArray(parsed)) throw new Error(`seen file ${path} is not a JSON array of keys`);
-  return new Set(parsed.filter((value): value is string => typeof value === 'string'));
+  const keys = seenKeys.safeParse(parsed);
+  if (!keys.success) throw new Error(`seen file ${path} is not a JSON array of keys`);
+  return new Set(keys.data);
 };
 
 /** Merge the keys shown in this run into the file, keeping everything already there. */
