@@ -6,6 +6,8 @@
  * keyring (`src/secrets.ts`), so a config file can be copied, diffed or committed
  * without leaking anything.
  */
+
+import { z } from 'zod';
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -62,8 +64,18 @@ const fail = (message: string): ParseResult => ({ ok: false, error: `config: ${m
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-/** Reject a credential at any depth before anything else looks at the object. */
+/**
+ * Reject a credential at any depth, inside objects and inside arrays, before anything else looks
+ * at the file. The path names the field, never its value.
+ */
 const findCredentialKey = (value: unknown, path: string[]): string | null => {
+  if (Array.isArray(value)) {
+    for (const [index, nested] of value.entries()) {
+      const deeper = findCredentialKey(nested, [...path, String(index)]);
+      if (deeper !== null) return deeper;
+    }
+    return null;
+  }
   if (!isRecord(value)) return null;
   for (const [key, nested] of Object.entries(value)) {
     if (CREDENTIAL_KEY.test(key)) return [...path, key].join('.');
@@ -72,6 +84,32 @@ const findCredentialKey = (value: unknown, path: string[]): string | null => {
   }
   return null;
 };
+
+const notBlank = (value: string): boolean => value.trim().length > 0;
+const positiveNumber = (value: number): boolean => Number.isFinite(value) && value > 0;
+const positiveInteger = (field: string) =>
+  z
+    .number({ error: `${field} must be a positive integer` })
+    .refine((value) => Number.isInteger(value) && value > 0, { error: `${field} must be a positive integer` });
+
+/** A source override: every field optional, and each one checked against its own message. */
+const sourceOverride = (id: string) =>
+  z.object(
+    {
+      automation: z.enum(AUTOMATIONS, {
+        error: `sources.${id}.automation must be one of ${AUTOMATIONS.join(', ')}`,
+      }),
+      pace_ms: z
+        .number({ error: `sources.${id}.pace_ms must be a positive number` })
+        .refine(positiveNumber, { error: `sources.${id}.pace_ms must be a positive number` }),
+      max_pages: z
+        .number({ error: `sources.${id}.max_pages must be a positive integer` })
+        .refine((value) => Number.isInteger(value) && value > 0, {
+          error: `sources.${id}.max_pages must be a positive integer`,
+        }),
+    },
+    { error: `sources.${id} must be an object` },
+  ).partial();
 
 type SourcesResult =
   | { ok: true; sources: Record<string, SourceOverride> }
@@ -82,46 +120,50 @@ const parseSources = (raw: unknown): SourcesResult => {
   if (!isRecord(raw)) return { ok: false, error: 'config: sources must be an object' };
   const sources: Record<string, SourceOverride> = {};
   for (const [id, override] of Object.entries(raw)) {
-    if (!isRecord(override)) return { ok: false, error: `config: sources.${id} must be an object` };
+    const checked = sourceOverride(id).safeParse(override);
+    if (!checked.success) {
+      return { ok: false, error: `config: ${checked.error.issues[0]?.message ?? `sources.${id} must be an object`}` };
+    }
+    // Only the fields the file actually sets are kept, so an absent field stays absent.
     const parsed: SourceOverride = {};
-    if (override['automation'] !== undefined) {
-      const automation = override['automation'];
-      if (typeof automation !== 'string' || !AUTOMATIONS.includes(automation as Automation)) {
-        return {
-          ok: false,
-          error: `config: sources.${id}.automation must be one of ${AUTOMATIONS.join(', ')}`,
-        };
-      }
-      parsed.automation = automation as Automation;
-    }
-    if (override['pace_ms'] !== undefined) {
-      const pace = override['pace_ms'];
-      if (typeof pace !== 'number' || !Number.isFinite(pace) || pace <= 0) {
-        return { ok: false, error: `config: sources.${id}.pace_ms must be a positive number` };
-      }
-      parsed.pace_ms = pace;
-    }
-    if (override['max_pages'] !== undefined) {
-      const pages = override['max_pages'];
-      if (typeof pages !== 'number' || !Number.isInteger(pages) || pages <= 0) {
-        return { ok: false, error: `config: sources.${id}.max_pages must be a positive integer` };
-      }
-      parsed.max_pages = pages;
-    }
+    if (checked.data.automation !== undefined) parsed.automation = checked.data.automation;
+    if (checked.data.pace_ms !== undefined) parsed.pace_ms = checked.data.pace_ms;
+    if (checked.data.max_pages !== undefined) parsed.max_pages = checked.data.max_pages;
     sources[id] = parsed;
   }
   return { ok: true, sources };
 };
 
-const positiveInt = (value: unknown, field: string): number | string => {
-  if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) {
-    return `config: ${field} must be a positive integer`;
-  }
-  return value;
-};
-
-const nonEmptyString = (value: unknown, field: string): string | null =>
-  typeof value === 'string' && value.trim().length > 0 ? value : null;
+/** The non-secret settings. Each message names its field; the values echoed are the ones the user wrote. */
+const configShape = z.object(
+  {
+    provider: z.enum(PROVIDERS, {
+      error: (issue) => `provider must be one of ${PROVIDERS.join(', ')} (got ${JSON.stringify(issue.input)})`,
+    }),
+    model: z.string({ error: 'model must be a non-empty string' }).refine(notBlank, {
+      error: 'model must be a non-empty string',
+    }),
+    profile_dir: z.string({ error: 'profile_dir must be a non-empty string' }).refine(notBlank, {
+      error: 'profile_dir must be a non-empty string',
+    }),
+    evidence_dir: z.string({ error: 'evidence_dir must be a non-empty string' }).refine(notBlank, {
+      error: 'evidence_dir must be a non-empty string',
+    }),
+    threshold: z
+      .number({ error: (issue) => `threshold must be a number between 0 and 1 (got ${JSON.stringify(issue.input)})` })
+      .refine((value) => Number.isFinite(value) && value >= 0 && value <= 1, {
+        error: 'threshold must be a number between 0 and 1',
+      }),
+    pace_ms_floor: positiveInteger('pace_ms_floor'),
+    max_pages_per_run: positiveInteger('max_pages_per_run'),
+    sources: z.unknown(),
+    base_url: z
+      .string({ error: 'base_url must be a non-empty string when present' })
+      .refine(notBlank, { error: 'base_url must be a non-empty string when present' })
+      .optional(),
+  },
+  { error: 'the configuration must be a JSON object' },
+);
 
 /** Validate a raw object into a config, naming the offending field on failure. */
 export const parseConfig = (raw: unknown): ParseResult => {
@@ -135,50 +177,23 @@ export const parseConfig = (raw: unknown): ParseResult => {
     );
   }
 
-  const provider = raw['provider'];
-  if (typeof provider !== 'string' || !PROVIDERS.includes(provider as Provider)) {
-    return fail(`provider must be one of ${PROVIDERS.join(', ')} (got ${JSON.stringify(provider)})`);
-  }
-
-  const model = nonEmptyString(raw['model'], 'model');
-  if (model === null) return fail('model must be a non-empty string');
-
-  const profileDir = nonEmptyString(raw['profile_dir'], 'profile_dir');
-  if (profileDir === null) return fail('profile_dir must be a non-empty string');
-
-  const evidenceDir = nonEmptyString(raw['evidence_dir'], 'evidence_dir');
-  if (evidenceDir === null) return fail('evidence_dir must be a non-empty string');
-
-  const threshold = raw['threshold'];
-  if (typeof threshold !== 'number' || !Number.isFinite(threshold) || threshold < 0 || threshold > 1) {
-    return fail(`threshold must be a number between 0 and 1 (got ${JSON.stringify(threshold)})`);
-  }
-
-  const paceFloor = positiveInt(raw['pace_ms_floor'], 'pace_ms_floor');
-  if (typeof paceFloor === 'string') return { ok: false, error: paceFloor };
-
-  const maxPages = positiveInt(raw['max_pages_per_run'], 'max_pages_per_run');
-  if (typeof maxPages === 'string') return { ok: false, error: maxPages };
+  const shaped = configShape.safeParse(raw);
+  if (!shaped.success) return fail(shaped.error.issues[0]?.message ?? 'the configuration is not valid');
 
   const sources = parseSources(raw['sources']);
   if (!sources.ok) return { ok: false, error: sources.error };
 
-  const baseUrl = raw['base_url'];
-  if (baseUrl !== undefined && (typeof baseUrl !== 'string' || baseUrl.trim().length === 0)) {
-    return fail('base_url must be a non-empty string when present');
-  }
-
   const config: AgentConfig = {
-    provider: provider as Provider,
-    model,
-    threshold,
-    profile_dir: profileDir,
-    evidence_dir: evidenceDir,
-    pace_ms_floor: paceFloor,
-    max_pages_per_run: maxPages,
+    provider: shaped.data.provider,
+    model: shaped.data.model,
+    threshold: shaped.data.threshold,
+    profile_dir: shaped.data.profile_dir,
+    evidence_dir: shaped.data.evidence_dir,
+    pace_ms_floor: shaped.data.pace_ms_floor,
+    max_pages_per_run: shaped.data.max_pages_per_run,
     sources: sources.sources,
   };
-  if (typeof baseUrl === 'string') config.base_url = baseUrl;
+  if (shaped.data.base_url !== undefined) config.base_url = shaped.data.base_url;
   return { ok: true, config };
 };
 

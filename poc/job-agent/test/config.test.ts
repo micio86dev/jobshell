@@ -90,3 +90,14 @@ test('a credential-shaped key nested in a source override is rejected too', () =
   if (result.ok) return;
   assert.match(result.error, /token/);
 });
+
+test('a credential-shaped key inside a list is rejected, not only inside an object', () => {
+  const result = parseConfig({
+    ...defaultConfig(),
+    sources: { linkedin: { extra: [{ api_key: 'sk-live-should-never-be-here' }] } },
+  });
+  assert.equal(result.ok, false, 'a secret nested in an array must be found');
+  if (result.ok) return;
+  assert.match(result.error, /api_key/);
+  assert.doesNotMatch(result.error, /sk-live-should-never-be-here/);
+});
