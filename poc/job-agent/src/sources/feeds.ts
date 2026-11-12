@@ -40,6 +40,13 @@ const number = z
   .catch(null)
   .transform((value) => value ?? null);
 
+/**
+ * A job identifier: non-blank text or a finite number. A value of any other type (an object, a
+ * list, a boolean) makes the whole item invalid, so it is skipped rather than stored under a
+ * meaningless key such as "[object Object]".
+ */
+const idValue = z.union([z.string().trim().min(1), z.number().finite()]).optional();
+
 /** Every item that fits its schema; an item that does not fit is skipped, never guessed. */
 const parseEach = <T extends z.ZodType>(items: unknown[], schema: T): Array<z.output<T>> =>
   items.flatMap((item) => {
@@ -116,8 +123,8 @@ const rssFeed = (
 });
 
 const remoteokJob = z.object({
-  id: z.unknown().optional(),
-  slug: z.unknown().optional(),
+  id: idValue,
+  slug: idValue,
   position: shortText,
   url: shortText,
   company: shortText,
@@ -129,7 +136,7 @@ const remoteokJob = z.object({
 });
 
 const remotiveJob = z.object({
-  id: z.unknown().optional(),
+  id: idValue,
   title: shortText,
   url: shortText,
   company_name: shortText,
@@ -140,7 +147,7 @@ const remotiveJob = z.object({
 });
 
 const arbeitnowJob = z.object({
-  slug: z.unknown().optional(),
+  slug: idValue,
   title: shortText,
   url: shortText,
   company_name: shortText,
@@ -151,7 +158,7 @@ const arbeitnowJob = z.object({
 });
 
 const jobicyJob = z.object({
-  id: z.unknown().optional(),
+  id: idValue,
   jobTitle: shortText,
   url: shortText,
   companyName: shortText,
@@ -164,7 +171,7 @@ const jobicyJob = z.object({
 });
 
 const workingnomadsJob = z.object({
-  id: z.unknown().optional(),
+  id: idValue,
   title: shortText,
   url: shortText,
   company_name: shortText,
@@ -175,7 +182,7 @@ const workingnomadsJob = z.object({
 });
 
 const hnHit = z.object({
-  objectID: z.unknown().optional(),
+  objectID: z.union([z.string().trim().min(1), z.number().finite()]),
   comment_text: shortText,
   created_at: z.unknown().optional(),
 });

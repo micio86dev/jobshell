@@ -289,3 +289,18 @@ test('remotive: a field of the wrong type is absent, and an item that is not an 
   assert.equal(postings[0]?.title, 'Rust Engineer');
   assert.equal(postings[0]?.salary, null, 'a salary that is not text is absent, not guessed');
 });
+
+test('an item whose id is not text or a number is skipped, never stored as "[object Object]" or an empty key', () => {
+  const remotiveBody = JSON.stringify({
+    jobs: [
+      { id: { nested: true }, title: 'Rust Engineer', url: 'https://example.test/a' },
+      { id: 7, title: 'Go Engineer', url: 'https://example.test/b' },
+    ],
+  });
+  const remotivePostings = remotive.extractPostings(remotiveBody);
+  assert.deepEqual(remotivePostings.map((p) => p.id), ['7'], 'an object id is not an identity');
+
+  const hnBody = JSON.stringify({ hits: [{ comment_text: 'We are hiring Rust engineers.' }, { objectID: '99', comment_text: 'We hire Go.' }] });
+  const hnPostings = hn.extractPostings(hnBody);
+  assert.deepEqual(hnPostings.map((p) => p.id), ['99'], 'a comment without an id is not a posting with an empty key');
+});
