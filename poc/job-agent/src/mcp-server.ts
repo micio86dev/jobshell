@@ -45,8 +45,6 @@ export type McpResponse = {
   error?: { code: number; message: string };
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /** A tools/call request: the tool name, and its arguments as an object when present. */
 const toolCall = z.object({
@@ -195,10 +193,11 @@ export const handleMcpRequest = async (request: McpRequest, deps: McpDeps): Prom
       }
 
       if (name === 'already_seen') {
-        const key = args['key'];
-        if (typeof key !== 'string') {
+        const checked = z.object({ key: z.string({ error: 'key must be a string' }) }).safeParse(args);
+        if (!checked.success) {
           return { jsonrpc: '2.0', id, error: { code: -32602, message: 'key must be a string' } };
         }
+        const key = checked.data.key;
         return { jsonrpc: '2.0', id, result: toolResult({ key, seen: deps.seen(key) }) };
       }
 
