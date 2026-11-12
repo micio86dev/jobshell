@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 
-import { handleMcpRequest, loadSeen, parseMcpRequest, type McpDeps } from '../src/mcp-server.ts';
+import { handleMcpRequest, internalErrorResponse, loadSeen, parseMcpRequest, type McpDeps } from '../src/mcp-server.ts';
 import { capture, posting, profile } from './support.ts';
 
 const mcpDeps = (): McpDeps => {
@@ -136,4 +136,11 @@ test('mcp: a posting with a non-web url is refused before any judgment, as the b
   );
   assert.equal(response.error?.code, -32602, 'a javascript url is not a posting');
   assert.equal(response.result, undefined);
+});
+
+test('mcp: an internal failure answers with a generic message, and the detail stays off the protocol channel', () => {
+  const response = internalErrorResponse(5, new Error('provider said: secret-token-123'));
+  assert.equal(response.error?.code, -32603);
+  assert.equal(response.error?.message, 'internal error');
+  assert.doesNotMatch(JSON.stringify(response), /secret-token-123/);
 });

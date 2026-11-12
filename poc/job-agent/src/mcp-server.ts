@@ -192,6 +192,16 @@ export const handleMcpRequest = async (request: McpRequest, deps: McpDeps): Prom
 };
 
 /** Serve MCP over stdio, one JSON-RPC object per line. */
+/**
+ * The answer to a request that failed inside the agent. The client gets a fixed message: a provider
+ * or a path can be in the error text, and the protocol channel is not where that belongs.
+ */
+export const internalErrorResponse = (id: string | number | null | undefined, _error: unknown): McpResponse => ({
+  jsonrpc: '2.0',
+  id: id ?? null,
+  error: { code: -32603, message: 'internal error' },
+});
+
 export const serveStdio = (deps: McpDeps): void => {
   const lines = createInterface({ input: process.stdin });
   lines.on('line', (line: string) => {
@@ -220,12 +230,9 @@ export const serveStdio = (deps: McpDeps): void => {
     handleMcpRequest(request, deps)
       .then((response) => process.stdout.write(`${JSON.stringify(response)}\n`))
       .catch((error: unknown) => {
+        process.stderr.write(`openjob-agent: request failed: ${error instanceof Error ? error.message : String(error)}\n`);
         process.stdout.write(
-          `${JSON.stringify({
-            jsonrpc: '2.0',
-            id: request.id ?? null,
-            error: { code: -32603, message: error instanceof Error ? error.message : 'internal error' },
-          })}\n`,
+          `${JSON.stringify(internalErrorResponse(request.id, error))}\n`,
         );
       });
   });
