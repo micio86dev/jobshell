@@ -68,14 +68,18 @@ const readBounded = async (response: Response): Promise<string> => {
   const decoder = new TextDecoder();
   let total = 0;
   let out = '';
-  while (total < MAX_BODY_BYTES) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    out += decoder.decode(value, { stream: true });
+  try {
+    while (total < MAX_BODY_BYTES) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      out += decoder.decode(value, { stream: true });
+    }
+    out += decoder.decode();
+  } finally {
+    // Close the stream on every path, including a read that failed part-way.
+    await reader.cancel().catch(() => undefined);
   }
-  out += decoder.decode();
-  await reader.cancel();
   return out;
 };
 

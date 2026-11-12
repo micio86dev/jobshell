@@ -91,3 +91,21 @@ test('a body that fails while it is read ends as not reachable, without the erro
   assert.equal(result.reachable, false);
   assert.equal(JSON.stringify(result).includes('internal-host'), false);
 });
+
+test('a body larger than the bound is cut off: the rest of the stream is closed, not left open', async () => {
+  let closed = false;
+  let sent = 0;
+  const stream = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      sent += 1;
+      controller.enqueue(new Uint8Array(100_000).fill(97));
+      if (sent >= 50) controller.close();
+    },
+    cancel() {
+      closed = true;
+    },
+  });
+  const result = await checkPortfolioLink('https://example.com/large', async () => new Response(stream, { status: 200 }));
+  assert.equal(result.reachable, true);
+  assert.equal(closed, true);
+});
