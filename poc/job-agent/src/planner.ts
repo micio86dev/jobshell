@@ -7,6 +7,8 @@
  * evidence records which of the two produced the queries, because "the model
  * answered" and "we used the compiler" are different facts.
  */
+
+import { z } from 'zod';
 import { compileQueries, type UserProfile } from './profile.ts';
 import type { FetchLike } from './jev.ts';
 
@@ -60,11 +62,14 @@ export const extractQueries = (text: string, limit: number): string[] | null => 
   } catch {
     return null;
   }
-  if (!Array.isArray(parsed)) return null;
+  const list = z.array(z.unknown()).safeParse(parsed);
+  if (!list.success) return null;
+  // Only strings count; any other item is skipped, and repeats are kept once.
   const queries: string[] = [];
-  for (const item of parsed) {
-    if (typeof item !== 'string') continue;
-    const trimmed = item.trim();
+  for (const item of list.data) {
+    const text = z.string().safeParse(item);
+    if (!text.success) continue;
+    const trimmed = text.data.trim();
     if (trimmed.length > 0 && !queries.includes(trimmed)) queries.push(trimmed);
   }
   return queries.length === 0 ? null : queries.slice(0, limit);

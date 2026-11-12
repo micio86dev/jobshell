@@ -15,6 +15,8 @@
  * Output tokens are currently free, so `usage.input_tokens` is the cost signal the
  * runner records.
  */
+
+import { z } from 'zod';
 import type { Posting } from './sources/types.ts';
 
 export const TYPESAFE_URL = 'https://api.typesafe.ai/v1/systemone';
@@ -61,29 +63,30 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const number = (value: unknown): number => (typeof value === 'number' && Number.isFinite(value) ? value : 0);
 
+/** One answer from the judge, by its type. A value that does not fit falls to its empty value. */
+const numeric = z.number().catch(0);
+const judgeAnswer = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('noul'), noul: numeric }),
+  z.object({
+    type: z.literal('choice'),
+    choice: z.string().catch(''),
+    confidence: numeric,
+    probabilities: z.record(z.string(), numeric).catch({}),
+  }),
+]);
+
 const parseAnswers = (raw: unknown): Record<string, JeAnswer> => {
   const answers: Record<string, JeAnswer> = {};
-  if (!isRecord(raw)) return answers;
-  for (const [name, value] of Object.entries(raw)) {
-    if (!isRecord(value)) continue;
-    if (value['type'] === 'noul') {
-      answers[name] = { type: 'noul', noul: number(value['noul']) };
-      continue;
-    }
-    if (value['type'] === 'choice') {
-      const probabilities: Record<string, number> = {};
-      if (isRecord(value['probabilities'])) {
-        for (const [choice, probability] of Object.entries(value['probabilities'])) {
-          probabilities[choice] = number(probability);
-        }
-      }
-      answers[name] = {
-        type: 'choice',
-        choice: typeof value['choice'] === 'string' ? value['choice'] : '',
-        confidence: number(value['confidence']),
-        probabilities,
-      };
-    }
+  const named = z.record(z.string(), z.unknown()).safeParse(raw);
+  if (!named.success) return answers;
+  for (const [name, value] of Object.entries(named.data)) {
+    const parsed = judgeAnswer.safeParse(value);
+    if (!parsed.success) continue;
+    const answer = parsed.data;
+    answers[name] =
+      answer.type === 'noul'
+        ? { type: 'noul', noul: answer.noul }
+        : { type: 'choice', choice: answer.choice, confidence: answer.confidence, probabilities: answer.probabilities };
   }
   return answers;
 };
