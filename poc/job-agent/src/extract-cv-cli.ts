@@ -65,7 +65,7 @@ process.stdin.on('end', () => {
     })
     .catch(() => {
       // A keychain failure carries no detail that is safe to print; the message is fixed.
-      process.stderr.write('the extraction could not run: the keychain or the request failed\n');
+      process.stderr.write('the extraction could not complete\n');
       process.exitCode = 2;
     });
 });
