@@ -105,7 +105,7 @@ const positiveInteger = (field: string) =>
 
 /** A source override: every field optional, and each one checked against its own message. */
 const sourceOverride = (id: string) =>
-  z.object(
+  z.strictObject(
     {
       automation: z.enum(AUTOMATIONS, {
         error: `sources.${id}.automation must be one of ${AUTOMATIONS.join(', ')}`,
@@ -139,7 +139,7 @@ const parseSources = (raw: unknown): SourcesResult => {
     }
     const checked = sourceOverride(id).safeParse(override);
     if (!checked.success) {
-      return { ok: false, error: `config: ${checked.error.issues[0]?.message ?? `sources.${id} must be an object`}` };
+      return { ok: false, error: `config: ${firstProblem(checked.error, `sources.${id} must be an object`)}` };
     }
     // Only the fields the file actually sets are kept, so an absent field stays absent.
     const parsed: SourceOverride = {};
@@ -152,7 +152,7 @@ const parseSources = (raw: unknown): SourcesResult => {
 };
 
 /** The non-secret settings. Each message names its field. No typed value is echoed, so a secret cannot leak through an error. */
-const configShape = z.object(
+const configShape = z.strictObject(
   {
     // The value typed is never echoed: a secret pasted into this field must not reach an error.
     provider: z.enum(PROVIDERS, { error: `provider must be one of ${PROVIDERS.join(', ')}` }),
@@ -185,6 +185,24 @@ const configShape = z.object(
   { error: 'the configuration must be a JSON object' },
 );
 
+/**
+ * The message for a field the configuration does not know. The name is shown only when it is a
+ * plain field name: an unknown key may itself carry a pasted secret.
+ */
+const unknownFieldMessage = (keys: string[]): string => {
+  const first = keys[0] ?? '';
+  const shown = /^[a-z0-9_]{1,40}$/i.test(first) ? `"${first}"` : 'whose name is not a plain field name';
+  return `unknown field ${shown}; the configuration accepts only its documented fields`;
+};
+
+/** The message for the first problem a configuration shape reports, unknown fields included. */
+const firstProblem = (error: z.ZodError, fallback: string): string => {
+  const issue = error.issues[0];
+  if (issue === undefined) return fallback;
+  if (issue.code === 'unrecognized_keys') return unknownFieldMessage(issue.keys);
+  return issue.message;
+};
+
 /** Validate a raw object into a config, naming the offending field on failure. */
 export const parseConfig = (raw: unknown): ParseResult => {
   if (!isRecord(raw)) return fail('the configuration must be a JSON object');
@@ -198,7 +216,7 @@ export const parseConfig = (raw: unknown): ParseResult => {
   }
 
   const shaped = configShape.safeParse(raw);
-  if (!shaped.success) return fail(shaped.error.issues[0]?.message ?? 'the configuration is not valid');
+  if (!shaped.success) return fail(firstProblem(shaped.error, 'the configuration is not valid'));
 
   const sources = parseSources(raw['sources']);
   if (!sources.ok) return { ok: false, error: sources.error };

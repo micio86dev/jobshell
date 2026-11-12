@@ -152,9 +152,32 @@ test('a base url carrying a credential in its query is refused without echoing i
 });
 
 test('a key that only contains a credential word inside a longer word is not a credential', () => {
-  const result = parseConfig({ ...defaultConfig(), max_tokens: 100 });
-  assert.equal(result.ok, true, 'max_tokens is a limit, not a secret');
+  // max_tokens is not a credential, so it is refused only as the unknown field it is.
+  const limit = parseConfig({ ...defaultConfig(), max_tokens: 100 });
+  assert.equal(limit.ok, false);
+  if (!limit.ok) assert.match(limit.error, /unknown field "max_tokens"/, 'refused as unknown, not as a credential');
   for (const key of ['token', 'API_KEY', 'qwen_secret', 'anthropic_api_key', 'db-password']) {
     assert.equal(parseConfig({ ...defaultConfig(), [key]: 'x' }).ok, false, `${key} must still be refused`);
   }
+});
+
+test('a misspelled field is refused, not silently ignored', () => {
+  const result = parseConfig({ ...defaultConfig(), thresold: 0.5 });
+  assert.equal(result.ok, false, 'a typo must not fall back to the default');
+  if (result.ok) return;
+  assert.match(result.error, /thresold/);
+  assert.match(result.error, /unknown field/);
+});
+
+test('an unknown field inside a source override is refused too', () => {
+  const result = parseConfig({ ...defaultConfig(), sources: { linkedin: { pace: 5000 } } });
+  assert.equal(result.ok, false);
+});
+
+test('an unknown field whose name looks like a secret is refused without echoing the name', () => {
+  const secret = 'sk-ant-LEAK-as-a-field-name';
+  const result = parseConfig({ ...defaultConfig(), [secret]: 1 });
+  assert.equal(result.ok, false);
+  if (result.ok) return;
+  assert.doesNotMatch(result.error, /sk-ant-LEAK/);
 });
