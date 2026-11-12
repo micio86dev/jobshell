@@ -140,3 +140,27 @@ test('the token budget comes from the environment, with a default large enough f
   assert.equal(maxTokensForExtraction({ OPENJOB_EXTRACT_MAX_TOKENS: '8000' }), 8000);
   assert.equal(maxTokensForExtraction({ OPENJOB_EXTRACT_MAX_TOKENS: 'lots' }), 4000, 'a value that is not a number is ignored');
 });
+
+test('the contract types a CV or portfolio states are proposed; an unknown one is dropped', async () => {
+  const reply = JSON.stringify({
+    headline: 'Desktop engineer',
+    capabilities: ['Rust'],
+    domains: [],
+    seniority: 'senior',
+    years_experience: 12,
+    languages: [],
+    contract_types: ['freelance', 'contractor-x', 'employee'],
+  });
+  const { fetchImpl } = fakeFetch(200, answer(reply));
+  const result = await extractCandidateFields(CV, deps(fetchImpl));
+  assert.equal(result.source, 'model');
+  assert.deepEqual(result.fields.contract_types, ['freelance', 'employee']);
+});
+
+test('a missing contract type list is an empty proposal, not a failed answer', async () => {
+  const reply = JSON.stringify({ headline: 'x', capabilities: [], domains: [], seniority: null, years_experience: null, languages: [] });
+  const { fetchImpl } = fakeFetch(200, answer(reply));
+  const result = await extractCandidateFields(CV, deps(fetchImpl));
+  assert.equal(result.source, 'model');
+  assert.deepEqual(result.fields.contract_types, []);
+});

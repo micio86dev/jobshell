@@ -39,6 +39,8 @@ export type ProposedFields = {
   seniority: Seniority | null;
   years_experience: number | null;
   languages: ProposedLanguage[];
+  /** The contract types the document states: employee, freelance. Empty when it states none. */
+  contract_types: Array<'employee' | 'freelance'>;
 };
 
 export type IntakeResult = {
@@ -63,6 +65,7 @@ const emptyFields = (): ProposedFields => ({
   seniority: null,
   years_experience: null,
   languages: [],
+  contract_types: [],
 });
 
 /**
@@ -108,6 +111,11 @@ const modelAnswer = z.object({
   seniority: z.enum(SENIORITIES).nullable().catch(null),
   years_experience: z.number().min(0).max(MAX_YEARS).nullable().catch(null),
   languages: languageList,
+  // Each value is checked on its own: an unknown contract type is dropped, the others are kept.
+  contract_types: z
+    .array(z.unknown())
+    .catch([])
+    .transform((values) => values.filter((value): value is 'employee' | 'freelance' => value === 'employee' || value === 'freelance')),
 });
 
 /** Validate an answer object; every field that does not fit becomes its empty value. */
@@ -138,6 +146,7 @@ const instruction = (text: string, kind: IntakeKind): string => {
     '"headline" (string or null), "capabilities" (array of strings), "domains" (array of strings),',
     '"seniority" (one of junior, mid, senior, lead, or null), "years_experience" (number or null),',
     `"languages" (array of objects {"code": two-letter ISO 639-1 code, "level": one of ${LANGUAGE_LEVELS.join(', ')}, or null}).`,
+    `"contract_types" (array with "employee" and/or "freelance", only when the text states it; otherwise []).`,
     `Use null or an empty array for anything the ${label} does not state. Do not guess a level.`,
     '',
     `${kind === 'cv' ? 'CV' : 'Portfolio'}:`,
