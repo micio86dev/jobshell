@@ -1,7 +1,7 @@
 /**
- * The portfolio is a public https link. This is the boundary check the wizard applies before it
- * asks the agent whether the link answers: the same rule the agent enforces, so a bad link is
- * refused here without a request. The agent's verdict is read through zod too.
+ * The portfolio is a public https link. This is a pre-check the wizard runs before it asks the
+ * agent whether the link answers, so an obviously bad link is refused without a request. It is
+ * not the authority: the agent's own rule decides, and its verdict is read through zod too.
  */
 import { z } from 'zod';
 
