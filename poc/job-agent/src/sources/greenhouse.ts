@@ -6,9 +6,21 @@
  * probed in Phase 0. This is what "fast" looks like — one HTTP call for hundreds of
  * postings, no challenge to defeat.
  */
-import { asRecord, mentionsRemote, text, toIsoDate, type Challenge, type Posting, type SearchOptions, type SourceAdapter } from './types.ts';
+import { z } from 'zod';
+
+import { mentionsRemote, text, toIsoDate, type Challenge, type Posting, type SearchOptions, type SourceAdapter } from './types.ts';
 
 const BOARD_URL = 'https://boards-api.greenhouse.io/v1/boards';
+
+/** A board job as Greenhouse publishes it. A field of the wrong type is absent; a missing URL drops the job. */
+const shortText = z.string().refine((value) => value.trim().length > 0).nullish().catch(null).transform((value) => value ?? null);
+const greenhouseJob = z.object({
+  absolute_url: shortText,
+  title: shortText,
+  location: z.object({ name: shortText }).nullish().catch(null).transform((value) => value?.name ?? null),
+  content: shortText,
+  updated_at: z.unknown().optional(),
+});
 
 const buildSearchUrl = (_query: string, options: SearchOptions): string => {
   if (options.tenant === undefined || options.tenant.trim().length === 0) {
@@ -25,9 +37,6 @@ const detectChallenge = (body: string): Challenge => {
   return 'none';
 };
 
-const asString = (value: unknown): string | null =>
-  typeof value === 'string' && value.trim().length > 0 ? value : null;
-
 const extractPostings = (body: string): Posting[] => {
   let parsed: unknown;
   try {
@@ -35,14 +44,14 @@ const extractPostings = (body: string): Posting[] => {
   } catch {
     return [];
   }
-  const jobs = asRecord(parsed)?.['jobs'];
-  if (!Array.isArray(jobs)) return [];
+  const list = z.looseObject({ jobs: z.array(z.unknown()).catch([]) }).safeParse(parsed);
+  if (!list.success) return [];
 
   const postings: Posting[] = [];
-  for (const raw of jobs) {
-    const job = asRecord(raw);
-    if (job === null) continue;
-    const absoluteUrl = asString(job['absolute_url']);
+  for (const raw of list.data.jobs) {
+    const job = greenhouseJob.safeParse(raw);
+    if (!job.success) continue;
+    const absoluteUrl = job.data.absolute_url;
     if (absoluteUrl === null) continue;
 
     let id: string;
@@ -54,18 +63,18 @@ const extractPostings = (body: string): Posting[] => {
     }
     if (id.length === 0) continue;
 
-    const location = asString(asRecord(job['location'])?.['name']);
-    const content = asString(job['content']);
+    const location = job.data.location;
+    const content = job.data.content;
     postings.push({
       source: 'greenhouse',
       id,
-      title: asString(job['title']) ?? '',
+      title: job.data.title ?? '',
       company: null,
       location,
       url: absoluteUrl,
       remote_hint: mentionsRemote(location),
       description: content === null ? null : text(content),
-      published_at: toIsoDate(job['updated_at']),
+      published_at: toIsoDate(job.data.updated_at),
       salary: null,
     });
   }
