@@ -105,7 +105,7 @@ pub async fn save_identity_with_scope(pool: &Pool<Sqlite>, payload: &str, apply_
             )
             .bind(&search_id)
             .bind(next)
-            .bind(&latest)
+            .bind(carry_identity(&latest, payload)?)
             .bind(apply_scope)
             .bind(identity)
             .execute(&mut *tx)
@@ -298,6 +298,17 @@ pub async fn search_history(pool: &Pool<Sqlite>, search_id: &str) -> Result<Vec<
         .collect())
 }
 
+/// The search profile the agent reads, with the identity's fields written over it. The identity
+/// is authoritative for the keys it contains; keys only the search has are kept as they are.
+fn carry_identity(search_payload: &str, identity_payload: &str) -> Result<String> {
+    let mut search: serde_json::Map<String, serde_json::Value> =
+        serde_json::from_str(search_payload).context("reading the search before propagating")?;
+    let identity: serde_json::Map<String, serde_json::Value> =
+        serde_json::from_str(identity_payload).context("reading the identity before propagating")?;
+    search.extend(identity);
+    Ok(serde_json::Value::Object(search).to_string())
+}
+
 /// Whether the first-run wizard has been completed.
 pub async fn onboarding_complete(pool: &Pool<Sqlite>) -> Result<bool> {
     let completed: Option<Option<String>> =
@@ -436,7 +447,9 @@ mod tests {
     async fn active_searches_scope_appends_a_version_only_to_active_searches() {
         let (_dir, pool) = store().await;
         let identity = save_identity(&pool, r#"{"headline":"Backend"}"#).await.expect("identity");
-        let active = create_search(&pool, "Active", r#"{}"#, Some(identity)).await.expect("create");
+        let active = create_search(&pool, "Active", r#"{"remote_modes":["remote"]}"#, Some(identity))
+            .await
+            .expect("create");
         let paused = create_search(&pool, "Paused", r#"{}"#, Some(identity)).await.expect("create");
         let deleted = create_search(&pool, "Deleted", r#"{}"#, Some(identity)).await.expect("create");
         set_search_status(&pool, &paused, "paused").await.expect("pause");
@@ -450,6 +463,9 @@ mod tests {
         assert_eq!(active_history.len(), 2, "the active search gets a version");
         let propagated = latest_search_version(&pool, &active).await.expect("read").expect("present");
         assert_eq!(propagated.identity_version, Some(new_identity));
+        let merged: serde_json::Value = serde_json::from_str(&propagated.payload).expect("json");
+        assert_eq!(merged["headline"], "Lead", "the identity field reaches the search profile the agent reads");
+        assert_eq!(merged["remote_modes"], serde_json::json!(["remote"]), "a search-only field is kept");
         assert_eq!(search_history(&pool, &paused).await.expect("history").len(), 1, "a paused search is not touched");
         assert_eq!(search_history(&pool, &deleted).await.expect("history").len(), 1, "a deleted search is not touched");
     }
