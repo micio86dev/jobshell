@@ -1,0 +1,91 @@
+{
+  "total": 17,
+  "failed": 0,
+  "results": [
+    {
+      "name": "A1 first run shows the wizard on the CV step",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A2 CV proposal fills the empty headline",
+      "ok": true,
+      "detail": "headline=\"Desktop engineer\""
+    },
+    {
+      "name": "A3 an empty language row is refused",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A4 a complete language row is listed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A5 finish is disabled while the remote scope is unstated",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A6 finish is enabled once the scope is chosen",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A7 after saving, the main app is shown",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A8 one identity_save with the new_only scope",
+      "ok": true,
+      "detail": "calls=1"
+    },
+    {
+      "name": "A9 the saved profile is the agent shape with the chosen values",
+      "ok": true,
+      "detail": "scope=europe languages=[\"en\"]"
+    },
+    {
+      "name": "A10 onboarding is marked complete once",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "B1 a partial draft is saved without a finish",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "B2 no profile is saved from a partial draft",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "B3 the draft is read back on the next start",
+      "ok": true,
+      "detail": "headline=\"Backend developer\""
+    },
+    {
+      "name": "C1 edit opens with the saved profile",
+      "ok": true,
+      "detail": "headline=\"Desktop engineer\""
+    },
+    {
+      "name": "C2 a changed profile without a scope is refused",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "C3 the change is saved with the active_searches scope",
+      "ok": true,
+      "detail": "calls=1"
+    },
+    {
+      "name": "C4 the new headline reaches the saved profile",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

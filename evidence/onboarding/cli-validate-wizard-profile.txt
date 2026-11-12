@@ -1,0 +1,3 @@
+# wizard-produced profile (browser run, scenario A, rerun after the CV fix) through the agent validator
+{"ok":true}
+exit=0

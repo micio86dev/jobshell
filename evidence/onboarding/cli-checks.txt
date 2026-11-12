@@ -1,0 +1,15 @@
+# validate-profile-cli with the example profile
+{"ok":true}
+exit=0
+# validate-profile-cli with an invalid profile (no headline)
+{"ok":false,"error":"profile: headline must be a non-empty string"}
+exit=1
+# extract-cv-cli with an empty CV (refused before any key is read)
+the CV is empty
+exit=2
+# extract-cv-cli with a CV over 60000 characters (refused before any key is read)
+the CV is too long (more than 60000 characters)
+exit=2
+# HISTORY, before the CV fix: the wizard profile was refused because cv was empty (fixed in the CV unit; see cli-validate-wizard-profile.txt)
+{"ok":false,"error":"profile: cv must be a non-empty string"}
+exit=1

@@ -1,0 +1,51 @@
+{
+  "headline": "Desktop engineer",
+  "capabilities": [
+    "Rust",
+    "Python"
+  ],
+  "domains": [],
+  "seniority": "senior",
+  "years_experience": 12,
+  "remote_modes": [
+    "remote"
+  ],
+  "onsite_cities": [],
+  "countries": [],
+  "contract_types": [
+    "employee"
+  ],
+  "languages": [
+    "en"
+  ],
+  "min_salary": null,
+  "timezone_overlap_hours": null,
+  "exclude_companies": [],
+  "exclude_terms": [],
+  "accepted_gaps": [],
+  "cv": "Twelve years building desktop apps with Rust and Python. Led a team of four.",
+  "portfolio": null,
+  "threshold": 0.9,
+  "daily_cap": 2,
+  "scoring_budget": 120,
+  "strengths": {
+    "languages": "mandatory",
+    "remote_modes": "mandatory",
+    "onsite_cities": "mandatory",
+    "countries": "mandatory",
+    "contract_types": "mandatory",
+    "min_salary": "mandatory"
+  },
+  "language_proficiency": {
+    "en": {
+      "level": "fluent",
+      "usage": "comfortable"
+    }
+  },
+  "eligibility": {
+    "employee": [],
+    "contractor": [],
+    "residence": null
+  },
+  "remote_scope": "europe"
+}
