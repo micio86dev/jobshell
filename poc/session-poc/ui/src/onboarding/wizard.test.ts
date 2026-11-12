@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  applyPortfolioLanguages,
+  applyPortfolioProposal,
   applyProposal,
   applyScopeNeedsChoice,
   canFinish,
@@ -189,6 +189,7 @@ describe('CV and portfolio proposals', () => {
       domains: [],
       seniority: 'senior',
       years_experience: 12,
+      contract_types: [],
       languages: [
         { code: 'en', level: 'fluent' },
         { code: 'it', level: null },
@@ -234,7 +235,7 @@ describe('CV and portfolio proposals', () => {
     const draft = withDefaultPrimary(emptyDraft(), 'en');
     const before = JSON.stringify(draft);
     applyProposal(draft, proposal);
-    applyPortfolioLanguages(draft, proposal);
+    applyPortfolioProposal(draft, proposal);
     expect(JSON.stringify(draft)).toBe(before);
   });
 
@@ -242,12 +243,12 @@ describe('CV and portfolio proposals', () => {
     const fallback: CvProposal = {
       source: 'fallback',
       reason: 'provider answered 401',
-      fields: { headline: null, capabilities: [], domains: [], seniority: null, years_experience: null, languages: [] },
+      fields: { headline: null, capabilities: [], domains: [], seniority: null, years_experience: null, contract_types: [], languages: [] },
     };
     expect(applyProposal(emptyDraft(), fallback)).toEqual(emptyDraft());
   });
 
-  it('a portfolio adds only the languages it states, and changes nothing else', () => {
+  it('a portfolio fills the fields the user left empty, adds its languages, and keeps what was written', () => {
     const portfolio: CvProposal = {
       source: 'model',
       reason: null,
@@ -257,13 +258,21 @@ describe('CV and portfolio proposals', () => {
         domains: [],
         seniority: 'lead',
         years_experience: 3,
+        contract_types: ['freelance'],
         languages: [{ code: 'de', level: 'basic' }],
       },
     };
-    const next = applyPortfolioLanguages(completeDraft(), portfolio);
+    const next = applyPortfolioProposal(completeDraft(), portfolio);
     expect(next.languages.items.map((item) => item.code)).toEqual(['en', 'de']);
     expect(next.headline).toBe('Desktop engineer');
     expect(next.capabilities).toEqual(['Rust', 'Python']);
+    expect(next.work.contract_types).toEqual(['employee']);
+  });
+
+  it('a CV proposal fills an empty contract type, and never overwrites one already chosen', () => {
+    const withContract: CvProposal = { ...proposal, fields: { ...proposal.fields, contract_types: ['freelance'] } };
+    expect(applyProposal(emptyDraft(), withContract).work.contract_types).toEqual(['freelance']);
+    expect(applyProposal(completeDraft(), withContract).work.contract_types).toEqual(['employee']);
   });
 
   it('the proposed languages keep their codes and levels, with no name translation', () => {

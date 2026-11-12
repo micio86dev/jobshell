@@ -24,7 +24,7 @@ import {
   type LanguageUsage,
 } from './schema';
 import {
-  applyPortfolioLanguages,
+  applyPortfolioProposal,
   applyProposal,
   applyScopeNeedsChoice,
   canFinish,
@@ -60,7 +60,6 @@ const busy = ref(false);
 
 // CV and portfolio intake: the CV text lives in the draft, the portfolio text does not
 const proposal = ref<CvProposal | null>(null);
-const accepted = ref({ headline: true, capabilities: true, seniority: true, years_experience: true });
 
 // New language row
 const newCode = ref('');
@@ -211,7 +210,11 @@ const analyseCv = async () => {
   notice.value = '';
   try {
     const next = readProposal(await invoke<string>('cv_extract', { cv: draft.value.cv, kind: 'cv' }));
-    proposal.value = next;
+    // The proposal fills the fields the user has not written; nothing already written is changed.
+    if (next?.source === 'model') {
+      draft.value = applyProposal(draft.value, next);
+      notice.value = t('notice.autoFilled');
+    }
     if (next?.source === 'fallback') notice.value = t('notice.noProposal', { reason: next.reason ?? t('notice.reasonNotStated') });
   } catch (error) {
     notice.value = t('notice.analysisFailed', { reason: errorText(error) });
@@ -237,24 +240,6 @@ const onCvFile = async (event: Event) => {
   }
 };
 
-const applySelectedProposal = () => {
-  if (!proposal.value) return;
-  const chosen: CvProposal = {
-    source: proposal.value.source,
-    reason: proposal.value.reason,
-    fields: {
-      headline: accepted.value.headline ? proposal.value.fields.headline : null,
-      capabilities: accepted.value.capabilities ? proposal.value.fields.capabilities : [],
-      domains: [],
-      seniority: accepted.value.seniority ? proposal.value.fields.seniority : null,
-      years_experience: accepted.value.years_experience ? proposal.value.fields.years_experience : null,
-      languages: proposal.value.fields.languages,
-    },
-  };
-  draft.value = applyProposal(draft.value, chosen);
-  notice.value = t('notice.applied');
-  goTo('work');
-};
 
 const checkPortfolio = async () => {
   const link = draft.value.portfolio.trim();
@@ -274,7 +259,7 @@ const checkPortfolio = async () => {
     if (check.text.trim() !== '') {
       const next = readProposal(await invoke<string>('cv_extract', { cv: check.text, kind: 'portfolio' }));
       if (next !== null && next.source === 'model') {
-        draft.value = applyPortfolioLanguages(draft.value, next);
+        draft.value = applyPortfolioProposal(draft.value, next);
         notice.value = `${notice.value} ${t('notice.portfolioApplied')}`;
       }
     }
@@ -379,17 +364,6 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
         <button type="button" :disabled="busy || draft.cv.trim() === ''" @click="analyseCv">{{ t('action.analyse') }}</button>
         <button type="button" @click="next">{{ t('action.next') }}</button>
       </div>
-      <fieldset v-if="proposal && proposal.source === 'model'">
-        <legend>{{ t('cv.proposal') }}</legend>
-        <label><input v-model="accepted.headline" type="checkbox" /> {{ t('field.headline') }}: {{ proposal.fields.headline ?? '—' }}</label>
-        <label><input v-model="accepted.capabilities" type="checkbox" /> {{ t('field.capabilities') }}: {{ proposal.fields.capabilities.join(', ') || '—' }}</label>
-        <label><input v-model="accepted.seniority" type="checkbox" /> {{ t('field.seniority') }}: {{ proposal.fields.seniority ?? '—' }}</label>
-        <label><input v-model="accepted.years_experience" type="checkbox" /> {{ t('field.years') }}: {{ proposal.fields.years_experience ?? '—' }}</label>
-        <p v-if="proposal.fields.languages.length">
-          {{ t('cv.mentions', { languages: proposal.fields.languages.map((language) => languageName(language.code)).join(', ') }) }}
-        </p>
-        <button type="button" @click="applySelectedProposal">{{ t('action.applyChosen') }}</button>
-      </fieldset>
       <fieldset>
         <legend>{{ t('portfolio.title') }}</legend>
         <p>{{ t('portfolio.intro') }}</p>

@@ -344,15 +344,16 @@ export const applyProposal = (draft: WizardDraft, proposal: CvProposal): WizardD
     capabilities: draft.capabilities.length > 0 ? draft.capabilities : fields.capabilities,
     seniority: draft.seniority ?? fields.seniority,
     years_experience: draft.years_experience ?? fields.years_experience,
+    work: {
+      ...draft.work,
+      contract_types: draft.work.contract_types.length > 0 ? draft.work.contract_types : fields.contract_types,
+    },
   };
   return withLanguages(filledFields, proposedLanguages(proposal));
 };
 
-/** A portfolio adds only the languages it states. Every other field is left as it is. */
-export const applyPortfolioLanguages = (draft: WizardDraft, proposal: CvProposal): WizardDraft => {
-  if (proposal.source !== 'model') return { ...draft, languages: { ...draft.languages } };
-  return withLanguages(draft, proposedLanguages(proposal));
-};
+/** A portfolio is read the same way as a CV: it fills the fields left empty, and adds the languages it states. */
+export const applyPortfolioProposal = (draft: WizardDraft, proposal: CvProposal): WizardDraft => applyProposal(draft, proposal);
 
 /**
  * The draft a saved profile came from. Editing starts from what was saved, so nothing is lost

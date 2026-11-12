@@ -49,6 +49,7 @@ export const cvProposalSchema = z.object({
     domains: textList,
     seniority: z.enum(SENIORITIES).nullable(),
     years_experience: z.number().min(0).max(60).nullable(),
+    contract_types: z.array(z.enum(['employee', 'freelance'])).default([]),
     languages: z.array(proposedLanguage),
   }),
 });

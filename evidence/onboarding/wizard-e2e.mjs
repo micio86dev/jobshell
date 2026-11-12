@@ -78,11 +78,11 @@ const languageRow = (page, text) => page.locator('li').filter({ hasText: text })
   const checks = await callsOf(page, 'portfolio_check');
   check('A1d a public https link is checked once, and the answer is shown', checks.length === 1 && checks[0].args.link === 'https://example.test/portfolio');
   await page.getByRole('button', { name: 'Analyse', exact: true }).click();
-  await page.getByText('CV proposal: choose what to apply').waitFor({ timeout: 10000 });
-  await page.getByRole('button', { name: 'Apply the chosen fields' }).click();
+  await page.getByText('The CV filled the empty fields.').waitFor({ timeout: 10000 });
   const extracted = await callsOf(page, 'cv_extract');
   const cvCalls = extracted.filter((call) => call.args.kind === 'cv');
   check('A1b the PDF text reaches the extractor as the CV', cvCalls.length === 1 && cvCalls[0].args.cv === CV_TEXT, `cv calls=${cvCalls.length}`);
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
   const headline = await page.getByLabel('Headline', { exact: false }).first().inputValue();
   check('A2 CV proposal fills the empty headline', headline === 'Desktop engineer', `headline="${headline}"`);
 

@@ -4,7 +4,7 @@ Status: implemented up to the open items at the end. Evidence is in `evidence/on
 
 ## What the user does
 
-1. **CV (required to finish).** Upload the file: PDF, `.txt` or `.md`. Nothing is typed or pasted. Analysis is optional: the extractor proposes headline, capabilities, seniority, years and languages, and each proposal is applied only to a field the user has not typed. A portfolio text can be read the same way; it only adds languages.
+1. **CV (required to finish).** Upload the file: PDF, `.txt` or `.md`. Nothing is typed or pasted. The extractor reads it and fills the fields the user has not typed: headline, capabilities, seniority, years, contract types and the language levels. Usage of each language stays the user's choice. A portfolio text can be read the same way; it only adds languages.
 2. **Work.** Headline, capabilities, seniority, years, contract type (employee, freelance), and how strict that preference is.
 3. **Where.** Work modes (remote, hybrid, onsite). Remote needs an explicit scope: `europe`, `countries`, `residence`, or `worldwide` chosen on purpose. An unstated scope is never read as worldwide. Employee and freelance country lists are separate; an empty list means not stated.
 4. **Languages.** Search only looks at postings in the languages you speak, at the level you give. Each language has a level and a usage (comfortable, limited, unwilling); one is the **primary language**, which is the language the app navigates in. The primary language defaults to the operating system language. A CV or a portfolio can pre-fill languages with their level; the usage is always yours to choose.
@@ -84,6 +84,6 @@ A value that is not a positive integer for the budget is ignored; a blank model 
 - **Limit:** a scanned PDF with no text layer is not read (no OCR). The UI has no styling pass yet.
 - **Model limit:** strength is one value per group (contract types, remote modes), not per item, because the agent schema has no per-item strength. Languages are always a hard filter.
 - **Interface limit:** only the wizard and the navigation are translated (Italian, English). The results and task panels of `App.vue` keep their Italian labels.
-- **Portfolio:** a public https link, checked when the user confirms it. The check is read-only: one GET per hop, a 10-second timeout, a bounded body, and redirects checked hop by hop. Private, loopback and reserved addresses are refused by their text; a public name that points at a private address is not caught (no DNS lookup).
+- **Portfolio:** a public https link, checked when the user confirms it. Its text is read the same way as the CV, and fills the fields still empty. The check is read-only: one GET per hop, a 10-second timeout, a bounded body, and redirects checked hop by hop. Private, loopback and reserved addresses are refused by their text; a public name that points at a private address is not caught (no DNS lookup).
 - **Open product decision:** how seniority and minimum salary act in the funnel (hard filter or ranking). Not implemented; the feature log records it as open.
 - **Open technical item:** a zod boundary for external posting fields inside the agent package.
