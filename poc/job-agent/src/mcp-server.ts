@@ -191,7 +191,6 @@ export const handleMcpRequest = async (request: McpRequest, deps: McpDeps): Prom
   }
 };
 
-/** Serve MCP over stdio, one JSON-RPC object per line. */
 /**
  * The answer to a request that failed inside the agent. The client gets a fixed message: a provider
  * or a path can be in the error text, and the protocol channel is not where that belongs.
@@ -202,6 +201,7 @@ export const internalErrorResponse = (id: string | number | null | undefined, _e
   error: { code: -32603, message: 'internal error' },
 });
 
+/** Serve MCP over stdio, one JSON-RPC object per line. */
 export const serveStdio = (deps: McpDeps): void => {
   const lines = createInterface({ input: process.stdin });
   lines.on('line', (line: string) => {
