@@ -26,6 +26,11 @@ process.stdin.on('data', (chunk: Buffer) => {
   received += chunk.length;
   if (received <= MAX_CV_BYTES) chunks.push(chunk);
 });
+// A failed read is a refusal with a fixed message, never an unhandled error.
+process.stdin.on('error', () => {
+  process.stderr.write('the input could not be read\n');
+  process.exitCode = 2;
+});
 process.stdin.on('end', () => {
   if (received > MAX_CV_BYTES) {
     process.stderr.write(`the CV is too long (more than ${MAX_CV_CHARS} characters)\n`);
