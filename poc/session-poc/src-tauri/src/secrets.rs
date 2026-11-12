@@ -7,7 +7,8 @@
 use anyhow::{Context, Result};
 use keyring::Entry;
 
-const SERVICE: &str = "dev.openjob.phase0";
+/// The keyring service of every key the desktop app writes, and the one the agent reads from.
+const SERVICE: &str = "dev.openjob.desktop";
 
 fn entry(account: &str) -> Result<Entry> {
     Entry::new(SERVICE, account).with_context(|| format!("opening keyring entry for {account}"))
