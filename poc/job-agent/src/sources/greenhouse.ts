@@ -20,8 +20,9 @@ import {
 
 const BOARD_URL = 'https://boards-api.greenhouse.io/v1/boards';
 
-/** A board job as Greenhouse publishes it. A field of the wrong type is absent; a missing URL drops the job. */
+/** A text field: a value of another type, or a blank one, is absent (null). */
 const shortText = z.string().refine((value) => value.trim().length > 0).nullish().catch(null).transform((value) => value ?? null);
+/** A board job as Greenhouse publishes it. A field of the wrong type is absent; a missing URL drops the job. */
 const greenhouseJob = z.object({
   absolute_url: shortText,
   title: shortText,

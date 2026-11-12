@@ -23,7 +23,7 @@ import {
   type SourceAdapter,
 } from './types.ts';
 
-/** A non-empty text field: a value of another type, or a blank one, is simply absent (null). */
+/** An absolute https link. Any other value, or none, is absent (null), so the job is dropped. */
 const httpsLink = z
   .string()
   .trim()
@@ -32,6 +32,7 @@ const httpsLink = z
   .catch(null)
   .transform((value) => value ?? null);
 
+/** A non-empty text field: a value of another type, or a blank one, is simply absent (null). */
 const shortText = z
   .string()
   .trim()
@@ -206,6 +207,7 @@ export const remoteok = jsonFeed('remoteok', 'https://remoteok.com/api', (payloa
         remote_hint: true,
         description: job.description === null ? null : text(job.description),
         published_at: toIsoDate(job.date),
+        // RemoteOK publishes its salary fields in USD and carries no currency field: an assumption about the source.
         salary: salaryRange(job.salary_min, job.salary_max, 'USD'),
       }),
     ),
