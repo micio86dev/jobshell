@@ -10,6 +10,7 @@
  * Transport: stdio, one JSON-RPC object per line. The handlers are pure functions so
  * they are tested without spawning a process.
  */
+import { z } from 'zod';
 import { createInterface } from 'node:readline';
 
 import { judgePosting, type JeDeps } from './jev.ts';
@@ -54,14 +55,21 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  * as a notification: JSON-RPC forbids answering one, and clients reject a response
  * to `notifications/initialized`.
  */
+/** The JSON-RPC envelope. An absent id is a notification; a null, text or numeric id is a request. */
+const envelope = z.object({
+  method: z.string({ error: 'method must be text' }).min(1, { error: 'method must be text' }),
+  id: z.union([z.string(), z.number(), z.null()]).optional(),
+  params: z.unknown().optional(),
+});
+
 export const parseMcpRequest = (raw: unknown): { request: McpRequest; notification: boolean } | null => {
-  if (!isRecord(raw)) return null;
-  const method = raw['method'];
-  if (typeof method !== 'string' || method.length === 0) return null;
-  const id = raw['id'];
-  const notification = id === undefined;
-  if (!notification && id !== null && typeof id !== 'string' && typeof id !== 'number') return null;
-  return { request: { jsonrpc: '2.0', method, id: notification ? null : id, params: raw['params'] }, notification };
+  const parsed = envelope.safeParse(raw);
+  if (!parsed.success) return null;
+  const id = parsed.data.id;
+  return {
+    request: { jsonrpc: '2.0', method: parsed.data.method, id: id ?? null, params: parsed.data.params },
+    notification: id === undefined,
+  };
 };
 
 const TOOLS = [
@@ -223,7 +231,9 @@ export const serveStdio = (deps: McpDeps): void => {
       // A notification is handled for its side effects and never answered. The
       // rejection is swallowed on purpose: an unhandled rejection exits Node, which
       // would kill the MCP server on a network error in a notification.
-      handleMcpRequest(frame.request, deps).catch(() => undefined);
+      handleMcpRequest(frame.request, deps).catch((error: unknown) => {
+        process.stderr.write(`openjob-agent: notification failed: ${error instanceof Error ? error.message : String(error)}\n`);
+      });
       return;
     }
     const request = frame.request;

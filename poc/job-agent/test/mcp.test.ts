@@ -144,3 +144,10 @@ test('mcp: an internal failure answers with a generic message, and the detail st
   assert.equal(response.error?.message, 'internal error');
   assert.doesNotMatch(JSON.stringify(response), /secret-token-123/);
 });
+
+test('mcp: the envelope is a zod shape, and a method that is not text is refused', () => {
+  assert.equal(parseMcpRequest({ jsonrpc: '2.0', id: 1, method: 42 }), null, 'a method must be text');
+  assert.equal(parseMcpRequest({ jsonrpc: '2.0', id: true, method: 'x' }), null, 'a boolean id is refused');
+  const withNull = parseMcpRequest({ jsonrpc: '2.0', id: null, method: 'tools/list' });
+  assert.equal(withNull?.notification, false, 'a null id is a request, not a notification');
+});
