@@ -216,3 +216,16 @@ test('bridge: the origin rules are explicit', () => {
   assert.equal(isAllowedOrigin('http://127.0.0.1:9999', 8787), false);
   assert.equal(isAllowedOrigin('https://evil.test', 8787), false);
 });
+
+test('bridge: a judgment error that is not one of the judge\'s fixed messages is not sent to the client', async () => {
+  const secret = 'sk-ant-LEAK-in-a-network-error';
+  const fetchImpl: FetchLike = async () => {
+    throw new Error(`connect failed using ${secret}`);
+  };
+  const response = await handleScore(
+    { postings: [posting] },
+    { jev: { apiKey: 'k', fetchImpl }, promptContext: 'c', threshold: 0.9, resolveKey: () => 'k' },
+  );
+  assert.equal(response.errors.length, 1);
+  assert.doesNotMatch(JSON.stringify(response), /sk-ant-LEAK/, 'the raw error text stays on the agent side');
+});

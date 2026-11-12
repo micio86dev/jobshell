@@ -9,8 +9,8 @@
  * `chrome-extension://` origin, so a web page cannot spend the user's tokens. It reads the
  * key from the keyring on each request; writing a key is the desktop app's job.
  *
- * The handlers are pure functions; the HTTP server is a thin wrapper, so the
- * behaviour is tested without opening a socket.
+ * The handlers are mostly pure: the judgment calls and the keyring read are injected, and the
+ * HTTP server is a thin wrapper, so the behaviour is tested without opening a socket.
  */
 import { parsePostings } from './posting-input.ts';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
@@ -109,7 +109,11 @@ export const handleScore = async (raw: unknown, deps: BridgeDeps): Promise<Score
       return { ok: true as const, key, posting, judged };
     } catch (error) {
       // One posting that cannot be judged must not cost the user the other 39.
-      return { ok: false as const, key, message: error instanceof Error ? error.message : String(error) };
+      // Only the judge's own fixed messages (a status code, or a body that is not JSON) reach the client.
+      // Anything else is a raw error text, and it stays on this side.
+      const message = error instanceof Error ? error.message : '';
+      const fixed = /^typesafe: (request failed with status \d{3}|response was not JSON)$/.test(message);
+      return { ok: false as const, key, message: fixed ? message : 'the posting could not be judged' };
     }
   });
 
@@ -166,6 +170,7 @@ export const handleHealth = (deps: BridgeDeps): { ok: true; threshold: number } 
  * host permission for 127.0.0.1 spend the user's tokens. A web page cannot forge an
  * extension origin at all, so this closes the remaining hole.
  */
+/** The only origin allowed to score: the openjob browser extension. */
 export const EXTENSION_ID = 'afigpbinfehpdhoolpoickipbklcogoa';
 export const EXTENSION_ORIGIN = `chrome-extension://${EXTENSION_ID}`;
 
@@ -213,7 +218,6 @@ const readBody = (request: IncomingMessage, limit = 1_000_000): Promise<string> 
 
 export type BridgeServer = { port: number; close: () => Promise<void> };
 
-/** Start the bridge on 127.0.0.1 and return the port it bound. */
 /** The port the server is actually on, needed to recognise its own settings page. */
 const boundPortFor = (server: Server): number => {
   const address = server.address();
@@ -269,7 +273,8 @@ export const startBridge = async (deps: BridgeDeps, port = 0): Promise<BridgeSer
           );
         })
         .catch((error: unknown) => {
-          send(response, 400, { error: error instanceof Error ? error.message : 'bad request' }, origin, boundPortFor(server));
+          // The request body is never quoted back: a parse error can contain a fragment of it.
+          send(response, 400, { error: 'bad request' }, origin, boundPortFor(server));
         });
       return;
     }

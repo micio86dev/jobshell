@@ -22,13 +22,6 @@ const isSafeUrl = (value: string): boolean => /^https:\/\/[^\s]+$/i.test(value);
 export const postingsFile = (evidenceDir: string): string => `${evidenceDir}/ziprecruiter.json`;
 
 /**
- * Read the file into postings.
- *
- * A missing file is not an error: it means ZipRecruiter was never fetched. A file that
- * exists but cannot be read is an error, because silently skipping it would hide a real
- * failure behind "no postings today".
- */
-/**
  * One posting record from the file. A field that does not fit is dropped to nothing; an id or a
  * title that does not fit drops the whole record, because it cannot be shown or deduplicated.
  */
@@ -43,6 +36,13 @@ const zipRecruiterPosting = z.object({
   published_at: z.unknown().optional(),
 });
 
+/**
+ * Read the file into postings.
+ *
+ * A missing file is not an error: it means ZipRecruiter was never fetched. A file that
+ * exists but cannot be read is an error, because silently skipping it would hide a real
+ * failure behind "no postings today".
+ */
 export const readPostings = (path: string, read: (path: string) => string = (p) => readFileSync(p, 'utf8')): Posting[] => {
   let raw: string;
   try {
