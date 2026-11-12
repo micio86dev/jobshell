@@ -9,6 +9,7 @@ import {
   detectCountry,
   detectLanguage,
   detectLanguageRequirement,
+  detectSeniority,
   parseSalary,
   postingKey,
   MAX_SOFT_BONUS,
@@ -400,12 +401,13 @@ test('the soft bonus is capped, so no set of preferences can outrank the thresho
 
 test('an unknown fact earns no bonus', () => {
   const compiled = spec({ remote_modes: ['remote'], strengths: { remote_modes: 'preferred' } });
-  assert.equal(softBonus(make({ remote_hint: null }), compiled.soft), 0, 'unknown is never read as matching');
+  assert.equal(softBonus(make({ remote_hint: null, title: 'Rust Engineer' }), compiled.soft), 0, 'unknown is never read as matching');
 });
 
 test('a profile without soft preferences gets no bonus at all', () => {
   const compiled = spec();
-  assert.equal(softBonus(make({}), compiled.soft), 0);
+  // The profile's own seniority is a ranking preference, so the title must not state one.
+  assert.equal(softBonus(make({ title: 'Rust Engineer' }), compiled.soft), 0);
 });
 
 // --- Graded languages, separate eligibility, remote scope ----------------------------
@@ -508,4 +510,48 @@ test('a stated level above the user’s is dropped even when the language settin
   const result = applyHardFilters([posting], compiled, new Set(), NOW);
   assert.deepEqual(result.kept.map(postingKey), [], 'the level is checked whatever the setting');
   assert.equal(result.dropped[0]?.detail, 'requires fluent en');
+});
+
+// --- Seniority and salary are ranking, never a reason to drop, unless the user says mandatory ---
+
+test('seniority is never a filter: a junior posting is kept for a senior profile', () => {
+  const junior = make({ id: 'jr', title: 'Junior Rust Developer', description: 'Junior role. The team works in English.' });
+  const result = applyHardFilters([junior], spec(), new Set(), NOW);
+  assert.deepEqual(result.kept.map(postingKey), ['remoteok:jr']);
+});
+
+test('a posting that states the same seniority as the profile ranks higher; an unstated one earns nothing', () => {
+  const senior = make({ id: 'sr', title: 'Senior Rust Engineer', description: 'The team works in English.' });
+  const unstated = make({ id: 'un', title: 'Rust Engineer', description: 'The team works in English.' });
+  const compiled = spec({ seniority: 'senior' });
+  assert.ok(softBonus(senior, compiled.soft) > 0, 'a matching seniority lifts the ranking');
+  assert.equal(softBonus(unstated, compiled.soft), 0, 'an unstated seniority is never read as a match');
+});
+
+test('seniority is read from the posting title or text, and a posting with none is unknown', () => {
+  assert.equal(detectSeniority('Lead Platform Engineer'), 'lead');
+  assert.equal(detectSeniority('Junior developer wanted'), 'junior');
+  assert.equal(detectSeniority('We build desktop apps'), null);
+});
+
+test('a salary floor is ranking by default: a posting below it is kept and not boosted', () => {
+  const low = make({ id: 'low', title: 'Rust Engineer', salary: '50000-60000 USD', description: 'The team works in English.' });
+  const compiled = spec({ min_salary: { amount: 90000, currency: 'usd', period: 'year' }, strengths: { min_salary: 'preferred' } });
+  const result = applyHardFilters([low], compiled, new Set(), NOW);
+  assert.deepEqual(result.kept.map(postingKey), ['remoteok:low'], 'a preferred salary never drops');
+  assert.equal(softBonus(low, compiled.soft), 0, 'below the floor earns no ranking point');
+});
+
+test('a daily freelance floor is compared on the same yearly basis as a yearly posting', () => {
+  const yearly = make({ id: 'yr', title: 'Rust Engineer', salary: '200000-250000 USD', description: 'The team works in English.' });
+  const compiled = spec({ min_salary: { amount: 600, currency: 'usd', period: 'day' }, strengths: { min_salary: 'preferred' } });
+  assert.ok(softBonus(yearly, compiled.soft) > 0, 'a day rate of 600 is below a yearly 200000 and earns the point');
+});
+
+test('a mandatory salary floor still drops a posting below it, when the user chose it', () => {
+  const low = make({ id: 'low2', title: 'Rust Engineer', salary: '50000-60000 USD', description: 'The team works in English.' });
+  const compiled = spec({ min_salary: { amount: 90000, currency: 'usd', period: 'year' }, strengths: { min_salary: 'mandatory' } });
+  const result = applyHardFilters([low], compiled, new Set(), NOW);
+  assert.deepEqual(result.kept.map(postingKey), []);
+  assert.equal(result.dropped[0]?.reason, 'salary_below_floor');
 });

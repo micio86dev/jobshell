@@ -7,7 +7,7 @@
  * `jev.ts`. That split is what keeps the daily loop free of model calls and keeps
  * every rejection auditable.
  */
-import { LANGUAGE_LEVELS, type LanguageLevel, type Spec } from './profile.ts';
+import { LANGUAGE_LEVELS, type LanguageLevel, type Seniority, type Spec } from './profile.ts';
 import type { Posting } from './sources/types.ts';
 
 export type DropReason =
@@ -477,6 +477,15 @@ export const applyHardFilters = (
 export const SOFT_POINT = 0.05;
 export const MAX_SOFT_BONUS = 0.1;
 
+/** The seniority a posting states, read from its title or text; null when it states none. */
+export const detectSeniority = (text: string): Seniority | null => {
+  if (/\b(lead|principal|staff)\b/i.test(text)) return 'lead';
+  if (/\bsenior\b/i.test(text)) return 'senior';
+  if (/\bjunior\b/i.test(text)) return 'junior';
+  if (/\b(mid|mid-level|intermediate)\b/i.test(text)) return 'mid';
+  return null;
+};
+
 /**
  * How much a posting's soft preferences lift its ranking. A preference never drops a
  * posting, and an unknown fact never counts as a match.
@@ -484,6 +493,8 @@ export const MAX_SOFT_BONUS = 0.1;
 export const softBonus = (posting: Posting, soft: Spec['soft']): number => {
   let points = 0;
   const text = `${posting.title} ${posting.description ?? ''}`;
+
+  if (soft.seniority !== null && detectSeniority(text) === soft.seniority) points += 1;
 
   if (soft.languages.length > 0) {
     const language = detectLanguage(text);

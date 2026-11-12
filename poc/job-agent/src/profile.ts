@@ -151,6 +151,8 @@ export type Spec = {
     countries: string[];
     contract_types: ContractType[];
     min_salary: SalaryFloor | null;
+    /** Seniority is ranking only: a posting that states the same level ranks higher, nothing is dropped. */
+    seniority: Seniority | null;
   };
   /** Search strings derived from capability and seniority, not from a stack list. */
   queries: string[];
@@ -514,6 +516,7 @@ export const compileProfile = (
       countries: isSoft('countries') ? profile.countries : [],
       contract_types: isSoft('contract_types') ? profile.contract_types : [],
       min_salary: isSoft('min_salary') ? profile.min_salary : null,
+      seniority: profile.seniority,
     },
     queries: compileQueries(profile, options.queryLimit ?? 8),
     threshold: profile.threshold,
