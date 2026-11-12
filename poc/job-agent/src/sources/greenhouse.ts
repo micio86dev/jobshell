@@ -8,7 +8,15 @@
  */
 import { z } from 'zod';
 
-import { challengeOf, mentionsRemote, text, toIsoDate, type Challenge, type Posting, type SearchOptions, type SourceAdapter } from './types.ts';
+import {
+  challengeOf,
+  mentionsRemote,
+  text,
+  toIsoDate,
+  type Posting,
+  type SearchOptions,
+  type SourceAdapter,
+} from './types.ts';
 
 const BOARD_URL = 'https://boards-api.greenhouse.io/v1/boards';
 

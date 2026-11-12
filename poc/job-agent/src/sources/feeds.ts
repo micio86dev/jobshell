@@ -14,17 +14,24 @@ import { z } from 'zod';
 import { parseRss } from './rss.ts';
 import {
   challengeOf,
+  isHttpsUrl,
   mentionsRemote,
   posting,
   text,
   toIsoDate,
-  type Challenge,
   type Posting,
-  type SearchOptions,
   type SourceAdapter,
 } from './types.ts';
 
 /** A non-empty text field: a value of another type, or a blank one, is simply absent (null). */
+const httpsLink = z
+  .string()
+  .trim()
+  .refine(isHttpsUrl)
+  .nullish()
+  .catch(null)
+  .transform((value) => value ?? null);
+
 const shortText = z
   .string()
   .trim()
@@ -114,6 +121,7 @@ const rssFeed = (
   detectChallenge: feedChallenge,
   extractPostings: (body) =>
     parseRss(body)
+      .filter((item) => isHttpsUrl(item.link))
       .map(map)
       .filter((value): value is Posting => value !== null),
 });
@@ -122,7 +130,7 @@ const remoteokJob = z.object({
   id: idValue,
   slug: idValue,
   position: shortText,
-  url: shortText,
+  url: httpsLink,
   company: shortText,
   location: shortText,
   description: shortText,
@@ -134,7 +142,7 @@ const remoteokJob = z.object({
 const remotiveJob = z.object({
   id: idValue,
   title: shortText,
-  url: shortText,
+  url: httpsLink,
   company_name: shortText,
   candidate_required_location: shortText,
   description: shortText,
@@ -145,7 +153,7 @@ const remotiveJob = z.object({
 const arbeitnowJob = z.object({
   slug: idValue,
   title: shortText,
-  url: shortText,
+  url: httpsLink,
   company_name: shortText,
   location: shortText,
   remote: z.unknown().optional(),
@@ -156,7 +164,7 @@ const arbeitnowJob = z.object({
 const jobicyJob = z.object({
   id: idValue,
   jobTitle: shortText,
-  url: shortText,
+  url: httpsLink,
   companyName: shortText,
   jobGeo: shortText,
   jobExcerpt: shortText,
@@ -169,7 +177,7 @@ const jobicyJob = z.object({
 const workingnomadsJob = z.object({
   id: idValue,
   title: shortText,
-  url: shortText,
+  url: httpsLink,
   company_name: shortText,
   location: shortText,
   description: shortText,
@@ -178,7 +186,7 @@ const workingnomadsJob = z.object({
 });
 
 const hnHit = z.object({
-  objectID: z.union([z.string().trim().min(1), z.number().finite()]),
+  objectID: z.string().regex(/^\d{1,20}$/),
   comment_text: shortText,
   created_at: z.unknown().optional(),
 });

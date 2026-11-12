@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { remoteok } from '../src/sources/feeds.ts';
+import { hn, remoteok } from '../src/sources/feeds.ts';
 import { greenhouse } from '../src/sources/greenhouse.ts';
 
 const jobWithWord = JSON.stringify([
@@ -38,4 +38,14 @@ test('greenhouse: a job URL that is not https is refused', () => {
   });
   const ids = greenhouse.extractPostings(body).map((p) => p.id);
   assert.deepEqual(ids, ['44'], 'only https job links are postings');
+});
+
+test('every feed refuses a job link that is not https, not only Greenhouse', () => {
+  const body = JSON.stringify([{ id: 2, position: 'Rust', url: 'javascript:alert(1)' }]);
+  assert.equal(remoteok.extractPostings(body).length, 0, 'a javascript: link is not a posting');
+});
+
+test('hacker news: a comment id that is not digits is refused, so it cannot change the link', () => {
+  const body = JSON.stringify({ hits: [{ objectID: '1&x=y', comment_text: 'We are hiring.' }] });
+  assert.equal(hn.extractPostings(body).length, 0, 'an id that is not a number is not an id');
 });

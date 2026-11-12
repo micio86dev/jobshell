@@ -134,3 +134,12 @@ export const challengeOf = (body: string): Challenge => {
   if (/\b429\b|too many requests/i.test(body)) return 'rate_limited';
   return 'none';
 };
+
+/** An absolute https link. Anything else (javascript:, data:, plain http, a relative path) is not a link to show. */
+export const isHttpsUrl = (value: string): boolean => {
+  try {
+    return new URL(value).protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
