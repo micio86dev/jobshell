@@ -17,15 +17,15 @@ export const cvFileKind = (file: { name: string; type: string }): CvFileKind | n
 };
 
 const pdfText = async (bytes: ArrayBuffer): Promise<string> => {
-  const pdfjs = await import('pdfjs-dist');
+  const pdfjs = await import('pdfjs-dist/build/pdf.mjs');
   const workerUrl = (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default;
   pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
-  const document = await pdfjs.getDocument({ data: new Uint8Array(bytes) }).promise;
+  const pdf = await pdfjs.getDocument({ data: new Uint8Array(bytes) }).promise;
   const pages: string[] = [];
-  for (let number = 1; number <= document.numPages; number += 1) {
-    const page = await document.getPage(number);
+  for (let number = 1; number <= pdf.numPages; number += 1) {
+    const page = await pdf.getPage(number);
     const content = await page.getTextContent();
-    pages.push(content.items.map((item) => ('str' in item ? item.str : '')).join(' '));
+    pages.push(content.items.map((item) => ('str' in item && typeof item.str === 'string' ? item.str : '')).join(' '));
   }
   return pages.join('\n').trim();
 };
