@@ -48,13 +48,6 @@ export type McpResponse = {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-/**
- * Validate an incoming JSON-RPC frame at the boundary.
- *
- * Returns null for a frame that is not a request, and marks a frame without an `id`
- * as a notification: JSON-RPC forbids answering one, and clients reject a response
- * to `notifications/initialized`.
- */
 /** The JSON-RPC envelope. An absent id is a notification; a null, text or numeric id is a request. */
 const envelope = z.object({
   method: z.string({ error: 'method must be text' }).min(1, { error: 'method must be text' }),
@@ -62,6 +55,13 @@ const envelope = z.object({
   params: z.unknown().optional(),
 });
 
+/**
+ * Validate an incoming JSON-RPC frame at the boundary.
+ *
+ * Returns null for a frame that is not a request, and marks a frame without an `id`
+ * as a notification: JSON-RPC forbids answering one, and clients reject a response
+ * to `notifications/initialized`.
+ */
 export const parseMcpRequest = (raw: unknown): { request: McpRequest; notification: boolean } | null => {
   const parsed = envelope.safeParse(raw);
   if (!parsed.success) return null;
