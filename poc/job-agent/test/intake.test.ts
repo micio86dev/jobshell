@@ -5,6 +5,7 @@ import { test } from 'node:test';
 
 import { ANTHROPIC_URL } from '../src/planner.ts';
 import { extractCandidateFields, type IntakeDeps } from '../src/intake.ts';
+import { maxTokensForExtraction } from '../src/extract-model.ts';
 import type { FetchLike } from '../src/jev.ts';
 
 const CV = 'Twelve years building desktop apps with Rust and Python. Led a team of four.';
@@ -124,4 +125,18 @@ test('a network failure falls back too, without leaking the raw error text', asy
   assert.equal(result.source, 'fallback');
   assert.equal(result.reason, 'provider request failed');
   assert.doesNotMatch(result.reason ?? '', /key=|ENOTFOUND/, 'the error text may carry secrets');
+});
+
+test('an answer cut off by the token limit says so, instead of blaming the format', async () => {
+  const cut = JSON.stringify({ stop_reason: 'max_tokens', content: [{ type: 'thinking', thinking: 'x' }, { type: 'text', text: '{"headline": "Desk' }] });
+  const { fetchImpl } = fakeFetch(200, cut);
+  const result = await extractCandidateFields(CV, deps(fetchImpl));
+  assert.equal(result.source, 'fallback');
+  assert.match(result.reason ?? '', /token limit/);
+});
+
+test('the token budget comes from the environment, with a default large enough for a reasoning model', () => {
+  assert.equal(maxTokensForExtraction({}), 4000);
+  assert.equal(maxTokensForExtraction({ OPENJOB_EXTRACT_MAX_TOKENS: '8000' }), 8000);
+  assert.equal(maxTokensForExtraction({ OPENJOB_EXTRACT_MAX_TOKENS: 'lots' }), 4000, 'a value that is not a number is ignored');
 });

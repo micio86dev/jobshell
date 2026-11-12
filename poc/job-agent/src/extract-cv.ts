@@ -14,6 +14,7 @@ export type ExtractDeps = {
   /** Returns the stored Anthropic key, or null when none is stored. */
   readKey: () => string | null;
   model: string;
+  maxTokens?: number;
   fetchImpl: FetchLike;
 };
 
@@ -42,7 +43,7 @@ export const runExtractCv = async (
 
   const result: IntakeResult = await extractCandidateFields(
     cv,
-    { apiKey, model: deps.model, fetchImpl: deps.fetchImpl },
+    { apiKey, model: deps.model, maxTokens: deps.maxTokens, fetchImpl: deps.fetchImpl },
     kind,
   );
   // The reason is produced by the intake module as a fixed string, so it is safe to print.

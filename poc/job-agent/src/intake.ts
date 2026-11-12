@@ -18,9 +18,13 @@ import { LANGUAGE_LEVELS, type LanguageLevel, type Seniority } from './profile.t
 /** The kind of document the text is: a CV, or a portfolio that can also state languages. */
 export type IntakeKind = 'cv' | 'portfolio';
 
+/** Enough room for a reasoning model's thinking and its answer; a smaller budget cuts the JSON off. */
+export const DEFAULT_EXTRACT_MAX_TOKENS = 4000;
+
 export type IntakeDeps = {
   apiKey: string;
   model: string;
+  maxTokens?: number | undefined;
   baseUrl?: string;
   fetchImpl: FetchLike;
 };
@@ -157,7 +161,7 @@ export const extractCandidateFields = async (
     },
     body: JSON.stringify({
       model: deps.model,
-      max_tokens: 800,
+      max_tokens: deps.maxTokens ?? DEFAULT_EXTRACT_MAX_TOKENS,
       messages: [{ role: 'user', content: instruction(text, kind) }],
     }),
   };
@@ -180,6 +184,10 @@ export const extractCandidateFields = async (
     return fallback('provider answer was not JSON');
   }
   const record = isRecord(parsed) ? parsed : {};
+  // A reasoning model that runs out of tokens returns a partial answer: say so, not that the format is wrong.
+  if (record['stop_reason'] === 'max_tokens') {
+    return fallback('provider answer was cut off by the token limit; raise OPENJOB_EXTRACT_MAX_TOKENS');
+  }
   const blocks = Array.isArray(record['content']) ? (record['content'] as unknown[]) : [];
   const answerText = blocks
     .map((block) => (isRecord(block) && typeof block['text'] === 'string' ? block['text'] : ''))
