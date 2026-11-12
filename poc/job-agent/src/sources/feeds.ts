@@ -45,10 +45,11 @@ const number = z
  * list, a boolean) makes the whole item invalid, so it is skipped rather than stored under a
  * meaningless key such as "[object Object]".
  */
-// A blank identifier is absent, so the fallback to the url applies; any other type is invalid.
+// A blank identifier, or null, is absent, so the fallback to the url applies. Any other type is invalid.
 const idValue = z
   .union([z.string().trim().transform((value) => (value.length > 0 ? value : undefined)), z.number().finite()])
-  .optional();
+  .nullish()
+  .transform((value) => value ?? undefined);
 
 /** Every item that fits its schema; an item that does not fit is skipped, never guessed. */
 const parseEach = <T extends z.ZodType>(items: unknown[], schema: T): Array<z.output<T>> =>
@@ -317,8 +318,7 @@ export const weworkremotely = rssFeed(
     });
   },
 );
-
-/** IProgrammatori.it: the Italian developer board, RSS with 490+ items. */
+/** IProgrammatori.it: the Italian developer board, published as RSS. */
 export const iprogrammatori = rssFeed(
   'iprogrammatori',
   () => 'https://www.iprogrammatori.it/rss/offerte-di-lavoro.xml',

@@ -311,3 +311,10 @@ test('a blank id is treated as missing: the job keeps its url as identity', () =
   assert.equal(postings.length, 1, 'a blank id is not a reason to lose the job');
   assert.equal(postings[0]?.id, 'https://example.test/blank');
 });
+
+test('a null id is absent too: the job keeps its url as identity', () => {
+  const body = JSON.stringify({ jobs: [{ id: null, title: 'Rust Engineer', url: 'https://example.test/null' }] });
+  const postings = remotive.extractPostings(body);
+  assert.equal(postings.length, 1, 'JSON null means absent, not an invalid item');
+  assert.equal(postings[0]?.id, 'https://example.test/null');
+});
