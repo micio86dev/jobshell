@@ -245,6 +245,15 @@ export const startBridge = async (deps: BridgeDeps, port = 0): Promise<BridgeSer
       readBody(request)
         .then(async (body) => {
           const boundPort = boundPortFor(server);
+          // A body that is not JSON is the request's fault; anything after it is the server's.
+          let parsed: unknown;
+          try {
+            parsed = JSON.parse(body);
+          } catch {
+            // The body is never quoted back: a parse error can contain a fragment of it.
+            send(response, 400, { error: 'bad request' }, origin, boundPort);
+            return;
+          }
           const key = (deps.resolveKey ?? (() => readKey('typesafe', deps.keyring)))();
           if (key === null) {
             // The bridge starts without a key on purpose: the settings page has to be
@@ -258,7 +267,6 @@ export const startBridge = async (deps: BridgeDeps, port = 0): Promise<BridgeSer
             );
             return;
           }
-          const parsed: unknown = JSON.parse(body);
           send(
             response,
             200,
@@ -268,8 +276,8 @@ export const startBridge = async (deps: BridgeDeps, port = 0): Promise<BridgeSer
           );
         })
         .catch(() => {
-          // The request body is never quoted back: a parse error can contain a fragment of it.
-          send(response, 400, { error: 'bad request' }, origin, boundPortFor(server));
+          // The cause stays on this side: only a fixed reply reaches the extension.
+          send(response, 500, { error: 'internal error' }, origin, boundPortFor(server));
         });
       return;
     }

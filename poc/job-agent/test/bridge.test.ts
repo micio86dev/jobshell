@@ -229,3 +229,31 @@ test('bridge: a judgment error that is not one of the judge\'s fixed messages is
   assert.equal(response.errors.length, 1);
   assert.doesNotMatch(JSON.stringify(response), /sk-ant-LEAK/, 'the raw error text stays on the agent side');
 });
+
+test('bridge: a malformed body is a 400, and a server-side failure is a 500 that says nothing about the cause', async () => {
+  const { deps } = bridgeDeps();
+  const server = await startBridge(deps);
+  try {
+    const malformed = await call(server.port, 'POST', '/score', { origin: EXTENSION, body: '{not json' });
+    assert.equal(malformed.status, 400, 'the request is at fault');
+
+    const failing = await startBridge({
+      ...deps,
+      resolveKey: () => {
+        throw new Error('keyring unavailable: sk-ant-LEAK-in-a-server-error');
+      },
+    });
+    try {
+      const broken = await call(failing.port, 'POST', '/score', {
+        origin: EXTENSION,
+        body: JSON.stringify({ postings: [posting] }),
+      });
+      assert.equal(broken.status, 500, 'the server is at fault, not the request');
+      assert.doesNotMatch(broken.body, /sk-ant-LEAK|keyring/, 'the cause is not sent to the client');
+    } finally {
+      await failing.close();
+    }
+  } finally {
+    await server.close();
+  }
+});
