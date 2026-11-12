@@ -1,7 +1,7 @@
 // Tests for the shared "already shown" memory. The point of this module is that a
 // corrupt file is an error and a write never replaces history, so both are pinned.
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -71,4 +71,23 @@ test('a corrupt entry in the memory file is an error, never silently dropped', (
   writeFileSync(path, JSON.stringify(['hn:1', 42, 'hn:3']));
   assert.throws(() => loadSeen(path, 'empty'), /not a JSON array of keys/, 'a non-string key is corruption, not a key to skip');
   rmSync(dir, { recursive: true, force: true });
+});
+
+test('a save leaves no temporary or lock file behind, and the result is the merged keys', () => {
+  const root = dir();
+  const path = join(root, 'seen.json');
+  writeFileSync(path, '["remoteok:1"]', 'utf8');
+  saveSeen(path, ['hn:2']);
+  assert.deepEqual(readdirSync(root).sort(), ['seen.json'], 'only the memory file remains');
+  assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')), ['hn:2', 'remoteok:1']);
+});
+
+test('a save that cannot take the lock refuses, and never overwrites the memory', () => {
+  const root = dir();
+  const path = join(root, 'seen.json');
+  writeFileSync(path, '["remoteok:1"]', 'utf8');
+  writeFileSync(`${path}.lock`, 'held by another run', 'utf8');
+  assert.throws(() => saveSeen(path, ['hn:2']), /lock/i, 'another run holds the memory');
+  assert.equal(readFileSync(path, 'utf8'), '["remoteok:1"]', 'the held memory is untouched');
+  assert.equal(readFileSync(`${path}.lock`, 'utf8'), 'held by another run', 'the other run keeps its lock');
 });
