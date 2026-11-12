@@ -2,6 +2,8 @@
 import { invoke } from '@tauri-apps/api/core';
 import { onMounted, ref } from 'vue';
 import OnboardingWizard from './onboarding/OnboardingWizard.vue';
+import { setPrimaryLanguage, t } from './i18n/store';
+import { primaryOf } from './onboarding/schema';
 
 type SelectedView = {
   key: string;
@@ -286,6 +288,10 @@ onMounted(() => {
   invoke<boolean>('onboarding_status')
     .then((done) => (onboardingDone.value = done))
     .catch(() => (onboardingDone.value = true));
+  // The interface language follows the saved primary language; the system language until then.
+  invoke<{ payload: string } | null>('identity_get')
+    .then((found) => setPrimaryLanguage(found === null ? null : primaryOf(found.payload)))
+    .catch(() => undefined);
 });
 </script>
 
@@ -296,9 +302,9 @@ onMounted(() => {
     <header>
       <h1>openjob.dev</h1>
       <nav>
-        <button type="button" :class="{ on: tab === 'results' }" @click="tab = 'results'">Risultati</button>
-        <button type="button" :class="{ on: tab === 'tasks' }" @click="tab = 'tasks'">Task</button>
-        <button type="button" :class="{ on: tab === 'settings' }" @click="tab = 'settings'">Impostazioni</button>
+        <button type="button" :class="{ on: tab === 'results' }" @click="tab = 'results'">{{ t('tab.results') }}</button>
+        <button type="button" :class="{ on: tab === 'tasks' }" @click="tab = 'tasks'">{{ t('tab.tasks') }}</button>
+        <button type="button" :class="{ on: tab === 'settings' }" @click="tab = 'settings'">{{ t('tab.settings') }}</button>
       </nav>
       <p class="status">{{ status }}</p>
     </header>
@@ -391,7 +397,7 @@ onMounted(() => {
 
     <section v-else-if="tab === 'settings'">
       <div class="actions">
-        <button type="button" @click="editingProfile = true">Edit profile</button>
+        <button type="button" @click="editingProfile = true">{{ t('action.editProfile') }}</button>
       </div>
       <OnboardingWizard
         v-if="editingProfile"

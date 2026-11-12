@@ -1,9 +1,11 @@
 <script setup lang="ts">
-// The first-run wizard and the later edit of the profile. Pure rules live in wizard.ts and the
-// boundary schemas in schema.ts; this component only wires them to the Tauri commands.
+// The first-run wizard and the later edit of the profile. Pure rules live in wizard.ts, the
+// boundary schemas in schema.ts and the messages in i18n; this component wires them to Tauri.
 import { computed, onMounted, ref } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 
+import { keyOf, languageName, setPrimaryLanguage, systemLanguageCode, t } from '../i18n/store';
+import type { MessageKey } from '../i18n/locale';
 import {
   cvProposalSchema,
   draftSchema,
@@ -18,19 +20,21 @@ import {
   type CvProposal,
   type LanguageLevel,
   type LanguageUsage,
-  type Strength,
 } from './schema';
 import {
+  applyPortfolioLanguages,
   applyProposal,
   applyScopeNeedsChoice,
   canFinish,
   emptyDraft,
   hydrateDraft,
   profileToDraft,
-  proposedLanguageCodes,
+  STEP_LABEL_KEYS,
   stepStatus,
-  summaryLines,
+  summaryRows,
   toUserProfile,
+  withDefaultPrimary,
+  type Issue,
   type ProfilePayload,
   type WizardDraft,
 } from './wizard';
@@ -42,69 +46,40 @@ const emit = defineEmits<{ done: []; cancel: [] }>();
 
 const STEPS = ['cv', 'work', 'location', 'languages', 'summary'] as const;
 type Step = (typeof STEPS)[number];
-const STEP_LABELS: Record<Step, string> = {
-  cv: 'CV',
-  work: 'Work',
-  location: 'Where',
-  languages: 'Languages',
-  summary: 'Summary',
-};
-const STRENGTH_LABELS: Record<Strength, string> = {
-  mandatory: 'Mandatory',
-  preferred: 'Preferred',
-  acceptable: 'Acceptable',
-};
-const CONTRACT_LABELS: Record<string, string> = { employee: 'Employee', freelance: 'Freelance' };
-const REMOTE_LABELS: Record<string, string> = { remote: 'Remote', hybrid: 'Hybrid', onsite: 'Onsite' };
-const SCOPE_LABELS: Record<string, string> = {
-  worldwide: 'Worldwide (only if you explicitly choose it)',
-  europe: 'Europe',
-  countries: 'Only some countries',
-  residence: 'Only from the country of residence',
-};
-const APPLY_SCOPES: Array<{ value: ApplyScope; label: string; help: string }> = [
-  { value: 'new_only', label: 'New searches only', help: 'Existing searches stay as they are.' },
-  {
-    value: 'active_searches',
-    label: 'Active searches',
-    help: 'Active searches use the new profile; paused ones stay unchanged.',
-  },
-  {
-    value: 'all_future',
-    label: 'All future sessions',
-    help: 'Paused searches too use the new profile when they resume.',
-  },
-];
+const SCOPES: ApplyScope[] = ['new_only', 'active_searches', 'all_future'];
+const LANGUAGE_CHOICES = ['en', 'it', 'es', 'fr', 'de', 'pt'] as const;
 
 const step = ref<Step>('cv');
 const draft = ref<WizardDraft>(emptyDraft());
 const notice = ref('');
-const issues = ref<string[]>([]);
+const issues = ref<Issue[]>([]);
 const busy = ref(false);
 
-// CV intake: the text lives in the draft, because the profile needs it
+// CV and portfolio intake: the CV text lives in the draft, the portfolio text does not
 const proposal = ref<CvProposal | null>(null);
-const accepted = ref<Record<'headline' | 'capabilities' | 'seniority' | 'years_experience', boolean>>({
-  headline: true,
-  capabilities: true,
-  seniority: true,
-  years_experience: true,
-});
+const accepted = ref({ headline: true, capabilities: true, seniority: true, years_experience: true });
+const portfolioText = ref('');
+
+// New language row
+const newCode = ref('');
+const newLevel = ref<LanguageLevel | ''>('');
+const newUsage = ref<LanguageUsage | ''>('');
 
 // Edit mode: the profile as it was saved, and the scope the user picked for the change
 const saved = ref<ProfilePayload | null>(null);
 const applyScope = ref<ApplyScope | null>(null);
 
 const status = computed(() => stepStatus(draft.value));
-const summary = computed(() => summaryLines(draft.value));
+const summary = computed(() => summaryRows(draft.value));
 const finishable = computed(() => canFinish(draft.value));
-const suggestedLanguages = computed(() => (proposal.value ? proposedLanguageCodes(proposal.value) : []));
-
 const stepIndex = computed(() => STEPS.indexOf(step.value));
 
-/** The state a step button shows. The summary has no state of its own. */
+const errorText = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+const issueText = (issue: Issue): string => t(issue.key, issue.params);
+
 const stateOf = (item: Step): string =>
   item === 'work' || item === 'location' || item === 'languages' ? status.value[item] : 'empty';
+
 const goTo = (target: Step) => {
   step.value = target;
   issues.value = [];
@@ -144,17 +119,25 @@ const contractorCountriesText = computed({
 const toggle = <T extends string>(list: T[], value: T): T[] =>
   list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 
-// Language row being added: nothing is preselected, so no preference is invented.
-const newCode = ref('');
-const newLevel = ref<LanguageLevel | ''>('');
-const newUsage = ref<LanguageUsage | ''>('');
+const levelName = (level: LanguageLevel | null): string => (level === null ? '—' : t(keyOf('level', level)));
+const usageName = (usage: LanguageUsage | null): string => (usage === null ? '—' : t(keyOf('usage', usage)));
+
+const setItemLevel = (code: string, value: string) => {
+  const item = draft.value.languages.items.find((row) => row.code === code);
+  if (item) item.level = value === '' ? null : (value as LanguageLevel);
+};
+const setItemUsage = (code: string, value: string) => {
+  const item = draft.value.languages.items.find((row) => row.code === code);
+  if (item) item.usage = value === '' ? null : (value as LanguageUsage);
+};
+
 const addLanguage = () => {
   if (newCode.value === '' || newLevel.value === '' || newUsage.value === '') {
-    issues.value = ['To add a language, choose the code, the level and the usage.'];
+    issues.value = [{ key: 'issue.languageFieldsMissing' }];
     return;
   }
   if (draft.value.languages.items.some((item) => item.code === newCode.value)) {
-    issues.value = ['This language is already in the list.'];
+    issues.value = [{ key: 'issue.languageDuplicate' }];
     return;
   }
   draft.value.languages.items.push({ code: newCode.value, level: newLevel.value, usage: newUsage.value });
@@ -163,20 +146,11 @@ const addLanguage = () => {
   newUsage.value = '';
   issues.value = [];
 };
+
 const removeLanguage = (code: string) => {
   draft.value.languages.items = draft.value.languages.items.filter((item) => item.code !== code);
+  if (draft.value.languages.primary === code) draft.value.languages.primary = null;
 };
-
-const LANGUAGE_NAMES: Record<string, string> = {
-  en: 'English',
-  it: 'Italian',
-  es: 'Spanish',
-  fr: 'French',
-  de: 'German',
-  pt: 'Portuguese',
-};
-
-const errorText = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 const loadSaved = async () => {
   try {
@@ -185,7 +159,7 @@ const loadSaved = async () => {
       if (identity === null) return;
       const parsed = storedProfileSchema.safeParse(JSON.parse(identity.payload));
       if (!parsed.success) {
-        notice.value = 'The saved profile cannot be read: edit it from scratch.';
+        notice.value = t('notice.profileUnreadable');
         return;
       }
       draft.value = profileToDraft(parsed.data);
@@ -199,32 +173,38 @@ const loadSaved = async () => {
     const parsed = draftSchema.safeParse(JSON.parse(draftRow.payload));
     if (parsed.success) {
       draft.value = hydrateDraft(parsed.data);
-      notice.value = 'You have a saved draft: it is here.';
+      notice.value = t('notice.draftFound');
     }
   } catch (error) {
-    notice.value = `Cannot read the saved profile: ${errorText(error)}`;
+    notice.value = t('notice.draftLoadFailed', { reason: errorText(error) });
   }
 };
 
-onMounted(loadSaved);
+onMounted(async () => {
+  // A new profile starts with the operating system language as its primary language.
+  if (props.mode === 'first') draft.value = withDefaultPrimary(draft.value, systemLanguageCode());
+  await loadSaved();
+  if (props.mode === 'first') draft.value = withDefaultPrimary(draft.value, systemLanguageCode());
+});
+
+const readProposal = (raw: string): CvProposal | null => {
+  const parsed = cvProposalSchema.safeParse(JSON.parse(raw));
+  if (!parsed.success) {
+    notice.value = t('notice.extractorInvalid');
+    return null;
+  }
+  return parsed.data;
+};
 
 const analyseCv = async () => {
   busy.value = true;
   notice.value = '';
   try {
-    const raw = await invoke<string>('cv_extract', { cv: draft.value.cv });
-    const parsed = cvProposalSchema.safeParse(JSON.parse(raw));
-    if (!parsed.success) {
-      notice.value = 'The extractor answer is not valid: nothing is proposed.';
-      proposal.value = null;
-      return;
-    }
-    proposal.value = parsed.data;
-    if (parsed.data.source === 'fallback') {
-      notice.value = `No proposal from the CV: ${parsed.data.reason ?? 'reason not stated'}.`;
-    }
+    const next = readProposal(await invoke<string>('cv_extract', { cv: draft.value.cv, kind: 'cv' }));
+    proposal.value = next;
+    if (next?.source === 'fallback') notice.value = t('notice.noProposal', { reason: next.reason ?? t('notice.reasonNotStated') });
   } catch (error) {
-    notice.value = `CV analysis failed: ${errorText(error)}`;
+    notice.value = t('notice.analysisFailed', { reason: errorText(error) });
     proposal.value = null;
   } finally {
     busy.value = false;
@@ -247,21 +227,36 @@ const applySelectedProposal = () => {
       domains: [],
       seniority: accepted.value.seniority ? proposal.value.fields.seniority : null,
       years_experience: accepted.value.years_experience ? proposal.value.fields.years_experience : null,
-      languages: [],
+      languages: proposal.value.fields.languages,
     },
   };
   draft.value = applyProposal(draft.value, chosen);
-  notice.value = 'CV fields applied where you had not written a value.';
+  notice.value = t('notice.applied');
   goTo('work');
+};
+
+const analysePortfolio = async () => {
+  busy.value = true;
+  try {
+    const next = readProposal(await invoke<string>('cv_extract', { cv: portfolioText.value, kind: 'portfolio' }));
+    if (next !== null && next.source === 'model') {
+      draft.value = applyPortfolioLanguages(draft.value, next);
+      notice.value = t('notice.portfolioApplied');
+    }
+  } catch (error) {
+    notice.value = t('notice.analysisFailed', { reason: errorText(error) });
+  } finally {
+    busy.value = false;
+  }
 };
 
 const saveForLater = async () => {
   busy.value = true;
   try {
     await invoke<number>('draft_save', { payload: JSON.stringify(draft.value) });
-    notice.value = 'Draft saved. You can finish it whenever you like.';
+    notice.value = t('notice.draftSaved');
   } catch (error) {
-    notice.value = `Saving the draft failed: ${errorText(error)}`;
+    notice.value = t('notice.saveDraftFailed', { reason: errorText(error) });
   } finally {
     busy.value = false;
   }
@@ -276,7 +271,7 @@ const finish = async () => {
   const profile = result.profile;
   const changed = saved.value === null || applyScopeNeedsChoice(saved.value, profile);
   if (props.mode === 'edit' && changed && applyScope.value === null) {
-    issues.value = ['Choose which searches the change applies to.'];
+    issues.value = [{ key: 'issue.scopeNeeded' }];
     return;
   }
   busy.value = true;
@@ -286,20 +281,41 @@ const finish = async () => {
       applyScope: applyScope.value ?? 'new_only',
     });
     if (props.mode === 'first') await invoke('onboarding_complete');
+    setPrimaryLanguage(profile.primary_language);
     emit('done');
   } catch (error) {
-    issues.value = [`The profile was not saved: ${errorText(error)}`];
+    issues.value = [{ key: 'issue.notSaved', params: { reason: errorText(error) } }];
   } finally {
     busy.value = false;
   }
 };
+
+/** The label of a summary row: plain text, or the translated enumerated values it names. */
+const rowValue = (row: (typeof summary.value)[number]): string => {
+  if (row.kind === 'characters') return row.value === null ? t('field.notStated') : t('summary.cvCharacters', { count: row.value });
+  if (row.codes !== undefined) {
+    if (row.codes.length === 0) return t('field.notStated');
+    return row.codes
+      .map((code) => {
+        if (row.kind === 'contract') return t(keyOf('contract', code));
+        if (row.kind === 'mode') return t(keyOf('mode', code));
+        if (row.kind === 'scope') return t(keyOf('scope', code));
+        return languageName(code);
+      })
+      .join(', ');
+  }
+  return row.value ?? t('field.notStated');
+};
+
+const applyLabel = (scope: ApplyScope): string => t(`apply.${scope}.label` as MessageKey);
+const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as MessageKey);
 </script>
 
 <template>
   <section class="wizard" aria-labelledby="wizard-title">
     <header>
-      <h2 id="wizard-title">{{ mode === 'first' ? 'Set up your profile' : 'Edit profile' }}</h2>
-      <nav class="steps" aria-label="Steps">
+      <h2 id="wizard-title">{{ mode === 'first' ? t('title.first') : t('title.edit') }}</h2>
+      <nav class="steps" :aria-label="t('steps.aria')">
         <button
           v-for="(item, index) in STEPS"
           :key="item"
@@ -308,51 +324,59 @@ const finish = async () => {
           :aria-current="step === item ? 'step' : undefined"
           @click="goTo(item)"
         >
-          {{ index + 1 }}. {{ STEP_LABELS[item] }}
+          {{ index + 1 }}. {{ t(STEP_LABEL_KEYS[item]) }}
         </button>
       </nav>
     </header>
 
     <p v-if="notice" class="notice" role="status">{{ notice }}</p>
     <ul v-if="issues.length" class="issues" role="alert">
-      <li v-for="issue in issues" :key="issue">{{ issue }}</li>
+      <li v-for="issue in issues" :key="issue.key">{{ issueText(issue) }}</li>
     </ul>
 
-    <!-- Step 0: CV, optional, pre-fills only what the user has not written -->
+    <!-- CV first: required to finish; the analysis proposes fields the user can refuse -->
     <div v-if="step === 'cv'" class="pane">
-      <p>Upload or paste your CV. It is required: I can also propose headline, capabilities, seniority and years from it.</p>
-      <input type="file" accept=".txt,.md,text/plain,text/markdown" @change="onCvFile" />
-      <textarea v-model="draft.cv" rows="8" placeholder="Paste the CV text here"></textarea>
+      <p>{{ t('cv.intro') }}</p>
+      <input type="file" accept=".txt,.md,text/plain,text/markdown" :aria-label="t('cv.file')" @change="onCvFile" />
+      <textarea v-model="draft.cv" rows="8" :placeholder="t('cv.placeholder')"></textarea>
       <div class="actions">
-        <button type="button" :disabled="busy || draft.cv.trim() === ''" @click="analyseCv">Analyse the CV</button>
-        <button type="button" @click="next">Next</button>
+        <button type="button" :disabled="busy || draft.cv.trim() === ''" @click="analyseCv">{{ t('action.analyse') }}</button>
+        <button type="button" @click="next">{{ t('action.next') }}</button>
       </div>
       <fieldset v-if="proposal && proposal.source === 'model'">
-        <legend>CV proposal: choose what to apply</legend>
-        <label><input v-model="accepted.headline" type="checkbox" /> Headline: {{ proposal.fields.headline ?? '—' }}</label>
-        <label><input v-model="accepted.capabilities" type="checkbox" /> Capabilities: {{ proposal.fields.capabilities.join(', ') || '—' }}</label>
-        <label><input v-model="accepted.seniority" type="checkbox" /> Seniority: {{ proposal.fields.seniority ?? '—' }}</label>
-        <label><input v-model="accepted.years_experience" type="checkbox" /> Years: {{ proposal.fields.years_experience ?? '—' }}</label>
-        <p v-if="suggestedLanguages.length">
-          The CV mentions: {{ suggestedLanguages.map((code) => LANGUAGE_NAMES[code] ?? code).join(', ') }}. Add them with level and usage in the Languages step.
+        <legend>{{ t('cv.proposal') }}</legend>
+        <label><input v-model="accepted.headline" type="checkbox" /> {{ t('field.headline') }}: {{ proposal.fields.headline ?? '—' }}</label>
+        <label><input v-model="accepted.capabilities" type="checkbox" /> {{ t('field.capabilities') }}: {{ proposal.fields.capabilities.join(', ') || '—' }}</label>
+        <label><input v-model="accepted.seniority" type="checkbox" /> {{ t('field.seniority') }}: {{ proposal.fields.seniority ?? '—' }}</label>
+        <label><input v-model="accepted.years_experience" type="checkbox" /> {{ t('field.years') }}: {{ proposal.fields.years_experience ?? '—' }}</label>
+        <p v-if="proposal.fields.languages.length">
+          {{ t('cv.mentions', { languages: proposal.fields.languages.map((language) => languageName(language.code)).join(', ') }) }}
         </p>
-        <button type="button" @click="applySelectedProposal">Apply the chosen fields</button>
+        <button type="button" @click="applySelectedProposal">{{ t('action.applyChosen') }}</button>
+      </fieldset>
+      <fieldset>
+        <legend>{{ t('portfolio.title') }}</legend>
+        <p>{{ t('portfolio.intro') }}</p>
+        <textarea v-model="portfolioText" rows="4"></textarea>
+        <div class="actions">
+          <button type="button" :disabled="busy || portfolioText.trim() === ''" @click="analysePortfolio">{{ t('portfolio.analyse') }}</button>
+        </div>
       </fieldset>
     </div>
 
-    <!-- Step 1: work -->
+    <!-- Work -->
     <div v-else-if="step === 'work'" class="pane">
-      <label>Headline <input v-model="draft.headline" type="text" maxlength="60" /></label>
-      <label>Capabilities (comma-separated) <input v-model="capabilitiesText" type="text" /></label>
+      <label>{{ t('field.headline') }} <input v-model="draft.headline" type="text" maxlength="60" /></label>
+      <label>{{ t('field.capabilities') }} <input v-model="capabilitiesText" type="text" /></label>
       <label>
-        Seniority
+        {{ t('field.seniority') }}
         <select v-model="draft.seniority">
-          <option :value="null">Not stated</option>
+          <option :value="null">{{ t('field.notStated') }}</option>
           <option v-for="level in SENIORITIES" :key="level" :value="level">{{ level }}</option>
         </select>
       </label>
       <label>
-        Years of experience
+        {{ t('field.years') }}
         <input
           type="number"
           min="0"
@@ -362,137 +386,161 @@ const finish = async () => {
         />
       </label>
       <fieldset>
-        <legend>Contract type</legend>
+        <legend>{{ t('work.contract') }}</legend>
         <label v-for="type in CONTRACT_TYPES" :key="type">
           <input
             type="checkbox"
             :checked="draft.work.contract_types.includes(type)"
             @change="draft.work.contract_types = toggle(draft.work.contract_types, type)"
           />
-          {{ CONTRACT_LABELS[type] }}
+          {{ t(keyOf('contract', type)) }}
         </label>
       </fieldset>
       <label>
-        How strict is the contract requirement
+        {{ t('work.strength') }}
         <select v-model="draft.work.strength">
-          <option v-for="value in STRENGTHS" :key="value" :value="value">{{ STRENGTH_LABELS[value] }}</option>
+          <option v-for="value in STRENGTHS" :key="value" :value="value">{{ t(keyOf('strength', value)) }}</option>
         </select>
       </label>
       <div class="actions">
-        <button type="button" @click="back">Back</button>
-        <button type="button" @click="next">Next</button>
-        <button type="button" :disabled="busy" @click="saveForLater">Save and continue later</button>
+        <button type="button" @click="back">{{ t('action.back') }}</button>
+        <button type="button" @click="next">{{ t('action.next') }}</button>
+        <button type="button" :disabled="busy" @click="saveForLater">{{ t('action.saveLater') }}</button>
       </div>
     </div>
 
-    <!-- Step 2: location; remote scope is asked, never assumed -->
+    <!-- Where: remote needs an explicit scope, never worldwide by default -->
     <div v-else-if="step === 'location'" class="pane">
       <fieldset>
-        <legend>Work modes (optional)</legend>
+        <legend>{{ t('where.workModes') }}</legend>
         <label v-for="mode in REMOTE_MODES" :key="mode">
           <input
             type="checkbox"
             :checked="draft.location.remote_modes.includes(mode)"
             @change="draft.location.remote_modes = toggle(draft.location.remote_modes, mode)"
           />
-          {{ REMOTE_LABELS[mode] }}
+          {{ t(keyOf('mode', mode)) }}
         </label>
       </fieldset>
       <template v-if="draft.location.remote_modes.includes('remote')">
         <label>
-          Remote scope (required, never worldwide by default)
+          {{ t('where.remoteScope') }}
           <select v-model="draft.location.remote_scope">
-            <option :value="null">Choose a scope</option>
-            <option v-for="scope in REMOTE_SCOPES" :key="scope" :value="scope">{{ SCOPE_LABELS[scope] }}</option>
+            <option :value="null">{{ t('where.chooseScope') }}</option>
+            <option v-for="scope in REMOTE_SCOPES" :key="scope" :value="scope">{{ t(keyOf('scope', scope)) }}</option>
           </select>
         </label>
         <label v-if="draft.location.remote_scope === 'countries'">
-          Remote countries (codes, comma-separated)
+          {{ t('where.remoteCountries') }}
           <input v-model="remoteCountriesText" type="text" placeholder="IT, DE" />
         </label>
         <label v-if="draft.location.remote_scope === 'residence'">
-          Country of residence (two-letter code)
+          {{ t('where.residence') }}
           <input v-model="draft.location.residence" type="text" maxlength="2" placeholder="IT" />
         </label>
       </template>
-      <label>Onsite cities (optional) <input v-model="onsiteCitiesText" type="text" /></label>
+      <label>{{ t('where.onsiteCities') }} <input v-model="onsiteCitiesText" type="text" /></label>
       <label>
-        Countries where you work as an employee (optional)
+        {{ t('where.employeeCountries') }}
         <input v-model="employeeCountriesText" type="text" placeholder="IT" />
       </label>
       <label>
-        Countries where you work as a freelancer (optional)
+        {{ t('where.contractorCountries') }}
         <input v-model="contractorCountriesText" type="text" placeholder="IT" />
       </label>
-      <p class="hint">Employee and freelance stay separate. An empty field means not stated, never “everywhere”.</p>
+      <p class="hint">{{ t('where.separateHint') }}</p>
       <div class="actions">
-        <button type="button" @click="back">Back</button>
-        <button type="button" @click="next">Next</button>
-        <button type="button" :disabled="busy" @click="saveForLater">Save and continue later</button>
+        <button type="button" @click="back">{{ t('action.back') }}</button>
+        <button type="button" @click="next">{{ t('action.next') }}</button>
+        <button type="button" :disabled="busy" @click="saveForLater">{{ t('action.saveLater') }}</button>
       </div>
     </div>
 
-    <!-- Step 3: languages; at least one, and mandatory -->
+    <!-- Languages: searched only in these, at these levels; one of them is primary -->
     <div v-else-if="step === 'languages'" class="pane">
-      <p>At least one language is mandatory. A language you do not speak at the required level excludes the posting.</p>
-      <ul class="list">
+      <p>{{ t('languages.intro') }}</p>
+      <p v-if="draft.languages.items.length === 0">{{ t('languages.none') }}</p>
+      <ul v-else class="list">
         <li v-for="item in draft.languages.items" :key="item.code">
-          {{ LANGUAGE_NAMES[item.code] ?? item.code }} · {{ item.level }} · {{ item.usage }}
-          <button type="button" @click="removeLanguage(item.code)">Remove</button>
+          <strong>{{ languageName(item.code) }}</strong>
+          <label>
+            {{ t('languages.level') }}
+            <select :value="item.level ?? ''" @change="setItemLevel(item.code, ($event.target as HTMLSelectElement).value)">
+              <option value="">—</option>
+              <option v-for="level in LANGUAGE_LEVELS" :key="level" :value="level">{{ t(keyOf('level', level)) }}</option>
+            </select>
+          </label>
+          <label>
+            {{ t('languages.usage') }}
+            <select :value="item.usage ?? ''" @change="setItemUsage(item.code, ($event.target as HTMLSelectElement).value)">
+              <option value="">—</option>
+              <option v-for="usage in LANGUAGE_USAGE" :key="usage" :value="usage">{{ t(keyOf('usage', usage)) }}</option>
+            </select>
+          </label>
+          <span v-if="item.level === null || item.usage === null" class="hint">{{ t('languages.incomplete') }}</span>
+          <button type="button" @click="removeLanguage(item.code)">{{ t('action.remove') }}</button>
         </li>
       </ul>
       <div class="row">
-        <select v-model="newCode" aria-label="Language">
-          <option value="">Language</option>
-          <option v-for="(name, code) in LANGUAGE_NAMES" :key="code" :value="code">{{ name }}</option>
+        <select v-model="newCode" :aria-label="t('languages.language')">
+          <option value="">{{ t('languages.language') }}</option>
+          <option v-for="code in LANGUAGE_CHOICES" :key="code" :value="code">{{ languageName(code) }}</option>
         </select>
-        <select v-model="newLevel" aria-label="Level">
-          <option value="">Level</option>
-          <option v-for="level in LANGUAGE_LEVELS" :key="level" :value="level">{{ level }}</option>
+        <select v-model="newLevel" :aria-label="t('languages.level')">
+          <option value="">{{ t('languages.level') }}</option>
+          <option v-for="level in LANGUAGE_LEVELS" :key="level" :value="level">{{ t(keyOf('level', level)) }}</option>
         </select>
-        <select v-model="newUsage" aria-label="Usage">
-          <option value="">Usage</option>
-          <option v-for="usage in LANGUAGE_USAGE" :key="usage" :value="usage">{{ usage }}</option>
+        <select v-model="newUsage" :aria-label="t('languages.usage')">
+          <option value="">{{ t('languages.usage') }}</option>
+          <option v-for="usage in LANGUAGE_USAGE" :key="usage" :value="usage">{{ t(keyOf('usage', usage)) }}</option>
         </select>
-        <button type="button" @click="addLanguage">Add</button>
+        <button type="button" @click="addLanguage">{{ t('languages.add') }}</button>
       </div>
       <label>
-        Language requirement strength
-        <select v-model="draft.languages.strength">
-          <option v-for="value in STRENGTHS" :key="value" :value="value">{{ STRENGTH_LABELS[value] }}</option>
+        {{ t('languages.primary') }}
+        <select v-model="draft.languages.primary">
+          <option :value="null">—</option>
+          <option v-for="item in draft.languages.items" :key="item.code" :value="item.code">{{ languageName(item.code) }}</option>
         </select>
       </label>
       <div class="actions">
-        <button type="button" @click="back">Back</button>
-        <button type="button" @click="next">Summary</button>
-        <button type="button" :disabled="busy" @click="saveForLater">Save and continue later</button>
+        <button type="button" @click="back">{{ t('action.back') }}</button>
+        <button type="button" @click="next">{{ t('action.summary') }}</button>
+        <button type="button" :disabled="busy" @click="saveForLater">{{ t('action.saveLater') }}</button>
       </div>
     </div>
 
-    <!-- Step 4: summary and save -->
+    <!-- Summary: every field, unstated ones as unstated; finish only when valid -->
     <div v-else class="pane">
       <dl class="summary">
-        <template v-for="line in summary" :key="line.label">
-          <dt>{{ line.label }}</dt>
-          <dd>{{ line.value }}</dd>
+        <template v-for="row in summary" :key="row.label">
+          <dt>{{ t(row.label) }}</dt>
+          <dd>{{ rowValue(row) }}</dd>
         </template>
+        <dt>{{ t('summary.languages') }}</dt>
+        <dd>
+          <template v-if="draft.languages.items.length === 0">{{ t('field.notStated') }}</template>
+          <template v-else>
+            {{ draft.languages.items.map((item) => `${languageName(item.code)} (${levelName(item.level)}, ${usageName(item.usage)})`).join(', ') }}
+          </template>
+        </dd>
       </dl>
       <fieldset v-if="mode === 'edit' && saved">
-        <legend>Apply the change to</legend>
-        <label v-for="option in APPLY_SCOPES" :key="option.value" class="scope">
-          <input v-model="applyScope" type="radio" name="apply-scope" :value="option.value" />
-          <strong>{{ option.label }}</strong>
-          <span>{{ option.help }}</span>
+        <legend>{{ t('apply.title') }}</legend>
+        <label v-for="scope in SCOPES" :key="scope" class="scope">
+          <input v-model="applyScope" type="radio" name="apply-scope" :value="scope" />
+          <strong>{{ applyLabel(scope) }}</strong>
+          <span>{{ applyHelp(scope) }}</span>
         </label>
       </fieldset>
-      <p v-if="!finishable" class="hint">Some fields are still missing: go back to the steps flagged.</p>
+      <p v-if="!finishable" class="hint">{{ t('summary.stillMissing') }}</p>
       <div class="actions">
-        <button type="button" @click="back">Back</button>
+        <button type="button" @click="back">{{ t('action.back') }}</button>
         <button type="button" :disabled="!finishable || busy" @click="finish">
-          {{ mode === 'first' ? 'Complete and save' : 'Save the change' }}
+          {{ mode === 'first' ? t('action.finish') : t('action.saveChange') }}
         </button>
-        <button type="button" :disabled="busy" @click="saveForLater">Save and continue later</button>
-        <button v-if="mode === 'edit'" type="button" @click="emit('cancel')">Cancel</button>
+        <button type="button" :disabled="busy" @click="saveForLater">{{ t('action.saveLater') }}</button>
+        <button v-if="mode === 'edit'" type="button" @click="emit('cancel')">{{ t('action.cancel') }}</button>
       </div>
     </div>
   </section>

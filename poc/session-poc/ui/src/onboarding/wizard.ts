@@ -1,27 +1,33 @@
 /**
  * Pure logic of the onboarding wizard: step state, the finish rule, the mapping to the agent's
- * profile key names, the summary, and the apply-scope decision. No DOM and no Tauri here, so
- * every rule is tested offline.
+ * profile key names, the proposals from a CV or portfolio, the summary, and the apply-scope
+ * decision. No DOM and no Tauri here, so every rule is tested offline.
  *
- * Rules that come from the spec and the agent:
+ * Rules that come from the spec, the user and the agent:
  * - An unstated field stays empty; nothing is invented. Remote never means worldwide by default.
- * - At least one language is required, and the language preference must be mandatory.
+ * - Languages are a hard filter: the search is only in the languages the user speaks, at the level
+ *   given. Each language row needs its level and its usage, chosen by the user.
+ * - One language is primary: it is the language the app navigates in, and it must be spoken.
  * - Employee and contractor eligibility are separate lists; an empty list means not stated.
  * - The mapped profile is still checked by the agent's validator before it is saved.
+ *
+ * Issues and summary labels are message keys, so the interface shows them in its own language.
  */
-import type { DraftInput, StoredProfile } from './schema';
+import type { MessageKey } from '../i18n/locale';
 import type {
   CvProposal,
   ContractType,
+  DraftInput,
   LanguageLevel,
   LanguageUsage,
   RemoteMode,
   RemoteScope,
   Seniority,
+  StoredProfile,
   Strength,
 } from './schema';
 
-export type LanguageItem = { code: string; level: LanguageLevel; usage: LanguageUsage };
+export type LanguageItem = { code: string; level: LanguageLevel | null; usage: LanguageUsage | null };
 
 export type WizardDraft = {
   /** The CV text. The agent needs it to score postings, so a profile cannot be saved without it. */
@@ -41,14 +47,27 @@ export type WizardDraft = {
     contractor_countries: string[];
     residence?: string | null;
   };
-  languages: { items: LanguageItem[]; strength: Strength };
+  languages: { primary: string | null; items: LanguageItem[] };
 };
+
+/** The message of each wizard step's label. The location step is labelled "Where" in the interface. */
+export const STEP_LABEL_KEYS = {
+  cv: 'step.cv',
+  work: 'step.work',
+  location: 'step.where',
+  languages: 'step.languages',
+  summary: 'step.summary',
+} as const satisfies Record<string, MessageKey>;
 
 export type StepState = 'empty' | 'partial' | 'complete';
 export type StepStatus = { work: StepState; location: StepState; languages: StepState };
 
+/** A problem that stops the finish: a message key, with the values its message needs. */
+export type Issue = { key: MessageKey; params?: Record<string, string> };
+
 /** The profile in the agent's own key names: what the validator reads. */
 export type ProfilePayload = {
+  cv: string;
   headline: string;
   capabilities: string[];
   domains: string[];
@@ -59,12 +78,12 @@ export type ProfilePayload = {
   countries: string[];
   contract_types: ContractType[];
   languages: string[];
+  primary_language: string;
   min_salary: null;
   timezone_overlap_hours: null;
   exclude_companies: string[];
   exclude_terms: string[];
   accepted_gaps: string[];
-  cv: string;
   portfolio: null;
   threshold: number;
   daily_cap: number;
@@ -98,43 +117,51 @@ export const emptyDraft = (): WizardDraft => ({
     contractor_countries: [],
     residence: null,
   },
-  languages: { items: [], strength: 'mandatory' },
+  languages: { primary: null, items: [] },
 });
 
 const filled = (text: string): boolean => text.trim().length > 0;
 
-const profileIssues = (draft: WizardDraft): string[] => {
-  const issues: string[] = [];
-  if (!filled(draft.cv)) issues.push('Add your CV: upload it or paste its text.');
-  if (!filled(draft.headline)) issues.push('Write a headline.');
-  if (draft.capabilities.length === 0) issues.push('Add at least one capability.');
-  if (draft.seniority === null) issues.push('Choose the seniority.');
-  if (draft.years_experience === null) issues.push('Enter the years of experience.');
+const profileIssues = (draft: WizardDraft): Issue[] => {
+  const issues: Issue[] = [];
+  if (!filled(draft.cv)) issues.push({ key: 'issue.cv' });
+  if (!filled(draft.headline)) issues.push({ key: 'issue.headline' });
+  if (draft.capabilities.length === 0) issues.push({ key: 'issue.capabilities' });
+  if (draft.seniority === null) issues.push({ key: 'issue.seniority' });
+  if (draft.years_experience === null) issues.push({ key: 'issue.years' });
   return issues;
 };
 
-const workIssues = (draft: WizardDraft): string[] =>
-  draft.work.contract_types.length === 0 ? ['Choose at least one contract type.'] : [];
+const workIssues = (draft: WizardDraft): Issue[] =>
+  draft.work.contract_types.length === 0 ? [{ key: 'issue.contract' }] : [];
 
-const locationIssues = (draft: WizardDraft): string[] => {
+const locationIssues = (draft: WizardDraft): Issue[] => {
   const location = draft.location;
   if (!location.remote_modes.includes('remote')) return [];
-  const issues: string[] = [];
-  if (location.remote_scope === null) issues.push('Choose the remote scope: it is never worldwide by default.');
+  const issues: Issue[] = [];
+  if (location.remote_scope === null) issues.push({ key: 'issue.remoteScope' });
   if (location.remote_scope === 'countries' && location.remote_countries.length === 0) {
-    issues.push('Enter at least one country for remote work.');
+    issues.push({ key: 'issue.remoteCountries' });
   }
-  if (location.remote_scope === 'residence' && !location.residence) {
-    issues.push('Enter the country of residence for remote work.');
-  }
+  if (location.remote_scope === 'residence' && !location.residence) issues.push({ key: 'issue.residence' });
   return issues;
 };
 
-const languageIssues = (draft: WizardDraft): string[] => {
-  const issues: string[] = [];
-  if (draft.languages.items.length === 0) issues.push('Add at least one language.');
-  if (draft.languages.strength !== 'mandatory') issues.push('Languages must be mandatory.');
-  return issues;
+const languageRowIssues = (draft: WizardDraft): Issue[] =>
+  draft.languages.items
+    .filter((item) => item.level === null || item.usage === null)
+    .map((item) => ({ key: 'issue.languageIncomplete' as const, params: { code: item.code } }));
+
+const primaryIssues = (draft: WizardDraft): Issue[] => {
+  const primary = draft.languages.primary;
+  if (primary === null) return [{ key: 'issue.primaryMissing' }];
+  if (!draft.languages.items.some((item) => item.code === primary)) return [{ key: 'issue.primaryNotSpoken' }];
+  return [];
+};
+
+const languageIssues = (draft: WizardDraft): Issue[] => {
+  if (draft.languages.items.length === 0) return [{ key: 'issue.languageNone' }];
+  return [...languageRowIssues(draft), ...primaryIssues(draft)];
 };
 
 const hasLocationInput = (draft: WizardDraft): boolean => {
@@ -152,9 +179,16 @@ const hasLocationInput = (draft: WizardDraft): boolean => {
 /** Each step is empty, partial (started but not valid yet), or complete. */
 export const stepStatus = (draft: WizardDraft): StepStatus => {
   const workStarted =
-    filled(draft.headline) || draft.capabilities.length > 0 || draft.seniority !== null || draft.years_experience !== null || draft.work.contract_types.length > 0;
-  const work: StepState =
-    !workStarted ? 'empty' : profileIssues(draft).length === 0 && workIssues(draft).length === 0 ? 'complete' : 'partial';
+    filled(draft.headline) ||
+    draft.capabilities.length > 0 ||
+    draft.seniority !== null ||
+    draft.years_experience !== null ||
+    draft.work.contract_types.length > 0;
+  const work: StepState = !workStarted
+    ? 'empty'
+    : profileIssues(draft).length === 0 && workIssues(draft).length === 0
+      ? 'complete'
+      : 'partial';
 
   const location: StepState = !hasLocationInput(draft)
     ? 'empty'
@@ -163,41 +197,40 @@ export const stepStatus = (draft: WizardDraft): StepStatus => {
       : 'partial';
 
   const languages: StepState =
-    draft.languages.items.length === 0
+    draft.languages.items.length === 0 && draft.languages.primary === null
       ? 'empty'
-      : draft.languages.strength === 'mandatory'
+      : languageIssues(draft).length === 0
         ? 'complete'
         : 'partial';
 
   return { work, location, languages };
 };
 
-/** Every issue that stops the profile from being saved. Empty when the profile can be built. */
-const allIssues = (draft: WizardDraft): string[] => [
-  ...profileIssues(draft),
-  ...workIssues(draft),
-  ...locationIssues(draft),
-  ...languageIssues(draft),
-];
-
 /** The rule the finish button follows: every required field is present and valid. */
-export const canFinish = (draft: WizardDraft): boolean => allIssues(draft).length === 0;
+export const canFinish = (draft: WizardDraft): boolean => toUserProfile(draft).ok;
 
-export type ProfileResult = { ok: true; profile: ProfilePayload } | { ok: false; issues: string[] };
+export type ProfileResult = { ok: true; profile: ProfilePayload } | { ok: false; issues: Issue[] };
 
 /** Map the draft to the agent's profile. Refused with the issues when the draft is incomplete. */
 export const toUserProfile = (draft: WizardDraft): ProfileResult => {
-  const issues = allIssues(draft);
+  const issues = [
+    ...profileIssues(draft),
+    ...workIssues(draft),
+    ...locationIssues(draft),
+    ...languageIssues(draft),
+  ];
   if (issues.length > 0 || draft.seniority === null || draft.years_experience === null) {
     return { ok: false, issues };
   }
   const location = draft.location;
   const remote = location.remote_modes.includes('remote');
   const scope = remote ? location.remote_scope : null;
+  const primary = draft.languages.primary ?? '';
 
   return {
     ok: true,
     profile: {
+      cv: draft.cv,
       headline: draft.headline.trim(),
       capabilities: draft.capabilities,
       domains: [],
@@ -208,16 +241,17 @@ export const toUserProfile = (draft: WizardDraft): ProfileResult => {
       countries: scope === 'countries' ? location.remote_countries.map((code) => code.toUpperCase()) : [],
       contract_types: draft.work.contract_types,
       languages: draft.languages.items.map((item) => item.code),
+      primary_language: primary,
       min_salary: null,
       timezone_overlap_hours: null,
       exclude_companies: [],
       exclude_terms: [],
       accepted_gaps: [],
-      cv: draft.cv,
       portfolio: null,
       ...AGENT_DEFAULTS,
+      // Languages are always a hard filter, so their strength is always mandatory.
       strengths: {
-        languages: draft.languages.strength,
+        languages: 'mandatory',
         remote_modes: location.strength,
         onsite_cities: location.strength,
         countries: location.strength,
@@ -225,7 +259,9 @@ export const toUserProfile = (draft: WizardDraft): ProfileResult => {
         min_salary: 'mandatory',
       },
       language_proficiency: Object.fromEntries(
-        draft.languages.items.map((item) => [item.code, { level: item.level, usage: item.usage }]),
+        draft.languages.items.flatMap((item) =>
+          item.level !== null && item.usage !== null ? [[item.code, { level: item.level, usage: item.usage }]] : [],
+        ),
       ),
       eligibility: {
         employee: location.employee_countries,
@@ -237,95 +273,59 @@ export const toUserProfile = (draft: WizardDraft): ProfileResult => {
   };
 };
 
-/** A change to the profile asks which searches it applies to. The same profile asks nothing. */
-const canonical = (value: unknown): string => {
-  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
-  if (value !== null && typeof value === 'object') {
-    const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
-    return `{${entries.map(([key, item]) => `${JSON.stringify(key)}:${canonical(item)}`).join(',')}}`;
+/**
+ * The operating system language becomes the primary language when none is chosen yet, and it is
+ * added as a row to complete. A primary language already chosen is kept.
+ */
+export const withDefaultPrimary = (draft: WizardDraft, systemCode: string): WizardDraft => {
+  if (draft.languages.primary !== null) return { ...draft, languages: { ...draft.languages } };
+  const items = draft.languages.items.some((item) => item.code === systemCode)
+    ? draft.languages.items
+    : [...draft.languages.items, { code: systemCode, level: null, usage: null }];
+  return { ...draft, languages: { primary: systemCode, items } };
+};
+
+/** Add the proposed languages the draft does not have yet, and fill a missing level. Values the user chose are kept. */
+const withLanguages = (draft: WizardDraft, proposed: Array<{ code: string; level: LanguageLevel | null }>): WizardDraft => {
+  const items = [...draft.languages.items];
+  for (const language of proposed) {
+    const existing = items.find((item) => item.code === language.code);
+    if (existing === undefined) {
+      items.push({ code: language.code, level: language.level, usage: null });
+    } else if (existing.level === null) {
+      // A row without a level takes the one the document states; a level the user chose is kept.
+      existing.level = language.level;
+    }
   }
-  return JSON.stringify(value) ?? 'null';
+  return { ...draft, languages: { primary: draft.languages.primary, items } };
 };
 
-export const applyScopeNeedsChoice = (before: ProfilePayload, after: ProfilePayload): boolean =>
-  canonical(before) !== canonical(after);
-
-export type SummaryLine = { label: string; value: string };
-
-const NOT_STATED = 'Not stated';
-const listOrNotStated = (values: string[]): string => (values.length > 0 ? values.join(', ') : NOT_STATED);
-
-const CONTRACT_LABELS: Record<ContractType, string> = { employee: 'employee', freelance: 'freelance' };
-const STRENGTH_LABELS: Record<Strength, string> = {
-  mandatory: 'mandatory',
-  preferred: 'preferred',
-  acceptable: 'acceptable',
-};
-
-/** The profile as the user reads it back: one line per field, unstated shown as such. */
-export const summaryLines = (draft: WizardDraft): SummaryLine[] => [
-  { label: 'CV', value: filled(draft.cv) ? `${draft.cv.trim().length} characters` : NOT_STATED },
-  { label: 'Headline', value: filled(draft.headline) ? draft.headline.trim() : NOT_STATED },
-  { label: 'Capabilities', value: listOrNotStated(draft.capabilities) },
-  { label: 'Seniority', value: draft.seniority ?? NOT_STATED },
-  {
-    label: 'Contract',
-    value:
-      draft.work.contract_types.length > 0
-        ? `${draft.work.contract_types.map((type) => CONTRACT_LABELS[type]).join(', ')} (${STRENGTH_LABELS[draft.work.strength]})`
-        : NOT_STATED,
-  },
-  { label: 'Work modes', value: listOrNotStated(draft.location.remote_modes) },
-  { label: 'Remote scope', value: draft.location.remote_scope ?? NOT_STATED },
-  { label: 'Remote countries', value: listOrNotStated(draft.location.remote_countries) },
-  { label: 'Onsite cities', value: listOrNotStated(draft.location.onsite_cities) },
-  { label: 'Employee countries', value: listOrNotStated(draft.location.employee_countries) },
-  { label: 'Freelance countries', value: listOrNotStated(draft.location.contractor_countries) },
-  {
-    label: 'Languages',
-    value:
-      draft.languages.items.length > 0
-        ? draft.languages.items.map((item) => `${item.code} (${item.level}, ${item.usage})`).join(', ')
-        : NOT_STATED,
-  },
-];
-
-/** Language names a CV may state, as the ISO 639-1 codes the agent uses. Unknown names are ignored. */
-// A Map, not an object: an object would also answer for inherited names such as "constructor".
-const LANGUAGE_CODES = new Map<string, string>([
-  ['english', 'en'],
-  ['italian', 'it'],
-  ['italiano', 'it'],
-  ['spanish', 'es'],
-  ['french', 'fr'],
-  ['german', 'de'],
-  ['portuguese', 'pt'],
-]);
-
-/** The languages a CV names that the wizard knows. They are suggestions, added with a level in step 3. */
-export const proposedLanguageCodes = (proposal: CvProposal): string[] => {
-  const codes: string[] = [];
-  for (const name of proposal.fields.languages) {
-    const code = LANGUAGE_CODES.get(name.trim().toLowerCase());
-    if (code !== undefined && !codes.includes(code)) codes.push(code);
-  }
-  return codes;
-};
+/** The languages a CV or portfolio states, as codes and levels. */
+export const proposedLanguages = (proposal: CvProposal): Array<{ code: string; level: LanguageLevel | null }> =>
+  proposal.fields.languages.map((language) => ({ code: language.code, level: language.level }));
 
 /**
  * Fill the draft from a CV proposal, field by field, and only where the user has not typed a
- * value. A fallback proposal fills nothing. The input draft is not changed.
+ * value. A language the CV states is added as a row; its usage is the user's to choose. A
+ * fallback proposal fills nothing. The input draft is not changed.
  */
 export const applyProposal = (draft: WizardDraft, proposal: CvProposal): WizardDraft => {
-  if (proposal.source !== 'model') return { ...draft };
+  if (proposal.source !== 'model') return { ...draft, languages: { ...draft.languages } };
   const fields = proposal.fields;
-  return {
+  const filledFields: WizardDraft = {
     ...draft,
     headline: filled(draft.headline) ? draft.headline : (fields.headline ?? ''),
     capabilities: draft.capabilities.length > 0 ? draft.capabilities : fields.capabilities,
     seniority: draft.seniority ?? fields.seniority,
     years_experience: draft.years_experience ?? fields.years_experience,
   };
+  return withLanguages(filledFields, proposedLanguages(proposal));
+};
+
+/** A portfolio adds only the languages it states. Every other field is left as it is. */
+export const applyPortfolioLanguages = (draft: WizardDraft, proposal: CvProposal): WizardDraft => {
+  if (proposal.source !== 'model') return { ...draft, languages: { ...draft.languages } };
+  return withLanguages(draft, proposedLanguages(proposal));
 };
 
 /**
@@ -353,18 +353,19 @@ export const profileToDraft = (profile: StoredProfile): WizardDraft => ({
     residence: profile.eligibility.residence,
   },
   languages: {
-    items: profile.languages.flatMap((code) => {
+    primary: profile.primary_language,
+    items: profile.languages.map((code) => {
       const proficiency = profile.language_proficiency[code];
-      return proficiency ? [{ code, level: proficiency.level, usage: proficiency.usage }] : [];
+      return {
+        code,
+        level: proficiency?.level ?? null,
+        usage: proficiency?.usage ?? null,
+      };
     }),
-    strength: profile.strengths.languages ?? 'mandatory',
   },
 });
 
-/**
- * A draft read back from storage (already parsed by the zod boundary) with the defaults filled
- * in for every part it does not have. Nothing a part omits is invented.
- */
+/** A draft read back from storage (already parsed by the zod boundary) with defaults for every part it does not have. */
 export const hydrateDraft = (input: DraftInput): WizardDraft => {
   const base = emptyDraft();
   return {
@@ -388,8 +389,74 @@ export const hydrateDraft = (input: DraftInput): WizardDraft => {
       residence: input.location?.residence ?? null,
     },
     languages: {
-      items: (input.languages?.items ?? []).map((item) => ({ ...item })),
-      strength: input.languages?.strength ?? base.languages.strength,
+      primary: input.languages?.primary ?? null,
+      items: (input.languages?.items ?? []).map((item) => ({
+        code: item.code,
+        level: item.level,
+        usage: item.usage,
+      })),
     },
   };
 };
+
+/** A change to the profile asks which searches it applies to. The same profile asks nothing. */
+export const applyScopeNeedsChoice = (before: ProfilePayload, after: ProfilePayload): boolean =>
+  canonical(before) !== canonical(after);
+
+/** A key-order-independent text of a value, so two equal profiles compare equal. */
+const canonical = (value: unknown): string => {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
+  if (value !== null && typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+    return `{${entries.map(([key, item]) => `${JSON.stringify(key)}:${canonical(item)}`).join(',')}}`;
+  }
+  return JSON.stringify(value) ?? 'null';
+};
+
+/**
+ * One line of the summary. `value` is plain text, or null when the field is not stated. `codes`
+ * are enumerated values the interface translates, named by `kind`.
+ */
+export type SummaryRow = {
+  label: MessageKey;
+  value: string | null;
+  codes?: string[];
+  kind?: 'contract' | 'mode' | 'scope' | 'lang' | 'characters';
+};
+
+const joined = (values: string[]): string | null => (values.length > 0 ? values.join(', ') : null);
+
+/** The profile as the user reads it back. Languages are rendered by the interface, with their levels. */
+export const summaryRows = (draft: WizardDraft): SummaryRow[] => [
+  { label: 'summary.headline', value: filled(draft.headline) ? draft.headline.trim() : null },
+  { label: 'summary.capabilities', value: joined(draft.capabilities) },
+  { label: 'summary.seniority', value: draft.seniority },
+  {
+    label: 'summary.contract',
+    value: null,
+    codes: draft.work.contract_types,
+    kind: 'contract',
+  },
+  { label: 'summary.workModes', value: null, codes: draft.location.remote_modes, kind: 'mode' },
+  {
+    label: 'summary.remoteScope',
+    value: null,
+    codes: draft.location.remote_scope === null ? [] : [draft.location.remote_scope],
+    kind: 'scope',
+  },
+  { label: 'summary.remoteCountries', value: joined(draft.location.remote_countries) },
+  { label: 'summary.onsiteCities', value: joined(draft.location.onsite_cities) },
+  { label: 'summary.employeeCountries', value: joined(draft.location.employee_countries) },
+  { label: 'summary.contractorCountries', value: joined(draft.location.contractor_countries) },
+  {
+    label: 'summary.primary',
+    value: null,
+    codes: draft.languages.primary === null ? [] : [draft.languages.primary],
+    kind: 'lang',
+  },
+  {
+    label: 'summary.cv',
+    value: filled(draft.cv) ? String(draft.cv.trim().length) : null,
+    kind: 'characters',
+  },
+];

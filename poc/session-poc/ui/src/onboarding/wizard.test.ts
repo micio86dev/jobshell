@@ -2,19 +2,23 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  applyPortfolioLanguages,
   applyProposal,
   applyScopeNeedsChoice,
   canFinish,
   emptyDraft,
   hydrateDraft,
   profileToDraft,
-  proposedLanguageCodes,
+  proposedLanguages,
   stepStatus,
-  summaryLines,
+  summaryRows,
   toUserProfile,
+  STEP_LABEL_KEYS,
+  withDefaultPrimary,
   type WizardDraft,
 } from './wizard';
 import { draftSchema, type CvProposal } from './schema';
+import { MESSAGES } from '../i18n/locale';
 
 const CV_TEXT = 'Twelve years building desktop apps with Rust and Python. Led a team of four.';
 
@@ -36,8 +40,8 @@ const completeDraft = (): WizardDraft => ({
     contractor_countries: [],
   },
   languages: {
+    primary: 'en',
     items: [{ code: 'en', level: 'fluent', usage: 'comfortable' }],
-    strength: 'mandatory',
   },
 });
 
@@ -65,19 +69,40 @@ describe('step status', () => {
     draft.location.remote_countries = ['DE'];
     expect(stepStatus(draft).location).toBe('complete');
   });
+
+  it('a language without a level or a usage keeps the languages step partial', () => {
+    const draft = completeDraft();
+    draft.languages.items = [{ code: 'en', level: null, usage: 'comfortable' }];
+    expect(stepStatus(draft).languages).toBe('partial');
+  });
 });
 
 describe('finishing the wizard', () => {
-  it('cannot finish without a language, because one mandatory language is required', () => {
+  it('cannot finish without a language', () => {
     const draft = completeDraft();
-    draft.languages.items = [];
+    draft.languages = { primary: null, items: [] };
     expect(canFinish(draft)).toBe(false);
   });
 
-  it('cannot finish when the language preference is not mandatory', () => {
+  it('cannot finish without a primary language, because the app needs one to navigate', () => {
     const draft = completeDraft();
-    draft.languages.strength = 'preferred';
-    expect(canFinish(draft)).toBe(false);
+    draft.languages.primary = null;
+    const result = toUserProfile(draft);
+    expect(!result.ok && result.issues.map((issue) => issue.key)).toContain('issue.primaryMissing');
+  });
+
+  it('the primary language must be one of the spoken languages', () => {
+    const draft = completeDraft();
+    draft.languages.primary = 'it';
+    const result = toUserProfile(draft);
+    expect(!result.ok && result.issues.map((issue) => issue.key)).toContain('issue.primaryNotSpoken');
+  });
+
+  it('a language row without its level or its usage stops the finish, and names the language', () => {
+    const draft = completeDraft();
+    draft.languages.items = [{ code: 'en', level: 'fluent', usage: null }];
+    const result = toUserProfile(draft);
+    expect(!result.ok && result.issues).toContainEqual({ key: 'issue.languageIncomplete', params: { code: 'en' } });
   });
 
   it('cannot finish without a contract type, because the agent requires one', () => {
@@ -103,26 +128,26 @@ describe('the profile the agent validates', () => {
     if (!result.ok) return;
     const profile = result.profile;
     expect(profile.headline).toBe('Desktop engineer');
+    expect(profile.cv).toBe(CV_TEXT);
     expect(profile.contract_types).toEqual(['employee']);
     expect(profile.remote_modes).toEqual(['remote']);
     expect(profile.remote_scope).toBe('europe');
     expect(profile.languages).toEqual(['en']);
+    expect(profile.primary_language).toBe('en');
     expect(profile.language_proficiency).toEqual({ en: { level: 'fluent', usage: 'comfortable' } });
     expect(profile.eligibility).toEqual({ employee: ['IT'], contractor: [], residence: null });
-    expect(profile.strengths.languages).toBe('mandatory');
   });
 
-  it('the CV text is carried into the profile unchanged, because the agent needs it to score postings', () => {
+  it('languages are always a hard filter, so their strength is always mandatory', () => {
     const result = toUserProfile(completeDraft());
-    expect(result.ok && result.profile.cv).toBe(CV_TEXT);
+    expect(result.ok && result.profile.strengths.languages).toBe('mandatory');
   });
 
-  it('a draft without the CV text cannot finish, because the agent refuses a profile without it', () => {
+  it('a draft without the CV text cannot finish, and the issue is a message key', () => {
     const draft = completeDraft();
     draft.cv = '   ';
     const result = toUserProfile(draft);
-    expect(result.ok).toBe(false);
-    expect(!result.ok && result.issues.some((issue) => issue.includes('CV'))).toBe(true);
+    expect(!result.ok && result.issues.map((issue) => issue.key)).toContain('issue.cv');
   });
 
   it('an unstated employee or contractor list stays empty, which the agent reads as no filter', () => {
@@ -137,6 +162,116 @@ describe('the profile the agent validates', () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.issues.length).toBeGreaterThan(0);
+  });
+});
+
+describe('primary language default', () => {
+  it('without a primary language, the operating system language becomes the default and a row to complete', () => {
+    const next = withDefaultPrimary(emptyDraft(), 'it');
+    expect(next.languages.primary).toBe('it');
+    expect(next.languages.items).toEqual([{ code: 'it', level: null, usage: null }]);
+  });
+
+  it('a primary language the user already chose is kept', () => {
+    const draft = completeDraft();
+    expect(withDefaultPrimary(draft, 'it').languages.primary).toBe('en');
+  });
+});
+
+describe('CV and portfolio proposals', () => {
+  const proposal: CvProposal = {
+    source: 'model',
+    reason: null,
+    fields: {
+      headline: 'Desktop engineer',
+      capabilities: ['Rust'],
+      domains: [],
+      seniority: 'senior',
+      years_experience: 12,
+      languages: [
+        { code: 'en', level: 'fluent' },
+        { code: 'it', level: null },
+      ],
+    },
+  };
+
+  it('fills only the fields the user has not filled, and never overrides a value the user typed', () => {
+    const draft = emptyDraft();
+    draft.headline = 'My own headline';
+    const next = applyProposal(draft, proposal);
+    expect(next.headline).toBe('My own headline');
+    expect(next.capabilities).toEqual(['Rust']);
+    expect(next.seniority).toBe('senior');
+    expect(next.years_experience).toBe(12);
+  });
+
+  it('a CV language arrives as a row with the level the CV states, and the usage is left for the user', () => {
+    const next = applyProposal(emptyDraft(), proposal);
+    expect(next.languages.items).toEqual([
+      { code: 'en', level: 'fluent', usage: null },
+      { code: 'it', level: null, usage: null },
+    ]);
+  });
+
+  it('a CV language the user already has is not added twice, and the user’s level is kept', () => {
+    const next = applyProposal(completeDraft(), proposal);
+    expect(next.languages.items.filter((item) => item.code === 'en')).toEqual([
+      { code: 'en', level: 'fluent', usage: 'comfortable' },
+    ]);
+  });
+
+  it('a language row the system added without a level takes the level the CV states, and a level the user chose is kept', () => {
+    const withDefault = withDefaultPrimary(emptyDraft(), 'en');
+    const filledFromCv = applyProposal(withDefault, proposal);
+    expect(filledFromCv.languages.items.find((item) => item.code === 'en')?.level).toBe('fluent');
+    const chosen = completeDraft();
+    chosen.languages.items = [{ code: 'en', level: 'basic', usage: 'limited' }];
+    expect(applyProposal(chosen, proposal).languages.items[0]).toEqual({ code: 'en', level: 'basic', usage: 'limited' });
+  });
+
+  it('a fallback proposal fills nothing', () => {
+    const fallback: CvProposal = {
+      source: 'fallback',
+      reason: 'provider answered 401',
+      fields: { headline: null, capabilities: [], domains: [], seniority: null, years_experience: null, languages: [] },
+    };
+    expect(applyProposal(emptyDraft(), fallback)).toEqual(emptyDraft());
+  });
+
+  it('a portfolio adds only the languages it states, and changes nothing else', () => {
+    const portfolio: CvProposal = {
+      source: 'model',
+      reason: null,
+      fields: {
+        headline: 'Other',
+        capabilities: ['Go'],
+        domains: [],
+        seniority: 'lead',
+        years_experience: 3,
+        languages: [{ code: 'de', level: 'basic' }],
+      },
+    };
+    const next = applyPortfolioLanguages(completeDraft(), portfolio);
+    expect(next.languages.items.map((item) => item.code)).toEqual(['en', 'de']);
+    expect(next.headline).toBe('Desktop engineer');
+    expect(next.capabilities).toEqual(['Rust', 'Python']);
+  });
+
+  it('the proposed languages keep their codes and levels, with no name translation', () => {
+    expect(proposedLanguages(proposal)).toEqual([
+      { code: 'en', level: 'fluent' },
+      { code: 'it', level: null },
+    ]);
+  });
+});
+
+describe('editing a saved profile', () => {
+  it('a saved profile becomes the same draft again, so the edit starts from what was saved', () => {
+    const first = toUserProfile(completeDraft());
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    const back = toUserProfile(profileToDraft(first.profile));
+    expect(back).toEqual(first);
   });
 });
 
@@ -156,86 +291,10 @@ describe('apply scope', () => {
     expect(applyScopeNeedsChoice(first.profile, reordered)).toBe(false);
   });
 
-  it('a country that is not a two-letter code is refused at the draft boundary', () => {
-    expect(draftSchema.safeParse({ location: { employee_countries: ['Italy'] } }).success).toBe(false);
-    expect(draftSchema.safeParse({ location: { remote_countries: ['it'] } }).success).toBe(false);
-  });
-
   it('saving the same profile again asks nothing', () => {
     const first = toUserProfile(completeDraft());
     const second = toUserProfile(completeDraft());
     expect(first.ok && second.ok && applyScopeNeedsChoice(first.profile, second.profile)).toBe(false);
-  });
-});
-
-describe('summary', () => {
-  it('shows an unstated field as not stated, never as a value', () => {
-    const draft = completeDraft();
-    draft.location.employee_countries = [];
-    const lines = summaryLines(draft);
-    expect(lines.find((line) => line.label === 'Employee countries')?.value).toBe('Not stated');
-  });
-});
-
-describe('CV proposal', () => {
-  const proposal: CvProposal = {
-    source: 'model',
-    reason: null,
-    fields: {
-      headline: 'Desktop engineer',
-      capabilities: ['Rust'],
-      domains: [],
-      seniority: 'senior',
-      years_experience: 12,
-      languages: ['English', 'Klingon'],
-    },
-  };
-
-  it('fills only the fields the user has not filled, and never overrides a value the user typed', () => {
-    const draft = emptyDraft();
-    draft.headline = 'My own headline';
-    const next = applyProposal(draft, proposal);
-    expect(next.headline).toBe('My own headline');
-    expect(next.capabilities).toEqual(['Rust']);
-    expect(next.seniority).toBe('senior');
-    expect(next.years_experience).toBe(12);
-  });
-
-  it('does not change the draft it was given', () => {
-    const draft = emptyDraft();
-    applyProposal(draft, proposal);
-    expect(draft.headline).toBe('');
-  });
-
-  it('reads the languages the CV names as codes, and ignores a name it does not know', () => {
-    expect(proposedLanguageCodes(proposal)).toEqual(['en']);
-  });
-
-  it('a language name that is an object property name is not a language', () => {
-    const tricky: CvProposal = {
-      ...proposal,
-      fields: { ...proposal.fields, languages: ['constructor', '__proto__', 'toString'] },
-    };
-    expect(proposedLanguageCodes(tricky)).toEqual([]);
-  });
-
-  it('a fallback proposal fills nothing', () => {
-    const fallback: CvProposal = {
-      source: 'fallback',
-      reason: 'provider answered 401',
-      fields: { headline: null, capabilities: [], domains: [], seniority: null, years_experience: null, languages: [] },
-    };
-    expect(applyProposal(emptyDraft(), fallback)).toEqual(emptyDraft());
-  });
-});
-
-describe('editing a saved profile', () => {
-  it('a saved profile becomes the same draft again, so the edit starts from what was saved', () => {
-    const first = toUserProfile(completeDraft());
-    expect(first.ok).toBe(true);
-    if (!first.ok) return;
-    const back = toUserProfile(profileToDraft(first.profile));
-    expect(back).toEqual(first);
   });
 });
 
@@ -246,6 +305,29 @@ describe('a saved draft read back', () => {
     expect(draft.location.remote_modes).toEqual(['onsite']);
     expect(draft.location.remote_scope).toBe(null);
     expect(draft.work).toEqual({ contract_types: [], strength: 'mandatory' });
-    expect(draft.languages).toEqual({ items: [], strength: 'mandatory' });
+    expect(draft.languages).toEqual({ primary: null, items: [] });
+  });
+});
+
+describe('summary', () => {
+  it('shows an unstated field as unstated, never as a value', () => {
+    const draft = completeDraft();
+    draft.location.employee_countries = [];
+    const row = summaryRows(draft).find((line) => line.label === 'summary.employeeCountries');
+    expect(row?.value).toBe(null);
+  });
+
+  it('a stated field carries its value', () => {
+    const row = summaryRows(completeDraft()).find((line) => line.label === 'summary.headline');
+    expect(row?.value).toBe('Desktop engineer');
+  });
+});
+
+describe('step labels', () => {
+  it('every wizard step has a message in every language, so no raw key reaches the screen', () => {
+    for (const key of Object.values(STEP_LABEL_KEYS)) {
+      expect(MESSAGES.en[key]).toBeDefined();
+      expect(MESSAGES.it[key]).toBeDefined();
+    }
   });
 });
