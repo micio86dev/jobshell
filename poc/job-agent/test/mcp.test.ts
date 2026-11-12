@@ -151,3 +151,9 @@ test('mcp: the envelope is a zod shape, and a method that is not text is refused
   const withNull = parseMcpRequest({ jsonrpc: '2.0', id: null, method: 'tools/list' });
   assert.equal(withNull?.notification, false, 'a null id is a request, not a notification');
 });
+
+test('mcp: a frame that is not JSON-RPC 2.0 is refused', () => {
+  assert.equal(parseMcpRequest({ jsonrpc: '1.0', id: 1, method: 'tools/list' }), null, 'only the 2.0 protocol is spoken');
+  assert.equal(parseMcpRequest({ id: 1, method: 'tools/list' }), null, 'a frame without the version is refused');
+  assert.notEqual(parseMcpRequest({ jsonrpc: '2.0', id: 1, method: 'tools/list' }), null);
+});

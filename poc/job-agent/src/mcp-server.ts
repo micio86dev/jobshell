@@ -50,6 +50,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 /** The JSON-RPC envelope. An absent id is a notification; a null, text or numeric id is a request. */
 const envelope = z.object({
+  jsonrpc: z.literal('2.0', { error: 'only the JSON-RPC 2.0 protocol is spoken' }),
   method: z.string({ error: 'method must be text' }).min(1, { error: 'method must be text' }),
   id: z.union([z.string(), z.number(), z.null()]).optional(),
   params: z.unknown().optional(),
