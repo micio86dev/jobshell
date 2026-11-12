@@ -49,7 +49,7 @@ export const cvProposalSchema = z.object({
     domains: textList,
     seniority: z.enum(SENIORITIES).nullable(),
     years_experience: z.number().min(0).max(60).nullable(),
-    contract_types: z.array(z.enum(['employee', 'freelance'])).default([]),
+    contract_types: z.array(z.enum(CONTRACT_TYPES)).default([]),
     languages: z.array(proposedLanguage),
   }),
 });
@@ -124,7 +124,11 @@ export const storedProfileSchema = z.object({
     languageCode,
     z.object({ level: z.enum(LANGUAGE_LEVELS), usage: z.enum(LANGUAGE_USAGE) }),
   ),
-  eligibility: z.object({ employee: countryList, contractor: countryList, residence: z.string().nullable() }),
+  eligibility: z.object({
+    employee: countryList,
+    contractor: countryList,
+    residence: z.string().regex(/^[A-Z]{2}$/).nullable(),
+  }),
   remote_scope: z.enum(REMOTE_SCOPES).nullable(),
 });
 export type StoredProfile = z.infer<typeof storedProfileSchema>;
