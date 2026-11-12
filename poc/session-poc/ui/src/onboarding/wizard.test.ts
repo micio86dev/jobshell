@@ -229,6 +229,14 @@ describe('CV and portfolio proposals', () => {
     expect(applyProposal(chosen, proposal).languages.items[0]).toEqual({ code: 'en', level: 'basic', usage: 'limited' });
   });
 
+  it('applying a proposal never changes the draft it was given, rows included', () => {
+    const draft = withDefaultPrimary(emptyDraft(), 'en');
+    const before = JSON.stringify(draft);
+    applyProposal(draft, proposal);
+    applyPortfolioLanguages(draft, proposal);
+    expect(JSON.stringify(draft)).toBe(before);
+  });
+
   it('a fallback proposal fills nothing', () => {
     const fallback: CvProposal = {
       source: 'fallback',

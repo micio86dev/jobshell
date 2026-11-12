@@ -287,14 +287,15 @@ export const withDefaultPrimary = (draft: WizardDraft, systemCode: string): Wiza
 
 /** Add the proposed languages the draft does not have yet, and fill a missing level. Values the user chose are kept. */
 const withLanguages = (draft: WizardDraft, proposed: Array<{ code: string; level: LanguageLevel | null }>): WizardDraft => {
-  const items = [...draft.languages.items];
+  // Every row is copied, so the draft that came in is never changed.
+  let items = draft.languages.items.map((item) => ({ ...item }));
   for (const language of proposed) {
     const existing = items.find((item) => item.code === language.code);
     if (existing === undefined) {
-      items.push({ code: language.code, level: language.level, usage: null });
+      items = [...items, { code: language.code, level: language.level, usage: null }];
     } else if (existing.level === null) {
       // A row without a level takes the one the document states; a level the user chose is kept.
-      existing.level = language.level;
+      items = items.map((item) => (item.code === language.code ? { ...item, level: language.level } : item));
     }
   }
   return { ...draft, languages: { primary: draft.languages.primary, items } };
