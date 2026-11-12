@@ -75,7 +75,8 @@ test('a credential-shaped key is rejected and points at the keyring', () => {
     const result = parseConfig({ ...defaultConfig(), [key]: 'sk-live-should-never-be-here' });
     assert.equal(result.ok, false, `${key} must be rejected`);
     if (result.ok) continue;
-    assert.match(result.error, new RegExp(key, 'i'));
+    // The error names the credential-shaped fragment, which may be shorter than the key.
+    assert.match(result.error, /api[_-]?key|token|secret|password/i);
     assert.match(result.error, /keyring/);
     assert.doesNotMatch(result.error, /sk-live-should-never-be-here/);
   }
@@ -100,4 +101,42 @@ test('a credential-shaped key inside a list is rejected, not only inside an obje
   if (result.ok) return;
   assert.match(result.error, /api_key/);
   assert.doesNotMatch(result.error, /sk-live-should-never-be-here/);
+});
+
+test('a secret typed into a value field is never echoed back in the error', () => {
+  const secret = 'sk-live-should-never-be-echoed';
+  for (const patch of [{ provider: secret }, { threshold: secret }]) {
+    const result = parseConfig({ ...defaultConfig(), ...patch });
+    assert.equal(result.ok, false);
+    if (result.ok) continue;
+    assert.doesNotMatch(result.error, /sk-live-should-never-be-echoed/, `echoed by ${Object.keys(patch)[0]}`);
+  }
+});
+
+test('malformed JSON never echoes the text it failed on, which may hold a pasted secret', () => {
+  const secret = 'sk-ant-LEAK-should-not-appear';
+  try {
+    loadConfig({ path: '/tmp/agent.json', readFile: () => `{"model": "x", "note": ${secret}}` });
+    assert.fail('malformed JSON must throw');
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    assert.doesNotMatch(message, /sk-ant-/, 'the parser fragment, even truncated, is not part of the error');
+    assert.match(message, /not valid JSON/);
+  }
+});
+
+test('a source id that is not a plain name is refused without echoing it', () => {
+  const secret = 'sk-ant-LEAK-in-an-id';
+  const result = parseConfig({ ...defaultConfig(), sources: { [secret]: { automation: 'allowed' } } });
+  assert.equal(result.ok, false, 'an id with a secret shape must be refused');
+  if (result.ok) return;
+  assert.doesNotMatch(result.error, /sk-ant-LEAK/);
+});
+
+test('a credential-shaped key is named by the fragment that matched, not the whole key', () => {
+  const result = parseConfig({ ...defaultConfig(), 'sk-ant-LEAK-api_key': 'x' });
+  assert.equal(result.ok, false);
+  if (result.ok) return;
+  assert.match(result.error, /api_key/);
+  assert.doesNotMatch(result.error, /sk-ant-LEAK/);
 });

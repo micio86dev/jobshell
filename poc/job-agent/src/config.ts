@@ -65,25 +65,32 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /**
- * Reject a credential at any depth, inside objects and inside arrays, before anything else looks
- * at the file. The path names the field, never its value.
+ * The credential-shaped fragment found at any depth, inside objects and inside arrays, or null.
+ * Only the fragment that matched is returned: never the path, and never the whole key, because a
+ * secret may be pasted into a key name.
  */
-const findCredentialKey = (value: unknown, path: string[]): string | null => {
+const findCredentialKey = (value: unknown): string | null => {
   if (Array.isArray(value)) {
-    for (const [index, nested] of value.entries()) {
-      const deeper = findCredentialKey(nested, [...path, String(index)]);
+    for (const nested of value) {
+      const deeper = findCredentialKey(nested);
       if (deeper !== null) return deeper;
     }
     return null;
   }
   if (!isRecord(value)) return null;
   for (const [key, nested] of Object.entries(value)) {
-    if (CREDENTIAL_KEY.test(key)) return [...path, key].join('.');
-    const deeper = findCredentialKey(nested, [...path, key]);
+    const match = CREDENTIAL_KEY.exec(key);
+    if (match !== null) return match[0];
+    const deeper = findCredentialKey(nested);
     if (deeper !== null) return deeper;
   }
   return null;
 };
+
+/** A source id is a plain name, so it can be shown in an error without carrying a secret. */
+const SOURCE_ID = /^[a-z0-9_-]{1,40}$/i;
+/** The prefixes API keys and tokens start with: an id that carries one is refused as a key, not a name. */
+const KEY_PREFIX = /(^|[-_])(sk|pk|ghp|xox[bp])[-_]/i;
 
 const notBlank = (value: string): boolean => value.trim().length > 0;
 const positiveNumber = (value: number): boolean => Number.isFinite(value) && value > 0;
@@ -119,7 +126,13 @@ const parseSources = (raw: unknown): SourcesResult => {
   if (raw === undefined) return { ok: true, sources: {} };
   if (!isRecord(raw)) return { ok: false, error: 'config: sources must be an object' };
   const sources: Record<string, SourceOverride> = {};
-  for (const [id, override] of Object.entries(raw)) {
+  for (const [index, [id, override]] of Object.entries(raw).entries()) {
+    if (!SOURCE_ID.test(id) || KEY_PREFIX.test(id) || CREDENTIAL_KEY.test(id)) {
+      return {
+        ok: false,
+        error: `config: sources entry ${index + 1} has an id that is not a plain name (letters, digits, "-" or "_")`,
+      };
+    }
     const checked = sourceOverride(id).safeParse(override);
     if (!checked.success) {
       return { ok: false, error: `config: ${checked.error.issues[0]?.message ?? `sources.${id} must be an object`}` };
@@ -137,9 +150,8 @@ const parseSources = (raw: unknown): SourcesResult => {
 /** The non-secret settings. Each message names its field; the values echoed are the ones the user wrote. */
 const configShape = z.object(
   {
-    provider: z.enum(PROVIDERS, {
-      error: (issue) => `provider must be one of ${PROVIDERS.join(', ')} (got ${JSON.stringify(issue.input)})`,
-    }),
+    // The value typed is never echoed: a secret pasted into this field must not reach an error.
+    provider: z.enum(PROVIDERS, { error: `provider must be one of ${PROVIDERS.join(', ')}` }),
     model: z.string({ error: 'model must be a non-empty string' }).refine(notBlank, {
       error: 'model must be a non-empty string',
     }),
@@ -150,7 +162,7 @@ const configShape = z.object(
       error: 'evidence_dir must be a non-empty string',
     }),
     threshold: z
-      .number({ error: (issue) => `threshold must be a number between 0 and 1 (got ${JSON.stringify(issue.input)})` })
+      .number({ error: 'threshold must be a number between 0 and 1' })
       .refine((value) => Number.isFinite(value) && value >= 0 && value <= 1, {
         error: 'threshold must be a number between 0 and 1',
       }),
@@ -169,7 +181,7 @@ const configShape = z.object(
 export const parseConfig = (raw: unknown): ParseResult => {
   if (!isRecord(raw)) return fail('the configuration must be a JSON object');
 
-  const credential = findCredentialKey(raw, []);
+  const credential = findCredentialKey(raw);
   if (credential !== null) {
     return fail(
       `field "${credential}" looks like a credential; keep keys out of this file and store them in the keyring ` +
@@ -226,7 +238,9 @@ export const loadConfig = (options: LoadOptions = {}): AgentConfig => {
   try {
     raw = JSON.parse(text);
   } catch (error) {
-    throw new Error(`config: ${path} is not valid JSON: ${error instanceof Error ? error.message : String(error)}`);
+    // The parser's own text can quote the file, so only its position is kept.
+    const position = error instanceof Error ? /position (\d+)/.exec(error.message)?.[1] : undefined;
+    throw new Error(`config: ${path} is not valid JSON${position === undefined ? '' : ` (at character ${position})`}`);
   }
 
   const result = parseConfig(isRecord(raw) ? { ...defaultConfig(), ...raw } : raw);
