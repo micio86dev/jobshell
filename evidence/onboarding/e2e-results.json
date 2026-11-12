@@ -1,5 +1,5 @@
 {
-  "total": 17,
+  "total": 20,
   "failed": 0,
   "results": [
     {
@@ -13,42 +13,47 @@
       "detail": "headline=\"Desktop engineer\""
     },
     {
-      "name": "A3 an empty language row is refused",
+      "name": "A3 the operating system language is the default primary",
       "ok": true,
       "detail": ""
     },
     {
-      "name": "A4 a complete language row is listed",
+      "name": "A4 the CV language arrives with its level, and the usage is still to choose",
       "ok": true,
       "detail": ""
     },
     {
-      "name": "A5 finish is disabled while the remote scope is unstated",
+      "name": "A5 an empty language row is refused",
       "ok": true,
       "detail": ""
     },
     {
-      "name": "A6 finish is enabled once the scope is chosen",
+      "name": "A6 finish is disabled while the remote scope is unstated",
       "ok": true,
       "detail": ""
     },
     {
-      "name": "A7 after saving, the main app is shown",
+      "name": "A7 finish is enabled once the scope is chosen and the usage is set",
       "ok": true,
       "detail": ""
     },
     {
-      "name": "A8 one identity_save with the new_only scope",
+      "name": "A8 after saving, the main app is shown in the primary language",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A9 one identity_save with the new_only scope",
       "ok": true,
       "detail": "calls=1"
     },
     {
-      "name": "A9 the saved profile is the agent shape with the chosen values",
+      "name": "A10 the saved profile is the agent shape with the chosen values",
       "ok": true,
-      "detail": "scope=europe languages=[\"en\"]"
+      "detail": "scope=europe primary=en"
     },
     {
-      "name": "A10 onboarding is marked complete once",
+      "name": "A11 onboarding is marked complete once",
       "ok": true,
       "detail": ""
     },
@@ -84,6 +89,16 @@
     },
     {
       "name": "C4 the new headline reaches the saved profile",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "D1 an Italian system shows the wizard in Italian",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "D2 the default primary language is the system language",
       "ok": true,
       "detail": ""
     }

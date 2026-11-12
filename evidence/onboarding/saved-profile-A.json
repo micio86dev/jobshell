@@ -1,4 +1,5 @@
 {
+  "cv": "Twelve years building desktop apps with Rust and Python. Led a team of four.",
   "headline": "Desktop engineer",
   "capabilities": [
     "Rust",
@@ -18,12 +19,12 @@
   "languages": [
     "en"
   ],
+  "primary_language": "en",
   "min_salary": null,
   "timezone_overlap_hours": null,
   "exclude_companies": [],
   "exclude_terms": [],
   "accepted_gaps": [],
-  "cv": "Twelve years building desktop apps with Rust and Python. Led a team of four.",
   "portfolio": null,
   "threshold": 0.9,
   "daily_cap": 2,
