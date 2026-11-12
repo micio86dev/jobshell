@@ -128,6 +128,7 @@ const profile = {
   countries: [],
   contract_types: ['freelance' as const],
   languages: ['en'],
+  primary_language: 'en',
   min_salary: null,
   timezone_overlap_hours: null,
   exclude_companies: [],

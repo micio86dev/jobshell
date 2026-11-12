@@ -305,8 +305,11 @@ export const applyHardFilters = (
       const haystack = `${posting.title} ${posting.description ?? ''}`;
       const language = detectLanguage(haystack);
       if (language === null) {
-        unknownFacts.push('language');
-      } else if (!spec.hard.languages.includes(language)) {
+        // Only the languages the user speaks are searched, so a posting whose language cannot be read is not a match.
+        dropped.push({ posting, reason: 'language', detail: 'language not readable' });
+        continue;
+      }
+      if (!spec.hard.languages.includes(language)) {
         dropped.push({ posting, reason: 'language', detail: `detected ${language}` });
         continue;
       }
@@ -321,10 +324,9 @@ export const applyHardFilters = (
       }
     }
 
-    // A stated language and level must be met by the user's own level for it. Only a mandatory
-    // language setting drops; a preferred one ranks, as every other soft preference does.
+    // A stated language and level must be met by the user's own level for it, whatever the setting.
     const requirement = detectLanguageRequirement(`${posting.title} ${posting.description ?? ''}`);
-    if (requirement !== null && requirement.level !== null && spec.hard.languages_mandatory) {
+    if (requirement !== null && requirement.level !== null) {
       const proficiency = spec.hard.language_proficiency[requirement.language];
       const met =
         proficiency !== undefined &&

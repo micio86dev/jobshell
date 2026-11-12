@@ -88,6 +88,8 @@ export type UserProfile = {
   contract_types: ContractType[];
   /** ISO 639-1 codes they work in. An empty list means no filter. */
   languages: string[];
+  /** The language the app navigates in. Must be one of `languages`; null means not stated. */
+  primary_language: string | null;
   min_salary: SalaryFloor | null;
   timezone_overlap_hours: number | null;
   exclude_companies: string[];
@@ -137,8 +139,6 @@ export type Spec = {
     remote_countries: string[];
     /** The user's graded languages, used to check a posting's stated requirement. */
     language_proficiency: Record<string, LanguageProficiency>;
-    /** True only when languages are mandatory: a stated requirement then drops postings. */
-    languages_mandatory: boolean;
   };
   /** Preferred and acceptable preferences: they rank, they never drop. */
   soft: {
@@ -237,6 +237,15 @@ export const parseProfile = (raw: unknown): ProfileResult => {
 
   const languages = strings(raw['languages']);
   if (languages === null) return fail('languages must be an array of ISO 639-1 codes');
+  const rawPrimary = raw['primary_language'];
+  let primaryLanguage: string | null = null;
+  if (rawPrimary !== undefined && rawPrimary !== null) {
+    const spoken = languages.map((code) => code.toLowerCase());
+    if (typeof rawPrimary !== 'string' || !spoken.includes(rawPrimary.toLowerCase())) {
+      return fail('primary_language must be one of the languages the profile lists');
+    }
+    primaryLanguage = rawPrimary.toLowerCase();
+  }
 
   const excludeCompanies = strings(raw['exclude_companies']);
   if (excludeCompanies === null) return fail('exclude_companies must be an array of strings');
@@ -374,6 +383,7 @@ export const parseProfile = (raw: unknown): ProfileResult => {
     countries,
     contract_types: contracts as ContractType[],
     languages: languages.map((code) => code.toLowerCase()),
+    primary_language: primaryLanguage,
     min_salary: minSalary,
     timezone_overlap_hours: typeof overlap === 'number' ? overlap : null,
     exclude_companies: excludeCompanies,
@@ -471,7 +481,8 @@ export const compileProfile = (
   const isSoft = (key: StrengthKey): boolean => s[key] !== 'mandatory';
   return {
     hard: {
-      languages: isHard('languages') ? profile.languages : [],
+      // The languages the user speaks are always a hard filter: the search is only in them.
+      languages: profile.languages,
       remote_modes: isHard('remote_modes') ? profile.remote_modes : [],
       onsite_cities: isHard('onsite_cities') ? profile.onsite_cities : [],
       countries: isHard('countries') ? profile.countries : [],
@@ -488,10 +499,10 @@ export const compileProfile = (
       remote_scope: profile.remote_scope,
       remote_countries: remoteCountriesFor(profile),
       language_proficiency: profile.language_proficiency,
-      languages_mandatory: profile.strengths.languages === 'mandatory',
     },
     soft: {
-      languages: isSoft('languages') ? profile.languages : [],
+      // Languages are never a ranking input: a posting is in a language the user speaks, or it is not searched.
+      languages: [],
       remote_modes: isSoft('remote_modes') ? profile.remote_modes : [],
       onsite_cities: isSoft('onsite_cities') ? profile.onsite_cities : [],
       countries: isSoft('countries') ? profile.countries : [],

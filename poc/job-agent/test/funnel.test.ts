@@ -132,7 +132,7 @@ test('accepting hybrid or onsite disables the remote filter', () => {
 
 test('an excluded company or term is dropped case-insensitively', () => {
   const company = make({ id: '6', company: 'bAdCoRp SpA' });
-  const term = make({ id: '7', title: 'Engineer', description: 'Our Gambling platform' });
+  const term = make({ id: '7', title: 'Engineer', description: 'Our Gambling platform. The team works in English.' });
   const result = applyHardFilters([company, term], spec(), new Set(), NOW);
   assert.equal(result.kept.length, 0);
   assert.deepEqual(result.dropped.map((drop) => drop.reason), ['excluded_company', 'excluded_term']);
@@ -226,9 +226,9 @@ test('onsite city: a remote posting is not judged by city at all', () => {
 });
 
 test('contract: a stated shape the profile rejects is dropped, an unstated one is kept', () => {
-  const freelance = make({ id: 'f', description: 'Freelance, partita IVA, 6 months' });
-  const employee = make({ id: 'e', description: 'Full-time permanent position' });
-  const silent = make({ id: 's', description: 'We build desktop apps' });
+  const freelance = make({ id: 'f', description: 'Freelance, partita IVA, 6 months. The team works in English.' });
+  const employee = make({ id: 'e', description: 'Full-time permanent position. The team works in English.' });
+  const silent = make({ id: 's', description: 'We build desktop apps. The team works in English.' });
   const result = applyHardFilters(
     [freelance, employee, silent],
     spec({ contract_types: ['freelance'] }),
@@ -251,8 +251,8 @@ test('contract detection needs a marker, and both markers cancel out', () => {
 test('contract: an empty preference list is no constraint, not "reject everything"', () => {
   const base = spec();
   const noPreference = { ...base, hard: { ...base.hard, contract_types: [] } };
-  const employee = make({ id: 'e', description: 'Full-time permanent position' });
-  const freelance = make({ id: 'f', description: 'Freelance, partita IVA' });
+  const employee = make({ id: 'e', description: 'Full-time permanent position. The team works in English.' });
+  const freelance = make({ id: 'f', description: 'Freelance, partita IVA. The team works in English.' });
 
   const result = applyHardFilters([employee, freelance], noPreference, new Set(), NOW);
 
@@ -348,7 +348,7 @@ test('an unknown fact is counted only when its posting is kept, not when it is l
 
 // --- Soft preferences rank, they never drop -----------------------------------------
 
-test('a preferred language that matches adds a ranking bonus, and a miss is still kept', () => {
+test('the languages the user speaks are a hard filter, even when the language setting is preferred', () => {
   const italian = make({
     id: 'it',
     title: 'Sviluppatore Rust',
@@ -358,15 +358,43 @@ test('a preferred language that matches adds a ranking bonus, and a miss is stil
   const compiled = spec({ languages: ['it'], strengths: { languages: 'preferred' } });
 
   const result = applyHardFilters([italian, english], compiled, new Set(), NOW);
-  assert.deepEqual(result.kept.map(postingKey), ['remoteok:it', 'remoteok:en'], 'a preference never drops');
-  assert.ok(softBonus(italian, compiled.soft) > 0, 'the match ranks higher');
-  assert.equal(softBonus(english, compiled.soft), 0, 'the miss is not penalised, only not boosted');
+  assert.deepEqual(result.kept.map(postingKey), ['remoteok:it'], 'a posting in a language the user does not speak is not searched');
+  assert.equal(result.dropped[0]?.reason, 'language');
+  assert.deepEqual(compiled.soft.languages, [], 'languages are never a ranking input');
+});
+
+// --- Languages: search only in the languages the user speaks, at their level ---
+
+test('a posting whose language cannot be read is dropped, never kept as a match', () => {
+  const unreadable = make({ id: 'lang', title: '12345', description: '67890 1111' });
+  const result = applyHardFilters([unreadable], spec(), new Set(), NOW);
+  assert.deepEqual(result.kept.map(postingKey), []);
+  assert.equal(result.dropped[0]?.reason, 'language');
+  assert.equal(result.dropped[0]?.detail, 'language not readable');
+});
+
+test('a posting asking for a level above the user’s own is dropped, whatever the setting', () => {
+  const needsFluent = make({ id: 'lvl', description: 'We need a fluent English speaker for this remote role.' });
+  const compiled = spec({
+    language_proficiency: { en: { level: 'basic', usage: 'comfortable' } },
+    strengths: { languages: 'preferred' },
+  });
+  const result = applyHardFilters([needsFluent], compiled, new Set(), NOW);
+  assert.deepEqual(result.kept.map(postingKey), []);
+  assert.equal(result.dropped[0]?.detail, 'requires fluent en');
+});
+
+test('a posting asking for a level the user meets is kept', () => {
+  const needsBasic = make({ id: 'ok', description: 'We need a basic English speaker for this remote role.' });
+  const compiled = spec({ language_proficiency: { en: { level: 'fluent', usage: 'comfortable' } } });
+  const result = applyHardFilters([needsBasic], compiled, new Set(), NOW);
+  assert.deepEqual(result.kept.map(postingKey), ['remoteok:ok']);
 });
 
 test('the soft bonus is capped, so no set of preferences can outrank the threshold alone', () => {
-  const compiled = spec({ languages: ['en'], remote_modes: ['remote'], strengths: { languages: 'preferred', remote_modes: 'preferred' } });
-  const bonus = softBonus(make({ remote_hint: true }), compiled.soft);
-  assert.equal(bonus, 0.1, 'two matches, five points each');
+  const compiled = spec({ contract_types: ['freelance'], remote_modes: ['remote'], strengths: { contract_types: 'preferred', remote_modes: 'preferred' } });
+  const bonus = softBonus(make({ remote_hint: true, description: 'Freelance remote role. The team works in English.' }), compiled.soft);
+  assert.equal(bonus, 0.1, 'two matches, five points each: languages are never a ranking input');
   assert.ok(bonus <= MAX_SOFT_BONUS);
 });
 
@@ -471,12 +499,13 @@ test('a required language the user does not speak at all drops the posting', () 
   assert.equal(result.dropped[0]?.reason, 'language');
 });
 
-test('a preferred language requirement is ranked, never a reason to drop', () => {
+test('a stated level above the user’s is dropped even when the language setting is preferred', () => {
   const posting = make({ id: 'pf', description: 'Team in English. We need fluent English for daily work with the team.' });
   const compiled = spec({
     language_proficiency: { en: { level: 'basic', usage: 'comfortable' } },
     strengths: { languages: 'preferred' },
   });
   const result = applyHardFilters([posting], compiled, new Set(), NOW);
-  assert.deepEqual(result.kept.map(postingKey), ['remoteok:pf'], 'a preference does not exclude');
+  assert.deepEqual(result.kept.map(postingKey), [], 'the level is checked whatever the setting');
+  assert.equal(result.dropped[0]?.detail, 'requires fluent en');
 });

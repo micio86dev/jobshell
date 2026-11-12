@@ -153,14 +153,15 @@ test('a profile without strengths keeps every field mandatory, as before', () =>
   assert.deepEqual(spec.soft.languages, [], 'nothing is soft unless the user says so');
 });
 
-test('a preferred field moves out of the hard filter into the soft preferences', () => {
-  const result = parseProfile({ ...raw, strengths: { languages: 'preferred', remote_modes: 'mandatory' } });
+test('a preferred field moves out of the hard filter, but languages stay a hard filter whatever the setting', () => {
+  const result = parseProfile({ ...raw, strengths: { languages: 'preferred', remote_modes: 'preferred' } });
   assert.equal(result.ok, true);
   if (!result.ok) return;
   const spec = compileProfile(result.profile);
-  assert.deepEqual(spec.hard.languages, [], 'a preferred language never excludes a posting');
-  assert.deepEqual(spec.soft.languages, ['it', 'en'], 'it still influences ranking');
-  assert.deepEqual(spec.hard.remote_modes, ['remote', 'hybrid']);
+  assert.deepEqual(spec.hard.languages, ['it', 'en'], 'the search is only in the languages the user speaks');
+  assert.deepEqual(spec.soft.languages, [], 'languages are never a ranking input');
+  assert.deepEqual(spec.hard.remote_modes, [], 'a preferred work mode is not a filter');
+  assert.deepEqual(spec.soft.remote_modes, ['remote', 'hybrid']);
 });
 
 test('an acceptable salary floor is neither a filter nor a ranking input', () => {
@@ -272,4 +273,13 @@ test('the prompt context states each language with its level and usage', () => {
   assert.equal(result.ok, true);
   if (!result.ok) return;
   assert.match(compilePromptContext(result.profile), /en: fluent, comfortable/);
+});
+
+test('the primary language is optional, must be one the user speaks, and defaults to not stated', () => {
+  const unset = parseProfile({ ...raw });
+  assert.ok(unset.ok && unset.profile.primary_language === null);
+  const set = parseProfile({ ...raw, primary_language: 'it' });
+  assert.ok(set.ok && set.profile.primary_language === 'it');
+  const notSpoken = parseProfile({ ...raw, primary_language: 'fr' });
+  assert.ok(!notSpoken.ok && notSpoken.error.includes('primary_language'), 'a primary language must be one of the languages');
 });

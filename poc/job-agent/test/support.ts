@@ -52,6 +52,7 @@ export const profile: UserProfile = {
   countries: [],
   contract_types: ['freelance'],
   languages: ['en'],
+  primary_language: 'en',
   min_salary: null,
   timezone_overlap_hours: null,
   exclude_companies: [],
