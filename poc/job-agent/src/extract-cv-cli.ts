@@ -9,7 +9,7 @@
  * (no key stored, empty or oversized CV). The key is read from the keyring under the
  * agent's own service name; it is never a flag, an environment variable or a file.
  */
-import { DEFAULT_MODEL } from './config.ts';
+import { modelForExtraction } from './extract-model.ts';
 import { runExtractCv, MAX_CV_CHARS } from './extract-cv.ts';
 import type { IntakeKind } from './intake.ts';
 import { defaultFetch } from './jev.ts';
@@ -28,7 +28,7 @@ process.stdin.on('end', () => {
   const kind = (kindFlag === -1 ? 'cv' : process.argv[kindFlag + 1]) as IntakeKind;
   runExtractCv(cv, {
     readKey: () => readSecret('anthropic'),
-    model: DEFAULT_MODEL.anthropic,
+    model: modelForExtraction(process.env),
     fetchImpl: defaultFetch,
   }, kind)
     .then((outcome) => {

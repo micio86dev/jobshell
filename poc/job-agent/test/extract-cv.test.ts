@@ -4,6 +4,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
+import { DEFAULT_MODEL } from '../src/config.ts';
+import { modelForExtraction } from '../src/extract-model.ts';
 import { runExtractCv } from '../src/extract-cv.ts';
 import type { FetchLike } from '../src/jev.ts';
 
@@ -121,4 +123,10 @@ test('a portfolio is sent framed as a portfolio, and an unknown kind is refused 
   const refused = await runExtractCv(CV, { readKey: () => { keyReads += 1; return KEY; }, model: 'claude-test', fetchImpl }, 'resume' as never);
   assert.equal(refused.exitCode, 2);
   assert.equal(keyReads, 0);
+});
+
+test('the extraction model comes from OPENJOB_EXTRACT_MODEL when it is set, and from the provider default otherwise', async () => {
+  assert.equal(modelForExtraction({ OPENJOB_EXTRACT_MODEL: 'claude-haiku-5-5' }), 'claude-haiku-5-5');
+  assert.equal(modelForExtraction({}), DEFAULT_MODEL.anthropic);
+  assert.equal(modelForExtraction({ OPENJOB_EXTRACT_MODEL: '   ' }), DEFAULT_MODEL.anthropic, 'a blank value is unset');
 });
