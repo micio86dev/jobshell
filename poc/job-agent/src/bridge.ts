@@ -12,6 +12,7 @@
  * The handlers are pure functions; the HTTP server is a thin wrapper, so the
  * behaviour is tested without opening a socket.
  */
+import { parsePostings } from './posting-input.ts';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 
 import { judgePosting, type JeDeps } from './jev.ts';
@@ -80,7 +81,6 @@ export type BridgeDeps = {
   resolveKey?: () => string | null;
   /** How the keyring is read. Absent means the real keychain; tests inject a stub. */
   keyring?: KeyringReader;
-  maxPostings?: number;
 };
 
 export const DEFAULT_MAX_POSTINGS = 40;
@@ -93,28 +93,7 @@ export const parseScoreRequest = (raw: unknown): Posting[] => {
   if (!isRecord(raw)) return [];
   const postings = raw['postings'];
   if (!Array.isArray(postings)) return [];
-  const out: Posting[] = [];
-  for (const item of postings) {
-    if (!isRecord(item)) continue;
-    const { source, id, title, url } = item;
-    if (typeof source !== 'string' || source.length === 0) continue;
-    if (typeof id !== 'string' || id.length === 0) continue;
-    if (typeof title !== 'string' || title.length === 0) continue;
-    if (typeof url !== 'string' || !/^https?:\/\//.test(url)) continue;
-    out.push({
-      source,
-      id,
-      title,
-      url,
-      company: typeof item['company'] === 'string' ? item['company'] : null,
-      location: typeof item['location'] === 'string' ? item['location'] : null,
-      remote_hint: typeof item['remote_hint'] === 'boolean' ? item['remote_hint'] : null,
-      description: typeof item['description'] === 'string' ? item['description'].slice(0, 4000) : null,
-      published_at: typeof item['published_at'] === 'string' ? item['published_at'] : null,
-      salary: typeof item['salary'] === 'string' ? item['salary'] : null,
-    });
-  }
-  return out.slice(0, DEFAULT_MAX_POSTINGS);
+  return parsePostings(postings).slice(0, DEFAULT_MAX_POSTINGS);
 };
 
 /** Judge the postings the user is looking at. Nothing is stored; the call is reported
