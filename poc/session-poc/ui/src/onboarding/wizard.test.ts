@@ -133,6 +133,18 @@ describe('apply scope', () => {
     expect(before.ok && after.ok && applyScopeNeedsChoice(before.profile, after.profile)).toBe(true);
   });
 
+  it('a profile with the same content in another key order is the same profile', () => {
+    const first = toUserProfile(completeDraft());
+    if (!first.ok) throw new Error('fixture must be complete');
+    const reordered = Object.fromEntries(Object.entries(first.profile).reverse()) as typeof first.profile;
+    expect(applyScopeNeedsChoice(first.profile, reordered)).toBe(false);
+  });
+
+  it('a country that is not a two-letter code is refused at the draft boundary', () => {
+    expect(draftSchema.safeParse({ location: { employee_countries: ['Italy'] } }).success).toBe(false);
+    expect(draftSchema.safeParse({ location: { remote_countries: ['it'] } }).success).toBe(false);
+  });
+
   it('saving the same profile again asks nothing', () => {
     const first = toUserProfile(completeDraft());
     const second = toUserProfile(completeDraft());

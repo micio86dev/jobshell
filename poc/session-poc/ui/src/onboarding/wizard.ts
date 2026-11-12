@@ -234,8 +234,17 @@ export const toUserProfile = (draft: WizardDraft): ProfileResult => {
 };
 
 /** A change to the profile asks which searches it applies to. The same profile asks nothing. */
+const canonical = (value: unknown): string => {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
+  if (value !== null && typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+    return `{${entries.map(([key, item]) => `${JSON.stringify(key)}:${canonical(item)}`).join(',')}}`;
+  }
+  return JSON.stringify(value) ?? 'null';
+};
+
 export const applyScopeNeedsChoice = (before: ProfilePayload, after: ProfilePayload): boolean =>
-  JSON.stringify(before) !== JSON.stringify(after);
+  canonical(before) !== canonical(after);
 
 export type SummaryLine = { label: string; value: string };
 

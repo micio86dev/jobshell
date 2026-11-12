@@ -26,6 +26,9 @@ export type Seniority = (typeof SENIORITIES)[number];
 
 const textList = z.array(z.string().trim().min(1).max(60));
 
+/** ISO 3166 alpha-2 codes, upper case: the only country form the agent reads. */
+const countryList = z.array(z.string().regex(/^[A-Z]{2}$/));
+
 /** What the extractor proposes for a CV. Every field is a proposal the user reviews. */
 export const cvProposalSchema = z.object({
   source: z.enum(['model', 'fallback']),
@@ -61,10 +64,10 @@ export const draftSchema = z.object({
       remote_modes: z.array(z.enum(REMOTE_MODES)).optional(),
       strength: z.enum(STRENGTHS).optional(),
       remote_scope: z.enum(REMOTE_SCOPES).nullable().optional(),
-      remote_countries: textList.optional(),
+      remote_countries: countryList.optional(),
       onsite_cities: textList.optional(),
-      employee_countries: textList.optional(),
-      contractor_countries: textList.optional(),
+      employee_countries: countryList.optional(),
+      contractor_countries: countryList.optional(),
       residence: z.string().regex(/^[A-Z]{2}$/).nullable().optional(),
     })
     .optional(),
@@ -96,7 +99,7 @@ export const storedProfileSchema = z.object({
   years_experience: z.number(),
   remote_modes: z.array(z.enum(REMOTE_MODES)),
   onsite_cities: textList,
-  countries: textList,
+  countries: countryList,
   contract_types: z.array(z.enum(CONTRACT_TYPES)),
   languages: z.array(z.string()),
   strengths: z.record(z.string(), z.enum(STRENGTHS)),
@@ -104,7 +107,7 @@ export const storedProfileSchema = z.object({
     z.string(),
     z.object({ level: z.enum(LANGUAGE_LEVELS), usage: z.enum(LANGUAGE_USAGE) }),
   ),
-  eligibility: z.object({ employee: textList, contractor: textList, residence: z.string().nullable() }),
+  eligibility: z.object({ employee: countryList, contractor: countryList, residence: z.string().nullable() }),
   remote_scope: z.enum(REMOTE_SCOPES).nullable(),
 });
 export type StoredProfile = z.infer<typeof storedProfileSchema>;
