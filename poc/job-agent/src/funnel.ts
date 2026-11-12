@@ -109,13 +109,13 @@ export const detectLanguageRequirement = (text: string): LanguageRequirement | n
     for (const word of words) {
       const at = lower.indexOf(word);
       if (at === -1) continue;
-      const window = lower.slice(Math.max(0, at - 40), at + word.length + 40);
+      const nearby = lower.slice(Math.max(0, at - 40), at + word.length + 40);
       for (const [level, levelWords] of Object.entries(LEVEL_WORDS) as Array<[LanguageLevel, readonly string[]]>) {
-        if (levelWords.some((levelWord) => new RegExp(`\\b${levelWord}\\b`).test(window))) {
+        if (levelWords.some((levelWord) => new RegExp(`\\b${levelWord}\\b`).test(nearby))) {
           return { language: code, level };
         }
       }
-      const cefr = /\b(c[12]|b[12]|a[12])\b/.exec(window);
+      const cefr = /\b(c[12]|b[12]|a[12])\b/.exec(nearby);
       if (cefr?.[1] !== undefined) return { language: code, level: CEFR_LEVELS[cefr[1]] ?? null };
     }
   }
