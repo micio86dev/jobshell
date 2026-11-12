@@ -63,9 +63,16 @@ pub async fn identity_get(state: State<'_, Arc<AppState>>) -> Result<Option<Vers
         .map_err(|error| error.to_string())
 }
 
+/// Save a new identity version and carry it to the searches the apply scope reaches.
 #[tauri::command]
-pub async fn identity_save(state: State<'_, Arc<AppState>>, payload: String) -> Result<i64, String> {
-    profile_store::save_identity(&state.pool, &payload).await.map_err(|error| error.to_string())
+pub async fn identity_save(
+    state: State<'_, Arc<AppState>>,
+    payload: String,
+    apply_scope: String,
+) -> Result<i64, String> {
+    profile_store::save_identity_with_scope(&state.pool, &payload, &apply_scope)
+        .await
+        .map_err(|error| error.to_string())
 }
 
 #[tauri::command]

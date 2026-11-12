@@ -14,11 +14,13 @@ pub const APPLY_SCOPES: [&str; 3] = ["new_only", "active_searches", "all_future"
 /// Search lifecycle. `deleted` is a soft delete: the history stays readable.
 const SEARCH_STATUSES: [&str; 3] = ["active", "paused", "deleted"];
 
-/// One stored version: its number and its JSON payload.
+/// One stored version: its number, its JSON payload, and for a search version the identity
+/// version it was built on (always `None` for an identity version itself).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Versioned {
     pub version: i64,
     pub payload: String,
+    pub identity_version: Option<i64>,
 }
 
 /// A search with the status and payload of its latest version.
@@ -51,13 +53,83 @@ pub async fn save_identity(pool: &Pool<Sqlite>, payload: &str) -> Result<i64> {
     Ok(result.last_insert_rowid())
 }
 
+/// Append a new identity version and carry it to the searches the chosen apply scope reaches.
+///
+/// `new_only` touches no existing search; `active_searches` appends a version to every
+/// active search; `all_future` also reaches paused searches, so a resumed search runs on the
+/// new identity. Deleted searches are never touched. Each reached search gets a new version
+/// that records the new identity version, and its previous versions stay as they were.
+/// The identity and every propagated version are written in one transaction.
+pub async fn save_identity_with_scope(pool: &Pool<Sqlite>, payload: &str, apply_scope: &str) -> Result<i64> {
+    require_object(payload)?;
+    if !APPLY_SCOPES.contains(&apply_scope) {
+        bail!("apply_scope must be one of {}", APPLY_SCOPES.join(", "));
+    }
+    let mut tx = pool.begin().await.context("starting an identity change")?;
+    let identity = sqlx::query("INSERT INTO identity_versions (payload) VALUES (?)")
+        .bind(payload)
+        .execute(&mut *tx)
+        .await
+        .context("appending an identity version")?
+        .last_insert_rowid();
+
+    let statuses: &[&str] = match apply_scope {
+        "new_only" => &[],
+        "active_searches" => &["active"],
+        _ => &["active", "paused"],
+    };
+    for status in statuses {
+        let targets: Vec<String> = sqlx::query_scalar("SELECT id FROM searches WHERE status = ?")
+            .bind(status)
+            .fetch_all(&mut *tx)
+            .await
+            .context("finding the searches the identity reaches")?;
+        for search_id in targets {
+            let latest: String = sqlx::query_scalar(
+                "SELECT payload FROM search_versions WHERE search_id = ? ORDER BY version DESC LIMIT 1",
+            )
+            .bind(&search_id)
+            .fetch_one(&mut *tx)
+            .await
+            .context("reading the search before propagating")?;
+            let next: i64 = sqlx::query_scalar(
+                "SELECT COALESCE(MAX(version), 0) + 1 FROM search_versions WHERE search_id = ?",
+            )
+            .bind(&search_id)
+            .fetch_one(&mut *tx)
+            .await
+            .context("numbering the propagated version")?;
+            sqlx::query(
+                "INSERT INTO search_versions (search_id, version, payload, apply_scope, identity_version) \
+                 VALUES (?, ?, ?, ?, ?)",
+            )
+            .bind(&search_id)
+            .bind(next)
+            .bind(&latest)
+            .bind(apply_scope)
+            .bind(identity)
+            .execute(&mut *tx)
+            .await
+            .context("appending the propagated version")?;
+        }
+    }
+    tx.commit().await.context("committing the identity change")?;
+    Ok(identity)
+}
+
 /// The newest identity version, if the user has saved one.
 pub async fn current_identity(pool: &Pool<Sqlite>) -> Result<Option<Versioned>> {
-    let row = sqlx::query("SELECT version, payload FROM identity_versions ORDER BY version DESC LIMIT 1")
-        .fetch_optional(pool)
-        .await
-        .context("reading the identity")?;
-    Ok(row.map(|row| Versioned { version: row.get("version"), payload: row.get("payload") }))
+    let row = sqlx::query(
+        "SELECT version, payload FROM identity_versions ORDER BY version DESC LIMIT 1",
+    )
+    .fetch_optional(pool)
+    .await
+    .context("reading the identity")?;
+    Ok(row.map(|row| Versioned {
+        version: row.get("version"),
+        payload: row.get("payload"),
+        identity_version: None,
+    }))
 }
 
 /// Create a search with its first version and return its id.
@@ -193,25 +265,36 @@ pub async fn list_searches(pool: &Pool<Sqlite>) -> Result<Vec<SearchSummary>> {
 /// The latest version of one search, deleted or not.
 pub async fn latest_search_version(pool: &Pool<Sqlite>, search_id: &str) -> Result<Option<Versioned>> {
     let row = sqlx::query(
-        "SELECT version, payload FROM search_versions WHERE search_id = ? ORDER BY version DESC LIMIT 1",
+        "SELECT version, payload, identity_version FROM search_versions WHERE search_id = ? \
+         ORDER BY version DESC LIMIT 1",
     )
     .bind(search_id)
     .fetch_optional(pool)
     .await
     .context("reading the search version")?;
-    Ok(row.map(|row| Versioned { version: row.get("version"), payload: row.get("payload") }))
+    Ok(row.map(|row| Versioned {
+        version: row.get("version"),
+        payload: row.get("payload"),
+        identity_version: row.get("identity_version"),
+    }))
 }
 
 /// Every version of one search, oldest first.
 pub async fn search_history(pool: &Pool<Sqlite>, search_id: &str) -> Result<Vec<Versioned>> {
-    let rows = sqlx::query("SELECT version, payload FROM search_versions WHERE search_id = ? ORDER BY version")
-        .bind(search_id)
-        .fetch_all(pool)
-        .await
-        .context("reading the search history")?;
+    let rows = sqlx::query(
+        "SELECT version, payload, identity_version FROM search_versions WHERE search_id = ? ORDER BY version",
+    )
+    .bind(search_id)
+    .fetch_all(pool)
+    .await
+    .context("reading the search history")?;
     Ok(rows
         .into_iter()
-        .map(|row| Versioned { version: row.get("version"), payload: row.get("payload") })
+        .map(|row| Versioned {
+            version: row.get("version"),
+            payload: row.get("payload"),
+            identity_version: row.get("identity_version"),
+        })
         .collect())
 }
 
@@ -330,6 +413,75 @@ mod tests {
         let id = create_search(&pool, "Old", r#"{}"#, None).await.expect("create");
         set_search_status(&pool, &id, "deleted").await.expect("delete");
         assert!(save_search_version(&pool, &id, r#"{}"#, "new_only", None).await.is_err());
+    }
+
+    #[tokio::test]
+    async fn an_identity_change_with_new_only_leaves_existing_searches_untouched() {
+        let (_dir, pool) = store().await;
+        let identity = save_identity(&pool, r#"{"headline":"Backend"}"#).await.expect("identity");
+        let existing = create_search(&pool, "Existing", r#"{}"#, Some(identity)).await.expect("create");
+
+        let new_identity = save_identity_with_scope(&pool, r#"{"headline":"Lead"}"#, "new_only")
+            .await
+            .expect("change");
+        assert!(new_identity > identity);
+        assert_eq!(search_history(&pool, &existing).await.expect("history").len(), 1, "no version appended");
+
+        let later = create_search(&pool, "Later", r#"{}"#, Some(new_identity)).await.expect("create later");
+        let later_version = latest_search_version(&pool, &later).await.expect("read").expect("present");
+        assert_eq!(later_version.version, 1);
+    }
+
+    #[tokio::test]
+    async fn active_searches_scope_appends_a_version_only_to_active_searches() {
+        let (_dir, pool) = store().await;
+        let identity = save_identity(&pool, r#"{"headline":"Backend"}"#).await.expect("identity");
+        let active = create_search(&pool, "Active", r#"{}"#, Some(identity)).await.expect("create");
+        let paused = create_search(&pool, "Paused", r#"{}"#, Some(identity)).await.expect("create");
+        let deleted = create_search(&pool, "Deleted", r#"{}"#, Some(identity)).await.expect("create");
+        set_search_status(&pool, &paused, "paused").await.expect("pause");
+        set_search_status(&pool, &deleted, "deleted").await.expect("delete");
+
+        let new_identity = save_identity_with_scope(&pool, r#"{"headline":"Lead"}"#, "active_searches")
+            .await
+            .expect("change");
+
+        let active_history = search_history(&pool, &active).await.expect("history");
+        assert_eq!(active_history.len(), 2, "the active search gets a version");
+        let propagated = latest_search_version(&pool, &active).await.expect("read").expect("present");
+        assert_eq!(propagated.identity_version, Some(new_identity));
+        assert_eq!(search_history(&pool, &paused).await.expect("history").len(), 1, "a paused search is not touched");
+        assert_eq!(search_history(&pool, &deleted).await.expect("history").len(), 1, "a deleted search is not touched");
+    }
+
+    #[tokio::test]
+    async fn all_future_scope_also_reaches_paused_searches_but_never_deleted_ones() {
+        let (_dir, pool) = store().await;
+        let identity = save_identity(&pool, r#"{"headline":"Backend"}"#).await.expect("identity");
+        let paused = create_search(&pool, "Paused", r#"{}"#, Some(identity)).await.expect("create");
+        let deleted = create_search(&pool, "Deleted", r#"{}"#, Some(identity)).await.expect("create");
+        set_search_status(&pool, &paused, "paused").await.expect("pause");
+        set_search_status(&pool, &deleted, "deleted").await.expect("delete");
+
+        let new_identity = save_identity_with_scope(&pool, r#"{"headline":"Lead"}"#, "all_future")
+            .await
+            .expect("change");
+
+        let propagated = latest_search_version(&pool, &paused).await.expect("read").expect("present");
+        assert_eq!(propagated.version, 2, "a paused search resumes on the new identity");
+        assert_eq!(propagated.identity_version, Some(new_identity));
+        assert_eq!(search_history(&pool, &deleted).await.expect("history").len(), 1, "a deleted search stays as it was");
+    }
+
+    #[tokio::test]
+    async fn an_identity_change_with_an_unknown_scope_stores_nothing() {
+        let (_dir, pool) = store().await;
+        let identity = save_identity(&pool, r#"{"headline":"Backend"}"#).await.expect("identity");
+        let search = create_search(&pool, "Keep", r#"{}"#, Some(identity)).await.expect("create");
+
+        assert!(save_identity_with_scope(&pool, r#"{"headline":"Lead"}"#, "everywhere").await.is_err());
+        assert_eq!(current_identity(&pool).await.expect("read").expect("present").version, identity);
+        assert_eq!(search_history(&pool, &search).await.expect("history").len(), 1);
     }
 
     #[tokio::test]
