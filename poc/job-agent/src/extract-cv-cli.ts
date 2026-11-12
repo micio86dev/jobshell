@@ -34,7 +34,14 @@ process.stdin.on('end', () => {
   }
   const cv = Buffer.concat(chunks).toString('utf8');
   const kindFlag = process.argv.indexOf('--kind');
-  const kind = (kindFlag === -1 ? 'cv' : process.argv[kindFlag + 1]) as IntakeKind;
+  const named = kindFlag === -1 ? 'cv' : process.argv[kindFlag + 1];
+  if (named === undefined) {
+    // A flag with no value is a mistake, not a request for the default.
+    process.stderr.write('--kind needs a value: cv or portfolio\n');
+    process.exitCode = 2;
+    return;
+  }
+  const kind = named as IntakeKind;
   runExtractCv(cv, {
     readKey: () => readSecret('anthropic'),
     model: modelForExtraction(process.env),
