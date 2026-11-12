@@ -65,3 +65,20 @@ test('the timeout is passed to the spawn call, so a hung keychain cannot block',
   assert.equal(seen[0]?.encoding, 'utf8');
   assert.ok((seen[0]?.timeout ?? 0) > 0, 'a bounded timeout is required');
 });
+
+test('a missing security tool is reported as missing, and only a timeout as a timeout', () => {
+  const missing = makeRunner(() => ({ status: null, error: Object.assign(new Error('spawn security ENOENT'), { code: 'ENOENT' }) }));
+  assert.equal(missing('security', []).status, 127, 'command not found, not a timeout');
+  const slow = makeRunner(() => ({ status: null, error: Object.assign(new Error('timed out'), { code: 'ETIMEDOUT' }) }));
+  assert.equal(slow('security', []).status, 124);
+});
+
+test('only the declared accounts can be read, and the keyring is not touched for any other', () => {
+  let calls = 0;
+  const runner: Runner = () => {
+    calls += 1;
+    return { status: 0, stdout: 'x', stderr: '' };
+  };
+  assert.throws(() => readSecret('someone-else', runner), /not a declared key account/);
+  assert.equal(calls, 0, 'no keyring call for an undeclared account');
+});

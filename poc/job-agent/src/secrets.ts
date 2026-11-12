@@ -26,6 +26,19 @@ const TIMEOUT_MS = 10_000;
 /** The shape `spawnSync` returns that this module cares about. */
 export type SpawnResult = { status: number | null; stdout?: string | null; stderr?: string | null; error?: unknown };
 
+/**
+ * The exit status for a process that did not run to completion. A missing `security` tool is
+ * reported as missing (127), a timeout as a timeout (124), and anything else as a plain failure:
+ * a wrong diagnosis sends the user to fix the wrong thing.
+ */
+const failureStatus = (error: unknown): number => {
+  const code = typeof error === 'object' && error !== null ? (error as { code?: unknown }).code : undefined;
+  if (code === 'ENOENT') return 127;
+  const message = error instanceof Error ? error.message : '';
+  if (code === 'ETIMEDOUT' || message.includes('ETIMEDOUT')) return 124;
+  return 1;
+};
+
 /** Build a runner around a spawn function, so the timeout mapping can be tested. */
 export const makeRunner =
   (spawn: (command: string, args: string[], options: { encoding: 'utf8'; timeout: number }) => SpawnResult): Runner =>
@@ -34,7 +47,7 @@ export const makeRunner =
     return {
       // 124 is the conventional exit code for "timed out"; a killed process reports no
       // status at all, which must not look like success.
-      status: result.error === undefined ? (result.status ?? 1) : 124,
+      status: result.error === undefined ? (result.status ?? 1) : failureStatus(result.error),
       stdout: result.stdout ?? '',
       stderr: result.stderr ?? '',
     };
@@ -53,6 +66,10 @@ const ITEM_NOT_FOUND = 44;
  * the user can fix it without the value ever being printed.
  */
 export const readSecret = (account: string, runner: Runner = defaultRunner): string | null => {
+  // Only the accounts the agent declares are ever read, so a typo or a foreign name never reaches the keyring.
+  if (!(ACCOUNTS as readonly string[]).includes(account)) {
+    throw new Error(`secrets: "${account}" is not a declared key account`);
+  }
   const result = runner('security', ['find-generic-password', '-s', SERVICE, '-a', account, '-w']);
   if (result.status === 0) return result.stdout.trim();
   if (result.status === ITEM_NOT_FOUND) return null;
