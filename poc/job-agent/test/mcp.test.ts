@@ -157,3 +157,14 @@ test('mcp: a frame that is not JSON-RPC 2.0 is refused', () => {
   assert.equal(parseMcpRequest({ id: 1, method: 'tools/list' }), null, 'a frame without the version is refused');
   assert.notEqual(parseMcpRequest({ jsonrpc: '2.0', id: 1, method: 'tools/list' }), null);
 });
+
+test('mcp: an unknown tool is refused with a fixed message, never echoing the name it was called with', async () => {
+  const secret = 'sk-ant-LEAK-as-a-tool-name';
+  const response = await handleMcpRequest(
+    { jsonrpc: '2.0', id: 11, method: 'tools/call', params: { name: secret, arguments: {} } },
+    mcpDeps(),
+  );
+  assert.equal(response.error?.code, -32601);
+  assert.equal(response.error?.message, 'unknown tool');
+  assert.doesNotMatch(JSON.stringify(response), /sk-ant-LEAK/);
+});

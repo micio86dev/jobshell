@@ -48,6 +48,12 @@ export type McpResponse = {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+/** A tools/call request: the tool name, and its arguments as an object when present. */
+const toolCall = z.object({
+  name: z.string({ error: 'name must be text' }).min(1),
+  arguments: z.record(z.string(), z.unknown()).optional(),
+});
+
 /** The JSON-RPC envelope. An absent id is a notification; a null, text or numeric id is a request. */
 const envelope = z.object({
   jsonrpc: z.literal('2.0', { error: 'only the JSON-RPC 2.0 protocol is spoken' }),
@@ -141,9 +147,10 @@ export const handleMcpRequest = async (request: McpRequest, deps: McpDeps): Prom
       return { jsonrpc: '2.0', id, result: { tools: TOOLS } };
 
     case 'tools/call': {
-      const params = isRecord(request.params) ? request.params : {};
-      const name = params['name'];
-      const args = isRecord(params['arguments']) ? params['arguments'] : {};
+      // The call is a zod shape: a tool name that is text, and arguments that are an object.
+      const call = toolCall.safeParse(request.params);
+      const name = call.success ? call.data.name : undefined;
+      const args = call.success ? (call.data.arguments ?? {}) : {};
 
       if (name === 'profile') {
         return {
@@ -192,7 +199,8 @@ export const handleMcpRequest = async (request: McpRequest, deps: McpDeps): Prom
         return { jsonrpc: '2.0', id, result: toolResult({ key, seen: deps.seen(key) }) };
       }
 
-      return { jsonrpc: '2.0', id, error: { code: -32601, message: `unknown tool ${String(name)}` } };
+      // The name the caller sent is not echoed back: it may carry anything.
+      return { jsonrpc: '2.0', id, error: { code: -32601, message: 'unknown tool' } };
     }
 
     default:
