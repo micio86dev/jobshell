@@ -30,3 +30,12 @@ test('a --kind that is neither cv nor portfolio is refused by the CLI itself, be
   assert.match(result.stderr, /--kind must be cv or portfolio/);
   assert.equal(result.stdout, '');
 });
+
+const PORTFOLIO_CLI = fileURLToPath(new URL('../src/portfolio-link-cli.ts', import.meta.url));
+
+test('the portfolio check refuses a link that is not a public https address, before any request', () => {
+  const result = spawnSync(process.execPath, [PORTFOLIO_CLI], { input: 'http://192.168.1.10/me\n', encoding: 'utf8' });
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /the portfolio link must be a public https address/);
+  assert.equal(result.stdout, '');
+});
