@@ -150,3 +150,11 @@ test('a base url carrying a credential in its query is refused without echoing i
     assert.doesNotMatch(result.error, /sk-ant-LEAK/);
   }
 });
+
+test('a key that only contains a credential word inside a longer word is not a credential', () => {
+  const result = parseConfig({ ...defaultConfig(), max_tokens: 100 });
+  assert.equal(result.ok, true, 'max_tokens is a limit, not a secret');
+  for (const key of ['token', 'API_KEY', 'qwen_secret', 'anthropic_api_key', 'db-password']) {
+    assert.equal(parseConfig({ ...defaultConfig(), [key]: 'x' }).ok, false, `${key} must still be refused`);
+  }
+});

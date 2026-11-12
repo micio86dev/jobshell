@@ -39,7 +39,8 @@ const AUTOMATIONS: readonly Automation[] = ['allowed', 'measurement_only', 'proh
 const PROVIDERS: readonly Provider[] = ['anthropic', 'qwen'];
 
 /** A key that looks like a credential, at any depth. */
-const CREDENTIAL_KEY = /(api[_-]?key|token|secret|password)/i;
+// A credential word as a whole word of the key: max_tokens is a limit, qwen_secret is a secret.
+const CREDENTIAL_KEY = /(^|[_-])(api[_-]?key|token|secret|password)($|[_-])/i;
 
 export const DEFAULT_MODEL: Record<Provider, string> = {
   anthropic: 'claude-sonnet-5-5',
