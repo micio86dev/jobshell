@@ -272,9 +272,13 @@ pub fn run_with_profile(profile: &Path, dry_run: bool) -> Result<String> {
     Ok(stdout)
 }
 
-/// The CV extractor entry, relative to the agent package. The CV travels on stdin, never in argv.
-pub fn extract_cv_args() -> [&'static str; 1] {
-    ["src/extract-cv-cli.ts"]
+/// The CV extractor entry, relative to the agent package, with the document kind. The text
+/// travels on stdin, never in argv; the kind is one of two fixed words.
+pub fn extract_cv_args(kind: &str) -> Result<Vec<String>> {
+    if kind != "cv" && kind != "portfolio" {
+        anyhow::bail!("the kind must be cv or portfolio");
+    }
+    Ok(vec!["src/extract-cv-cli.ts".to_string(), "--kind".to_string(), kind.to_string()])
 }
 
 /// Map the extractor's exit code to what the UI shows. Exit 0 (a proposal) and 1 (a fallback
@@ -293,7 +297,7 @@ pub fn interpret_extract(exit_code: Option<i32>, stdout: &str, stderr: &str) -> 
 
 /// Run one agent script with `input` on stdin, from the agent package. Returns the exit code,
 /// stdout and stderr. The input never goes in argv.
-fn pipe_to_agent_script(script: &[&str], input: &str) -> Result<(Option<i32>, String, String)> {
+fn pipe_to_agent_script(script: &[String], input: &str) -> Result<(Option<i32>, String, String)> {
     use std::io::Write;
     use std::process::Stdio;
 
@@ -316,9 +320,9 @@ fn pipe_to_agent_script(script: &[&str], input: &str) -> Result<(Option<i32>, St
     ))
 }
 
-/// Run the extractor on one CV text and return its JSON verdict.
-pub fn run_extract_cv(cv: &str) -> Result<String> {
-    let (code, stdout, stderr) = pipe_to_agent_script(&extract_cv_args(), cv)?;
+/// Run the extractor on one CV or portfolio text and return its JSON verdict.
+pub fn run_extract_cv(cv: &str, kind: &str) -> Result<String> {
+    let (code, stdout, stderr) = pipe_to_agent_script(&extract_cv_args(kind)?, cv)?;
     interpret_extract(code, &stdout, &stderr)
 }
 
@@ -340,7 +344,8 @@ pub fn interpret_validation(exit_code: Option<i32>, stdout: &str) -> Result<()> 
 
 /// Ask the agent, the single validator, whether a profile payload is valid.
 pub fn run_validate_profile(payload: &str) -> Result<()> {
-    let (code, stdout, _stderr) = pipe_to_agent_script(&["src/validate-profile-cli.ts"], payload)?;
+    let (code, stdout, _stderr) =
+        pipe_to_agent_script(&["src/validate-profile-cli.ts".to_string()], payload)?;
     interpret_validation(code, &stdout)
 }
 
@@ -596,8 +601,17 @@ mod cv_extract_tests {
     use super::*;
 
     #[test]
-    fn the_extractor_is_the_cli_entry_under_the_agent_package() {
-        assert_eq!(extract_cv_args(), ["src/extract-cv-cli.ts"]);
+    fn the_extractor_is_the_cli_entry_with_the_document_kind() {
+        assert_eq!(
+            extract_cv_args("portfolio").expect("portfolio"),
+            ["src/extract-cv-cli.ts", "--kind", "portfolio"]
+        );
+        assert_eq!(extract_cv_args("cv").expect("cv")[2], "cv");
+    }
+
+    #[test]
+    fn a_document_kind_other_than_cv_or_portfolio_is_refused() {
+        assert!(extract_cv_args("resume").is_err(), "the kind is one of two values");
     }
 
     #[test]
