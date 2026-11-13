@@ -30,7 +30,6 @@
   "daily_cap": 2,
   "scoring_budget": 120,
   "strengths": {
-    "languages": "mandatory",
     "remote_modes": "mandatory",
     "onsite_cities": "mandatory",
     "countries": "mandatory",
