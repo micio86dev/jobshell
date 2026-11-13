@@ -300,7 +300,7 @@ onMounted(() => {
     <OnboardingWizard v-if="onboardingDone === false" mode="first" @done="onboardingDone = true" />
     <template v-else>
     <header>
-      <h1>openjob.dev</h1>
+      <h1>Jobshell</h1>
       <nav>
         <button type="button" :class="{ on: tab === 'results' }" @click="tab = 'results'">{{ t('tab.results') }}</button>
         <button type="button" :class="{ on: tab === 'tasks' }" @click="tab = 'tasks'">{{ t('tab.tasks') }}</button>
