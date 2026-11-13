@@ -27,6 +27,14 @@ describe('interface language', () => {
 
   it('every message exists in every supported language, so no key is missing in one', () => {
     expect(Object.keys(MESSAGES.it).sort()).toEqual(Object.keys(MESSAGES.en).sort());
+    expect(Object.keys(MESSAGES.es).sort()).toEqual(Object.keys(MESSAGES.en).sort());
+  });
+
+  it('Spanish is a supported interface language, chosen from the system or the primary language', () => {
+    expect(osLocale('es-ES')).toBe('es');
+    expect(resolveLocale(null, 'es-MX')).toBe('es');
+    expect(resolveLocale('es', 'en-US')).toBe('es');
+    expect(translate('es', 'action.next')).toBe('Siguiente');
   });
 
   it('a message fills its named parameters and falls back to the key when it has none', () => {
