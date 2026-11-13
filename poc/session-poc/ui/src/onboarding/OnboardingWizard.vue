@@ -771,8 +771,16 @@ legend {
   border-color: var(--cta);
   color: var(--cta-fg);
 }
+.wizard .actions button.primary:not(:disabled) {
+  transition: background-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
 .wizard .actions button.primary:not(:disabled):hover {
   background: var(--cta-hover);
+  box-shadow: 0 8px 18px -10px var(--cta);
+}
+.wizard .actions button.primary:not(:disabled):active {
+  transform: scale(0.98);
+  box-shadow: none;
 }
 .actions button:hover:not(:disabled) {
   background: var(--panel);
