@@ -105,6 +105,11 @@ spike:
 			--node "$$(which node)" --sidecar "$(ROOT)/poc/session-poc/sidecar/browser-agent.mjs" \
 			--url https://example.com > "$(OUT)/spike/phase2.json"
 
+# Desktop app with hot reload: Tauri starts the Vite dev server (ui/) and opens the window on it.
+dev:
+	cd poc/session-poc/app && set -a && . ../../../scripts/env.sh && set +a && \
+		export PATH="$$HOME/.cargo/bin:$$PATH" && ../../../scripts/cargo.sh tauri dev
+
 # The .app bundle builds. Tauri's own dmg step fails in bundle_dmg.sh on this host
 # (evidence/summary/bundle.json), because create-dmg needs Finder Automation permission
 # and times out with -1712. `dmg` therefore builds the image with hdiutil alone and is
