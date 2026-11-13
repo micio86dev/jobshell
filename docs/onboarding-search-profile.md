@@ -64,7 +64,8 @@ On macOS the Rust tests need the toolchain 1.98.1 and `RUSTFLAGS="-C link-arg=-W
 ## Language rules
 
 - A posting is searched only if its language is one the user speaks. A posting whose language cannot be read is not a match.
-- A level the posting states above the user's own drops the posting, whatever the setting.
+- A level the posting states above the user's own drops the posting.
+- The languages are not a preference: the primary language is the one the app shows, and every language the user picks is a filter on the postings.
 - The agent refuses a language that is not a two-letter ISO 639-1 code.
 
 ## Configuration

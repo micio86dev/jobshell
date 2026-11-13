@@ -126,7 +126,7 @@ const languageRow = (page, text) => page.locator('li').filter({ hasText: text })
       JSON.stringify(profile.languages) === '["en"]' &&
       profile.primary_language === 'en' &&
       profile.language_proficiency?.en?.usage === 'comfortable' &&
-      profile.strengths?.languages === 'mandatory' &&
+      !('languages' in (profile.strengths ?? {})) &&
       profile.eligibility?.residence === null &&
       profile.threshold === 0.9 &&
       profile.portfolio === 'https://example.test/portfolio' &&

@@ -274,9 +274,8 @@ export const toUserProfile = (draft: WizardDraft): ProfileResult => {
       accepted_gaps: [],
       portfolio: draft.portfolio.trim() === '' ? null : draft.portfolio.trim(),
       ...AGENT_DEFAULTS,
-      // Languages are always a hard filter, so their strength is always mandatory.
+      // The languages are not a preference: every language the user picks is a filter on the postings.
       strengths: {
-        languages: 'mandatory',
         remote_modes: location.strength,
         onsite_cities: location.strength,
         countries: location.strength,

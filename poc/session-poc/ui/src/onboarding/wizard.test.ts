@@ -139,9 +139,9 @@ describe('the profile the agent validates', () => {
     expect(profile.eligibility).toEqual({ employee: ['IT'], contractor: [], residence: null });
   });
 
-  it('languages are always a hard filter, so their strength is always mandatory', () => {
+  it('languages are a filter, not a preference: the profile carries no language strength', () => {
     const result = toUserProfile(completeDraft());
-    expect(result.ok && result.profile.strengths.languages).toBe('mandatory');
+    expect(result.ok && 'languages' in result.profile.strengths).toBe(false);
   });
 
   it('a draft without the CV text cannot finish, and the issue is a message key', () => {
