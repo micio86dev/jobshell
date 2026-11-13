@@ -579,7 +579,7 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
   --accent-hover: var(--accent);
   --on-accent: var(--cta-fg);
   --danger-strong: oklch(0.46 0.17 27);
-  --danger: oklch(0.5 0.18 27);
+  --danger: oklch(0.43 0.17 27);
   --danger-tint: oklch(0.96 0.02 27);
   --info-tint: var(--accent-soft);
   max-width: 42rem;
@@ -740,12 +740,12 @@ legend {
   color: var(--ink);
   cursor: pointer;
 }
-.actions button.primary:not(:disabled) {
+.wizard .actions button.primary:not(:disabled) {
   background: var(--cta);
   border-color: var(--cta);
   color: var(--cta-fg);
 }
-.actions button.primary:not(:disabled):hover {
+.wizard .actions button.primary:not(:disabled):hover {
   background: var(--cta-hover);
 }
 .actions button:hover:not(:disabled) {
