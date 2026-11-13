@@ -2,7 +2,7 @@
 # Capture the host state that all Phase 0 measurements depend on.
 # Output: evidence/run/<ts>/env.json  (git-ignored, reproducible)
 set -euo pipefail
-ROOT="<repo>"
+ROOT="${OPENJOB_ROOT:-$(git rev-parse --show-toplevel)}"
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
 OUT="$ROOT/evidence/run/$TS"
 mkdir -p "$OUT"
@@ -27,13 +27,13 @@ const data = {
     cores: Number(sh("sysctl -n hw.ncpu")),
     memory_bytes: Number(sh("sysctl -n hw.memsize")),
   },
-  disk: sh("df -h \"<external-disk>\""),
+  disk: sh("df -h \"$ROOT\""),
   toolchain: {
     node: sh("node --version"),
     pnpm: sh("pnpm --version"),
     rustc_homebrew: sh("rustc --version"),
-    cargo_pinned: sh("\"<repo>/scripts/cargo.sh\" --version"),
-    rustc_pinned: sh("\"<repo>/scripts/cargo.sh\" -V"),
+    cargo_pinned: sh("\"$ROOT/scripts/cargo.sh\" --version"),
+    rustc_pinned: sh("\"$ROOT/scripts/cargo.sh\" -V"),
     tauri_cli: sh("~/.cargo/bin/cargo-tauri --version"),
     go: sh("go version"),
     python: sh("python3 --version"),
@@ -41,7 +41,7 @@ const data = {
     git: sh("git --version"),
   },
   paths: {
-    project_root: "<repo>",
+    project_root: ROOT,
     cargo_target_dir: process.env.CARGO_TARGET_DIR || null,
     playwright_browsers_path: process.env.PLAYWRIGHT_BROWSERS_PATH || null,
     system_playwright_cache: sh("ls ~/Library/Caches/ms-playwright 2>/dev/null"),

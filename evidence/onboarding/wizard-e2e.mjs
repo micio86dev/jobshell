@@ -9,8 +9,8 @@ import { writeFileSync } from 'node:fs';
 
 const OUT = process.env.E2E_OUT;
 const URL = 'http://127.0.0.1:5174/';
-const CHROME =
-  '<repo>/.cache/pw-browsers/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing';
+// Path to Chrome for Testing, given by the environment: CHROME_BIN=/path/to/chrome node wizard-e2e.mjs
+const CHROME = process.env.CHROME_BIN ?? '';
 const CV_TEXT = 'Twelve years building desktop apps with Rust and Python. Led a team of four.';
 
 const bridge = `
