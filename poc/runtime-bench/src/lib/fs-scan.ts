@@ -33,7 +33,7 @@ const SKIP_DIRS = new Set(['node_modules', '.git', '.venv', '__pycache__', 'targ
 
 /**
  * Depth-limited search for files with an exact name. Returns repository-relative
- * paths sorted for stable evidence output. Missing directories are an error, not
+ * paths, always with '/' separators, sorted for stable evidence output on every system. Missing directories are an error, not
  * an empty result, so a typo cannot masquerade as "no manifest found".
  */
 export const findFilesNamed = (baseDir: string, relativeFrom: string, name: string, maxDepth = 3): string[] => {
@@ -44,7 +44,7 @@ export const findFilesNamed = (baseDir: string, relativeFrom: string, name: stri
       if (SKIP_DIRS.has(entry.name)) continue;
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) walk(full, depth + 1);
-      else if (entry.name === name) hits.push(path.relative(relativeFrom, full));
+      else if (entry.name === name) hits.push(path.relative(relativeFrom, full).split(path.sep).join('/'));
     }
   };
   walk(baseDir, 0);
