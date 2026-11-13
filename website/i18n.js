@@ -31,6 +31,7 @@
       "home.statusTitle": "Status",
       "home.status": "Jobshell is at version 0.1.2. Builds for macOS, Windows and Linux are produced by the release workflow. Only the macOS build has been tested by hand so far. See the <a href=\"https://github.com/micio86dev/jobshell/blob/main/CHANGELOG.md\">changelog</a> for what is in each version.",
       "home.footer": "Jobshell is released under the Apache-2.0 licence. <a href=\"https://github.com/micio86dev/jobshell\">Source on GitHub</a>.",
+      "home.history": "All previous releases stay available on <a href=\"https://github.com/micio86dev/jobshell/releases\">GitHub</a>.",
 
       "guide.title": "Install Jobshell on macOS",
       "guide.description": "How to open Jobshell on macOS when the app is not signed with an Apple developer certificate.",
@@ -82,6 +83,7 @@
       "home.statusTitle": "Stato",
       "home.status": "Jobshell è alla versione 0.1.2. Le build per macOS, Windows e Linux sono prodotte dal workflow di release; finora solo la build macOS è stata provata a mano. Vedi il <a href=\"https://github.com/micio86dev/jobshell/blob/main/CHANGELOG.md\">changelog</a> per il contenuto di ogni versione.",
       "home.footer": "Jobshell è rilasciato con licenza Apache-2.0. <a href=\"https://github.com/micio86dev/jobshell\">Codice su GitHub</a>.",
+      "home.history": "Tutte le versioni precedenti restano disponibili su <a href=\"https://github.com/micio86dev/jobshell/releases\">GitHub</a>.",
 
       "guide.title": "Installa Jobshell su macOS",
       "guide.description": "Come aprire Jobshell su macOS quando l'app non è firmata con un certificato Apple.",
@@ -133,6 +135,7 @@
       "home.statusTitle": "Estado",
       "home.status": "Jobshell está en la versión 0.1.2. Las versiones para macOS, Windows y Linux las genera el flujo de publicación; hasta ahora solo la de macOS se ha probado a mano. Consulta el <a href=\"https://github.com/micio86dev/jobshell/blob/main/CHANGELOG.md\">changelog</a> para ver qué incluye cada versión.",
       "home.footer": "Jobshell se publica con licencia Apache-2.0. <a href=\"https://github.com/micio86dev/jobshell\">Código en GitHub</a>.",
+      "home.history": "Todas las versiones anteriores siguen disponibles en <a href=\"https://github.com/micio86dev/jobshell/releases\">GitHub</a>.",
 
       "guide.title": "Instala Jobshell en macOS",
       "guide.description": "Cómo abrir Jobshell en macOS cuando la app no está firmada con un certificado de Apple.",

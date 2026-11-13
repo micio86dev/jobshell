@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Install Jobshell on macOS</title>
   <meta name="description" content="How to open Jobshell on macOS when the app is not signed with an Apple developer certificate.">
-  <link rel="icon" type="image/png" href="/icon.png">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <meta name="color-scheme" content="light dark">
   <style>
     :root { --bg: #f7f7f5; --fg: #1c1c1a; --muted: #5c5c57; --card: #fff; --line: #deddd8; --accent: #1f6f4a; }
@@ -26,6 +28,68 @@
     code { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
     .warn { border-left: 3px solid var(--accent); padding-left: 12px; color: var(--muted); }
     a { color: var(--accent); }
+  /* Clickable things look clickable: pointer cursor, a visible hover, and a clear disabled state. */
+  a[href],
+  button,
+  summary,
+  select,
+  [role="button"],
+  [role="option"],
+  label:has(> input[type="checkbox"]),
+  label:has(> input[type="radio"]),
+  label:has(> input[type="file"]),
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="file"] {
+    cursor: pointer;
+  }
+  button,
+  summary,
+  select,
+  input[type="checkbox"],
+  input[type="radio"],
+  label:has(> input[type="checkbox"]),
+  label:has(> input[type="radio"]),
+  label:has(> input[type="file"]),
+  [role="option"] {
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms ease, filter 150ms ease;
+  }
+  button:not(:disabled):hover,
+  summary:hover,
+  label:has(> input[type="file"]):hover,
+  [role="option"]:hover {
+    filter: brightness(1.08);
+  }
+  button:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+  button:not(:disabled):active {
+    transform: translateY(0);
+    filter: brightness(0.96);
+  }
+  select:hover,
+  input[type="checkbox"]:hover,
+  input[type="radio"]:hover {
+    border-color: var(--accent);
+  }
+  label:has(> input[type="checkbox"]):hover,
+  label:has(> input[type="radio"]):hover {
+    color: var(--accent);
+  }
+  a[href]:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  :is(button, select, input, a[href], summary, label):focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  button:disabled,
+  [aria-disabled="true"],
+  select:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
   </style>
 </head>
 <body>

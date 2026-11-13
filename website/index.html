@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Jobshell: find the jobs that match your CV</title>
   <meta name="description" content="Jobshell reads your CV, builds your profile with AI and ranks job postings by how well they match, with the reasons for each match.">
-  <link rel="icon" type="image/png" href="/icon.png">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <meta name="color-scheme" content="light dark">
   <style>
     :root {
@@ -66,6 +68,68 @@
     ul.features strong { display: block; color: var(--fg); }
     footer { color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--line); }
     a { color: var(--accent); }
+  /* Clickable things look clickable: pointer cursor, a visible hover, and a clear disabled state. */
+  a[href],
+  button,
+  summary,
+  select,
+  [role="button"],
+  [role="option"],
+  label:has(> input[type="checkbox"]),
+  label:has(> input[type="radio"]),
+  label:has(> input[type="file"]),
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="file"] {
+    cursor: pointer;
+  }
+  button,
+  summary,
+  select,
+  input[type="checkbox"],
+  input[type="radio"],
+  label:has(> input[type="checkbox"]),
+  label:has(> input[type="radio"]),
+  label:has(> input[type="file"]),
+  [role="option"] {
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms ease, filter 150ms ease;
+  }
+  button:not(:disabled):hover,
+  summary:hover,
+  label:has(> input[type="file"]):hover,
+  [role="option"]:hover {
+    filter: brightness(1.08);
+  }
+  button:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+  button:not(:disabled):active {
+    transform: translateY(0);
+    filter: brightness(0.96);
+  }
+  select:hover,
+  input[type="checkbox"]:hover,
+  input[type="radio"]:hover {
+    border-color: var(--accent);
+  }
+  label:has(> input[type="checkbox"]):hover,
+  label:has(> input[type="radio"]):hover {
+    color: var(--accent);
+  }
+  a[href]:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  :is(button, select, input, a[href], summary, label):focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  button:disabled,
+  [aria-disabled="true"],
+  select:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
   </style>
 </head>
 <body>
@@ -100,6 +164,7 @@
     </section>
 
     <footer>
+      <p data-i18n="home.history">All previous releases stay available on <a href="https://github.com/micio86dev/jobshell/releases">GitHub</a>.</p>
       <p data-i18n="home.footer">Jobshell is released under the Apache-2.0 licence. <a href="https://github.com/micio86dev/jobshell">Source on GitHub</a>.</p>
     </footer>
   </main>
