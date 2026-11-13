@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-title-key="home.title" data-description-key="home.description">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Jobshell — find the jobs that match your CV</title>
+  <title>Jobshell: find the jobs that match your CV</title>
   <meta name="description" content="Jobshell reads your CV, builds your profile with AI and ranks job postings by how well they match, with the reasons for each match.">
   <link rel="icon" type="image/png" href="/icon.png">
   <meta name="color-scheme" content="light dark">
@@ -72,36 +72,37 @@
   <main>
     <header>
       <div class="brand"><img src="/icon.png" alt="" width="32" height="32"> Jobshell</div>
-      <h1>Find the jobs that match your CV.</h1>
-      <p class="lead">Jobshell reads your CV, builds your profile with AI and ranks job postings by how well they fit you, showing the reasons behind every match.</p>
+      <h1 data-i18n="home.h1">Find the jobs that match your CV.</h1>
+      <p class="lead" data-i18n="home.lead">Jobshell reads your CV, builds your profile with AI and ranks job postings by how well they fit you, showing the reasons behind every match.</p>
 
-      <div class="downloads" id="downloads">
-        <a class="btn" href="https://github.com/micio86dev/jobshell/releases/latest" data-os="macos">Download for macOS<small>Apple Silicon (M1 and later)</small></a>
-        <a class="btn" href="https://github.com/micio86dev/jobshell/releases/latest" data-os="windows">Download for Windows<small>Windows 10 and later</small></a>
-        <a class="btn" href="https://github.com/micio86dev/jobshell/releases/latest" data-os="linux">Download for Linux<small>AppImage and .deb</small></a>
+      <div class="downloads">
+        <a class="btn" href="https://github.com/micio86dev/jobshell/releases/download/v0.1.2/Jobshell_0.1.2_aarch64.dmg"><span data-i18n="dl.mac">Download for macOS</span><small data-i18n="dl.mac.small">Apple Silicon (M1 and later) · .dmg</small></a>
+        <a class="btn" href="https://github.com/micio86dev/jobshell/releases/download/v0.1.2/Jobshell_0.1.2_x64-setup.exe"><span data-i18n="dl.win">Download for Windows</span><small data-i18n="dl.win.small">Windows 10 and later · x64 installer</small></a>
+        <a class="btn" href="https://github.com/micio86dev/jobshell/releases/download/v0.1.2/Jobshell_0.1.2_amd64.AppImage"><span data-i18n="dl.linux">Download for Linux</span><small data-i18n="dl.linux.small">AppImage · x64</small></a>
       </div>
-      <p class="note" style="margin-top:20px">Builds are not code-signed yet. macOS blocks the first launch: follow the <a href="/install-macos.html">macOS install guide</a>. Windows SmartScreen may show a warning too. The source code is public on <a href="https://github.com/micio86dev/jobshell">GitHub</a>.</p>
+      <p class="note" style="margin-top:20px" data-i18n="home.note">The apps are not code-signed yet. macOS blocks the first launch: follow the <a href="/install-macos.html">macOS install guide</a>. Windows SmartScreen may show a warning too. The source code is public on <a href="https://github.com/micio86dev/jobshell">GitHub</a>.</p>
     </header>
 
     <section>
-      <h2>What it does</h2>
+      <h2 data-i18n="home.whatTitle">What it does</h2>
       <ul class="features">
-        <li><strong>Upload your CV</strong>PDF, .txt or .md. The file stays on your computer.</li>
-        <li><strong>An AI-built profile</strong>Jobshell fills in your profile from the CV and flags the fields still missing.</li>
-        <li><strong>Ranked job postings</strong>Each posting gets a match score and the reasons for it, so you can see why it ranks where it does.</li>
-        <li><strong>Your keys stay safe</strong>API keys are kept in the operating system keychain and read only by the app.</li>
-        <li><strong>English, Italian and Spanish</strong>The app interface is available in all three languages and follows your system language.</li>
+        <li><strong data-i18n="f1.title">Upload your CV</strong><span data-i18n="f1.text">PDF, .txt or .md. The file stays on your computer.</span></li>
+        <li><strong data-i18n="f2.title">An AI-built profile</strong><span data-i18n="f2.text">Jobshell fills in your profile from the CV and flags the fields still missing.</span></li>
+        <li><strong data-i18n="f3.title">Ranked job postings</strong><span data-i18n="f3.text">Each posting gets a match score and the reasons for it, so you can see why it ranks where it does.</span></li>
+        <li><strong data-i18n="f4.title">Your keys stay safe</strong><span data-i18n="f4.text">API keys are kept in the operating system keychain and read only by the app.</span></li>
+        <li><strong data-i18n="f5.title">English, Italian and Spanish</strong><span data-i18n="f5.text">The app interface is available in all three languages and follows your system language.</span></li>
       </ul>
     </section>
 
     <section>
-      <h2>Status</h2>
-      <p>Jobshell is at version 0.1.0. The macOS build is the one tested so far; Windows and Linux builds are produced by the release workflow and are still being verified. See the <a href="https://github.com/micio86dev/jobshell/blob/main/CHANGELOG.md">changelog</a> for what is in each version.</p>
+      <h2 data-i18n="home.statusTitle">Status</h2>
+      <p data-i18n="home.status">Jobshell is at version 0.1.2. Builds for macOS, Windows and Linux are produced by the release workflow. Only the macOS build has been tested by hand so far. See the <a href="https://github.com/micio86dev/jobshell/blob/main/CHANGELOG.md">changelog</a> for what is in each version.</p>
     </section>
 
     <footer>
-      <p>Jobshell is released under the Apache-2.0 licence. <a href="https://github.com/micio86dev/jobshell">Source on GitHub</a>.</p>
+      <p data-i18n="home.footer">Jobshell is released under the Apache-2.0 licence. <a href="https://github.com/micio86dev/jobshell">Source on GitHub</a>.</p>
     </footer>
   </main>
+  <script src="/i18n.js"></script>
 </body>
 </html>

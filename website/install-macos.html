@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-title-key="guide.title" data-description-key="guide.description">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -30,37 +30,39 @@
 </head>
 <body>
   <main>
-    <p><a href="/">← Jobshell</a></p>
-    <h1>Install Jobshell on macOS</h1>
-    <p class="muted">Jobshell is not signed with an Apple developer certificate yet, so macOS blocks the first launch. The steps below open it once; after that it starts normally. This applies to Apple Silicon Macs (M1 and later), the only architecture the current build produces.</p>
+    <p><a href="/" data-i18n="guide.back">← Jobshell</a></p>
+    <h1 data-i18n="guide.h1">Install Jobshell on macOS</h1>
+    <p class="muted" data-i18n="guide.intro">Jobshell is not signed with an Apple developer certificate yet, so macOS blocks the first launch. The steps below open it once; after that it starts normally. This applies to Apple Silicon Macs (M1 and later), the only architecture the current build produces.</p>
 
-    <h2>1. Download and install</h2>
+    <h2 data-i18n="guide.s1">1. Download and install</h2>
     <ol>
-      <li>Download the <code>.dmg</code> file for macOS from the <a href="https://github.com/micio86dev/jobshell/releases/latest">latest release</a>.</li>
-      <li>Open the <code>.dmg</code> and drag <strong>Jobshell</strong> into <strong>Applications</strong>.</li>
-      <li>Eject the disk image.</li>
+      <li data-i18n="guide.s1.1">Download the <code>.dmg</code> file for macOS from the <a href="https://github.com/micio86dev/jobshell/releases/latest">latest release</a>.</li>
+      <li data-i18n="guide.s1.2">Open the <code>.dmg</code> and drag <strong>Jobshell</strong> into <strong>Applications</strong>.</li>
+      <li data-i18n="guide.s1.3">Eject the disk image.</li>
     </ol>
 
-    <h2>2. First launch (recommended way)</h2>
+    <h2 data-i18n="guide.s2">2. First launch (recommended way)</h2>
     <ol>
-      <li>Open <strong>Applications</strong> and double-click <strong>Jobshell</strong>. macOS says it cannot verify the app. Click <strong>Done</strong>.</li>
-      <li>Open <strong>System Settings</strong> → <strong>Privacy &amp; Security</strong>.</li>
-      <li>Scroll down to the message <em>“Jobshell” was blocked to protect your Mac</em> and click <strong>Open Anyway</strong>.</li>
-      <li>Enter your Mac password (or use Touch ID). In the dialog that appears, click <strong>Open</strong>.</li>
+      <li data-i18n="guide.s2.1">Open <strong>Applications</strong> and double-click <strong>Jobshell</strong>. macOS says it cannot verify the app. Click <strong>Done</strong>.</li>
+      <li data-i18n="guide.s2.2">Open <strong>System Settings</strong> → <strong>Privacy &amp; Security</strong>.</li>
+      <li data-i18n="guide.s2.3">Scroll down to the message <em>“Jobshell” was blocked to protect your Mac</em> and click <strong>Open Anyway</strong>.</li>
+      <li data-i18n="guide.s2.4">Enter your Mac password (or use Touch ID). In the dialog that appears, click <strong>Open</strong>.</li>
     </ol>
-    <p class="warn">On macOS Sequoia and later, right-click → Open no longer bypasses this check. Use the Privacy &amp; Security path above. The button stays available for about an hour after the first blocked attempt.</p>
+    <p class="warn" data-i18n="guide.warn">On macOS Sequoia and later, right-click → Open no longer bypasses this check. Use the Privacy &amp; Security path above. The button stays available for about an hour after the first blocked attempt.</p>
 
-    <h2>2b. First launch (Terminal alternative)</h2>
-    <p>If you prefer the Terminal, remove the download quarantine flag from the app only:</p>
+    <h2 data-i18n="guide.s2b">2b. First launch (Terminal alternative)</h2>
+    <p data-i18n="guide.s2b.p">If you prefer the Terminal, remove the download quarantine flag from the app only:</p>
     <pre>xattr -dr com.apple.quarantine /Applications/Jobshell.app
 open /Applications/Jobshell.app</pre>
-    <p class="muted">The command removes the flag that macOS adds to files downloaded from the internet. It does not change system security settings. Run it only on the app you downloaded from the official repository.</p>
+    <p class="muted" data-i18n="guide.s2b.note">The command removes the flag that macOS adds to files downloaded from the internet. It does not change system security settings. Run it only on the app you downloaded from the official repository.</p>
 
-    <h2>Updates</h2>
-    <p>Each new version is a new download, so the steps repeat the first time you install it.</p>
+    <h2 data-i18n="guide.updates">Updates</h2>
+    <p data-i18n="guide.updates.p">Each new version is a new download, so the steps repeat the first time you install it.</p>
 
-    <h2>Something else?</h2>
-    <p>If the app still does not open, send the exact message macOS shows and your macOS version in an issue on <a href="https://github.com/micio86dev/jobshell/issues">GitHub</a>.</p>
+    <h2 data-i18n="guide.more">Something else?</h2>
+    <p data-i18n="guide.more.p">If the app still does not open, send the exact message macOS shows and your macOS version in an issue on <a href="https://github.com/micio86dev/jobshell/issues">GitHub</a>.</p>
+
   </main>
+  <script src="/i18n.js"></script>
 </body>
 </html>
