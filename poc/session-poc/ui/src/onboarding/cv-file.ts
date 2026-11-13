@@ -4,6 +4,8 @@
  * text reaches the agent the same way a text file does.
  */
 
+import { installBinaryPolyfills } from './binary-polyfill';
+
 export type CvFileKind = 'pdf' | 'text';
 
 const isPdf = (name: string, type: string): boolean => type === 'application/pdf' || /\.pdf$/i.test(name);
@@ -17,6 +19,7 @@ export const cvFileKind = (file: { name: string; type: string }): CvFileKind | n
 };
 
 const pdfText = async (bytes: ArrayBuffer): Promise<string> => {
+  installBinaryPolyfills();
   const pdfjs = await import('pdfjs-dist/build/pdf.mjs');
   const workerUrl = (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default;
   pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;

@@ -1,13 +1,14 @@
 <script setup lang="ts">
 // The first-run wizard and the later edit of the profile. Pure rules live in wizard.ts, the
 // boundary schemas in schema.ts and the messages in i18n; this component wires them to Tauri.
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 
 import { keyOf, languageName, setPrimaryLanguage, systemLanguageCode, t } from '../i18n/store';
 import type { MessageKey } from '../i18n/locale';
 import { readCvFile } from './cv-file';
 import { isPortfolioLink, parseCheckResult } from './portfolio-link';
+import CountryPicker from './CountryPicker.vue';
 import {
   cvProposalSchema,
   draftSchema,
@@ -104,10 +105,20 @@ const listFrom = (text: string, upper = false): string[] =>
     .filter((part) => part.length > 0)
     .map((part) => (upper ? part.toUpperCase() : part));
 
-const capabilitiesText = computed({
-  get: () => draft.value.capabilities.join(', '),
-  set: (text: string) => (draft.value.capabilities = listFrom(text)),
-});
+// The competences field keeps the text the user types, so a comma stays while more are typed.
+// The list is parsed from it; the text is rebuilt from the list only when the list changes elsewhere.
+const capabilitiesRaw = ref('');
+const onCapabilitiesInput = (text: string) => {
+  capabilitiesRaw.value = text;
+  draft.value.capabilities = listFrom(text);
+};
+watch(
+  () => draft.value.capabilities,
+  (list) => {
+    if (listFrom(capabilitiesRaw.value).join('\u0000') !== list.join('\u0000')) capabilitiesRaw.value = list.join(', ');
+  },
+  { deep: true, immediate: true },
+);
 const remoteCountriesText = computed({
   get: () => draft.value.location.remote_countries.join(', '),
   set: (text: string) => (draft.value.location.remote_countries = listFrom(text, true)),
@@ -115,14 +126,6 @@ const remoteCountriesText = computed({
 const onsiteCitiesText = computed({
   get: () => draft.value.location.onsite_cities.join(', '),
   set: (text: string) => (draft.value.location.onsite_cities = listFrom(text)),
-});
-const employeeCountriesText = computed({
-  get: () => draft.value.location.employee_countries.join(', '),
-  set: (text: string) => (draft.value.location.employee_countries = listFrom(text, true)),
-});
-const contractorCountriesText = computed({
-  get: () => draft.value.location.contractor_countries.join(', '),
-  set: (text: string) => (draft.value.location.contractor_countries = listFrom(text, true)),
 });
 
 const toggle = <T extends string>(list: T[], value: T): T[] =>
@@ -226,45 +229,65 @@ const analyseCv = async () => {
 
 const cvFileName = ref('');
 
+const cvError = ref('');
+
 const onCvFile = async (event: Event) => {
-  const file = (event.target as HTMLInputElement).files?.[0];
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
   if (!file) return;
+  cvError.value = '';
   try {
-    draft.value.cv = await readCvFile(file);
+    const text = await readCvFile(file);
+    // A file with no readable text is refused here, so the CV is never silently left empty.
+    if (text === '') {
+      cvFileName.value = '';
+      draft.value.cv = '';
+      cvError.value = t('cv.noText');
+      return;
+    }
+    draft.value.cv = text;
     cvFileName.value = file.name;
     proposal.value = null;
     notice.value = '';
+    // The CV fills the fields as soon as it is loaded; the button only runs it again.
+    await analyseCv();
   } catch (error) {
     cvFileName.value = '';
-    notice.value = t('notice.analysisFailed', { reason: errorText(error) });
+    cvError.value = t('notice.analysisFailed', { reason: errorText(error) });
+  } finally {
+    // Picking the same file again must fire the change event again.
+    input.value = '';
   }
 };
 
 
+const portfolioStatus = ref<{ tone: 'ok' | 'error' | 'busy'; text: string } | null>(null);
+
 const checkPortfolio = async () => {
   const link = draft.value.portfolio.trim();
   if (!isPortfolioLink(link)) {
-    notice.value = t('portfolio.invalid');
+    portfolioStatus.value = { tone: 'error', text: t('portfolio.invalid') };
     return;
   }
   busy.value = true;
+  portfolioStatus.value = { tone: 'busy', text: t('portfolio.checking') };
   try {
     const check = parseCheckResult(await invoke<string>('portfolio_check', { link }));
     if (check === null || !check.reachable) {
-      notice.value = t('portfolio.unreachable');
+      portfolioStatus.value = { tone: 'error', text: t('portfolio.unreachable') };
       return;
     }
-    // The reachability verdict stays on screen: the language notice is added to it, never replaces it.
-    notice.value = t('portfolio.reachable');
+    let text = t('portfolio.reachable');
     if (check.text.trim() !== '') {
       const next = readProposal(await invoke<string>('cv_extract', { cv: check.text, kind: 'portfolio' }));
       if (next !== null && next.source === 'model') {
         draft.value = applyPortfolioProposal(draft.value, next);
-        notice.value = `${notice.value} ${t('notice.portfolioApplied')}`;
+        text = `${text} ${t('notice.portfolioApplied')}`;
       }
     }
+    portfolioStatus.value = { tone: 'ok', text };
   } catch (error) {
-    notice.value = t('notice.analysisFailed', { reason: errorText(error) });
+    portfolioStatus.value = { tone: 'error', text: t('notice.analysisFailed', { reason: errorText(error) }) };
   } finally {
     busy.value = false;
   }
@@ -359,8 +382,12 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
     <!-- CV first: required to finish; the analysis proposes fields the user can refuse -->
     <div v-if="step === 'cv'" class="pane">
       <p>{{ t('cv.intro') }}</p>
-      <input type="file" accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown" :aria-label="t('cv.file')" @change="onCvFile" />
+      <label class="file-button">
+        {{ t('cv.file') }}
+        <input class="sr-only" type="file" accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown" @change="onCvFile" />
+      </label>
       <p v-if="cvFileName" class="notice">{{ t('cv.loaded', { name: cvFileName }) }}</p>
+      <p v-if="cvError" class="notice error" role="alert">{{ cvError }}</p>
       <div class="actions">
         <button type="button" :disabled="busy || draft.cv.trim() === ''" @click="analyseCv">{{ t('action.analyse') }}</button>
         <button type="button" class="primary" @click="next">{{ t('action.next') }}</button>
@@ -372,13 +399,15 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
         <div class="actions">
           <button type="button" :disabled="busy || draft.portfolio.trim() === ''" @click="checkPortfolio">{{ t('portfolio.check') }}</button>
         </div>
+        <p v-if="portfolioStatus" class="notice" :class="portfolioStatus.tone" role="status">{{ portfolioStatus.text }}</p>
       </fieldset>
     </div>
 
     <!-- Work -->
     <div v-else-if="step === 'work'" class="pane">
       <label>{{ t('field.headline') }} <input v-model="draft.headline" type="text" maxlength="60" /></label>
-      <label>{{ t('field.capabilities') }} <input v-model="capabilitiesText" type="text" /></label>
+      <label>{{ t('field.capabilities') }} <input :value="capabilitiesRaw" type="text" @input="onCapabilitiesInput(($event.target as HTMLInputElement).value)" /></label>
+      <div class="row">
       <label>
         {{ t('field.seniority') }}
         <select v-model="draft.seniority">
@@ -396,6 +425,7 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
           @input="draft.years_experience = ($event.target as HTMLInputElement).value === '' ? null : Number(($event.target as HTMLInputElement).value)"
         />
       </label>
+      </div>
       <fieldset>
         <legend>{{ t('work.contract') }}</legend>
         <label v-for="type in CONTRACT_TYPES" :key="type">
@@ -451,14 +481,10 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
         </label>
       </template>
       <label>{{ t('where.onsiteCities') }} <input v-model="onsiteCitiesText" type="text" /></label>
-      <label>
-        {{ t('where.employeeCountries') }}
-        <input v-model="employeeCountriesText" type="text" placeholder="IT" />
-      </label>
-      <label>
-        {{ t('where.contractorCountries') }}
-        <input v-model="contractorCountriesText" type="text" placeholder="IT" />
-      </label>
+      <div class="row">
+        <CountryPicker v-model="draft.location.employee_countries" :label="t('where.employeeCountries')" />
+        <CountryPicker v-model="draft.location.contractor_countries" :label="t('where.contractorCountries')" />
+      </div>
       <p class="hint">{{ t('where.separateHint') }}</p>
       <div class="actions">
         <button type="button" @click="back">{{ t('action.back') }}</button>
@@ -473,15 +499,15 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
       <p v-if="draft.languages.items.length === 0">{{ t('languages.none') }}</p>
       <ul v-else class="list">
         <li v-for="item in draft.languages.items" :key="item.code">
-          <strong>{{ languageName(item.code) }}</strong>
-          <label>
+          <strong class="lang-name">{{ languageName(item.code) }}</strong>
+          <label class="inline">
             {{ t('languages.level') }}
             <select :value="item.level ?? ''" @change="setItemLevel(item.code, ($event.target as HTMLSelectElement).value)">
               <option value="">—</option>
               <option v-for="level in LANGUAGE_LEVELS" :key="level" :value="level">{{ t(keyOf('level', level)) }}</option>
             </select>
           </label>
-          <label>
+          <label class="inline">
             {{ t('languages.usage') }}
             <select :value="item.usage ?? ''" @change="setItemUsage(item.code, ($event.target as HTMLSelectElement).value)">
               <option value="">—</option>
@@ -851,5 +877,80 @@ button.link {
   .actions button {
     flex: 1 1 auto;
   }
+}
+
+/* Result rows: one line per item, with its fields side by side and no gap between items. */
+.list {
+  gap: 0;
+}
+.list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.75rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--line, #e5e5e0);
+}
+.list .lang-name {
+  min-width: 6.5rem;
+}
+label.inline {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 400;
+}
+label.inline select {
+  width: auto;
+  min-width: 9rem;
+}
+.row > label,
+.row > .country-picker {
+  min-width: 0;
+}
+
+/* Larger controls: the choice and text fields are easy to hit and read. */
+input:not([type='checkbox']):not([type='radio']):not(.sr-only),
+select {
+  min-height: 2.75rem;
+  font-size: 1rem;
+}
+select {
+  padding: 0.55rem 0.7rem;
+}
+.file-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--line, #ccc);
+  cursor: pointer;
+  font-weight: 600;
+  width: fit-content;
+}
+.file-button:focus-within {
+  outline: 2px solid var(--accent, #1f6f4a);
+  outline-offset: 2px;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.notice.ok {
+  color: var(--ok, #1f6f4a);
+}
+.notice.error {
+  color: var(--error, #b42318);
+}
+.notice.busy {
+  opacity: 0.8;
 }
 </style>

@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  mergeCapabilities,
   applyPortfolioProposal,
   applyProposal,
   applyScopeNeedsChoice,
@@ -265,8 +266,13 @@ describe('CV and portfolio proposals', () => {
     const next = applyPortfolioProposal(completeDraft(), portfolio);
     expect(next.languages.items.map((item) => item.code)).toEqual(['en', 'de']);
     expect(next.headline).toBe('Desktop engineer');
-    expect(next.capabilities).toEqual(['Rust', 'Python']);
+    expect(next.capabilities).toEqual(['Rust', 'Python', 'Go']);
     expect(next.work.contract_types).toEqual(['employee']);
+  });
+
+  it('competences from the CV and the portfolio are merged, each kept once whatever its case', () => {
+    expect(mergeCapabilities(['Rust', 'Python'], ['python', 'Go', ' rust ', ''])).toEqual(['Rust', 'Python', 'Go']);
+    expect(mergeCapabilities([], ['Go'])).toEqual(['Go']);
   });
 
   it('a CV proposal fills an empty contract type, and never overwrites one already chosen', () => {

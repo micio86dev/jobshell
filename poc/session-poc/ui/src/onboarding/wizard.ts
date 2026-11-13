@@ -334,13 +334,30 @@ export const proposedLanguages = (proposal: CvProposal): Array<{ code: string; l
  * value. A language the CV states is added as a row; its usage is the user's to choose. A
  * fallback proposal fills nothing. The input draft is not changed.
  */
+/**
+ * The competences from the CV and from the portfolio, together: each one is kept once, whatever
+ * its letter case, and the order of first appearance is kept.
+ */
+export const mergeCapabilities = (current: readonly string[], proposed: readonly string[]): string[] => {
+  const seen = new Set<string>();
+  const merged: string[] = [];
+  for (const item of [...current, ...proposed]) {
+    const name = item.trim();
+    const key = name.toLowerCase();
+    if (name === '' || seen.has(key)) continue;
+    seen.add(key);
+    merged.push(name);
+  }
+  return merged;
+};
+
 export const applyProposal = (draft: WizardDraft, proposal: CvProposal): WizardDraft => {
   if (proposal.source !== 'model') return { ...draft, languages: { ...draft.languages } };
   const fields = proposal.fields;
   const filledFields: WizardDraft = {
     ...draft,
     headline: filled(draft.headline) ? draft.headline : (fields.headline ?? ''),
-    capabilities: draft.capabilities.length > 0 ? draft.capabilities : fields.capabilities,
+    capabilities: mergeCapabilities(draft.capabilities, fields.capabilities),
     seniority: draft.seniority ?? fields.seniority,
     years_experience: draft.years_experience ?? fields.years_experience,
     work: {
