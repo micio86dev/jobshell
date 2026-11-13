@@ -21,5 +21,6 @@
     "vite": "^7",
     "vitest": "5.1.0",
     "vue-tsc": "^3"
-  }
+  },
+  "license": "Apache-2.0"
 }

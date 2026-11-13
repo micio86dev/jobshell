@@ -173,3 +173,7 @@ permission — including every CI runner.
 
 Code, comments, commits and repository-facing documentation are English. Conversation
 with the maintainer is Italian.
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE). Contributions are welcome: open an issue, or send a pull request.
