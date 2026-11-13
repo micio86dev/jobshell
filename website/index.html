@@ -18,6 +18,8 @@
       --line: #deddd8;
       --accent: #1f6f4a;
       --accent-fg: #ffffff;
+      --cta: #1f6f4a;
+      --cta-fg: #ffffff;
     }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
@@ -28,6 +30,8 @@
         --line: #33332f;
         --accent: #3fb07a;
         --accent-fg: #0f1f16;
+        --cta: #1f6f4a;
+        --cta-fg: #ffffff;
       }
     }
     :root[data-theme="dark"] {
@@ -38,6 +42,8 @@
       --line: #33332f;
       --accent: #3fb07a;
       --accent-fg: #0f1f16;
+      --cta: #1f6f4a;
+      --cta-fg: #ffffff;
     }
     * { box-sizing: border-box; }
     body {
@@ -58,10 +64,10 @@
     .downloads { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-top: 24px; }
     .btn {
       display: block; text-align: center; text-decoration: none;
-      background: var(--accent); color: var(--accent-fg);
+      background: var(--cta); color: var(--cta-fg);
       padding: 14px 16px; border-radius: 10px; font-weight: 600;
     }
-    .btn small { display: block; font-weight: 400; opacity: 0.85; font-size: 0.85rem; }
+    .btn small { display: block; font-weight: 400; font-size: 0.85rem; }
     .note { font-size: 0.92rem; border-left: 3px solid var(--line); padding-left: 12px; }
     ul.features { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
     ul.features li { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
