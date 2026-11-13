@@ -49,6 +49,10 @@ jobs:
         working-directory: poc/session-poc/ui
         run: pnpm install --frozen-lockfile
 
+      - name: Build the UI the desktop app embeds
+        working-directory: poc/session-poc/ui
+        run: pnpm build
+
       - name: Tests before packaging
         working-directory: poc/job-agent
         run: |
