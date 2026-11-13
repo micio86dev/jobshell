@@ -105,8 +105,13 @@ spike:
 			--node "$$(which node)" --sidecar "$(ROOT)/poc/session-poc/sidecar/browser-agent.mjs" \
 			--url https://example.com > "$(OUT)/spike/phase2.json"
 
-# Desktop app with hot reload: Tauri starts the Vite dev server (ui/) and opens the window on it.
+# Desktop app with hot reload. Vite runs from its own folder, the window opens once the dev server
+# answers, and stopping the app stops Vite too.
 dev:
+	@set -e; \
+	(cd poc/session-poc/ui && exec ./node_modules/.bin/vite --strictPort) & \
+	vite=$$!; trap 'kill $$vite 2>/dev/null || true' EXIT INT TERM; \
+	until curl -s -o /dev/null http://localhost:1420/; do sleep 1; done; \
 	cd poc/session-poc/app && set -a && . ../../../scripts/env.sh && set +a && \
 		export PATH="$$HOME/.cargo/bin:$$PATH" && ../../../scripts/cargo.sh tauri dev
 

@@ -5,7 +5,6 @@
   "identifier": "dev.openjob.phase0",
   "build": {
     "frontendDist": "../ui/dist",
-    "beforeDevCommand": "pnpm --dir ../ui dev",
     "devUrl": "http://localhost:1420"
   },
   "app": {
