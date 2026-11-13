@@ -2,6 +2,13 @@
 
 All notable changes to the app are listed here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.1.5] - 2026-11-13
+
+### Fixed
+- PDF CVs fail no more with "undefined is not a function": the PDF is read by the agent, outside the webview.
+- Checking a portfolio link and saving the profile failed with "starting an agent script" when the app was opened from Finder: the Node binary is now looked up in the usual places (Homebrew, nvm).
+- The competences field, the country picker and the language rows: selects have the same height as the text fields, the countries stack, and the remove button is a red bin icon on the right.
+
 ## [0.1.4] - 2026-11-13
 
 ### Changed

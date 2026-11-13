@@ -2676,7 +2676,7 @@ checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 
 [[package]]
 name = "openjob-spike"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -3634,7 +3634,7 @@ dependencies = [
 
 [[package]]
 name = "session-poc-core"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "anyhow",
  "keyring",
