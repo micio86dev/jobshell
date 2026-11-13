@@ -77,3 +77,66 @@ body {
   background-size: 2.5rem 2.5rem;
   background-position: -1px -1px;
 }
+
+/* Clickable things look clickable: pointer cursor, a visible hover, and a clear disabled state. */
+a[href],
+button,
+summary,
+select,
+[role="button"],
+[role="option"],
+label:has(> input[type="checkbox"]),
+label:has(> input[type="radio"]),
+label:has(> input[type="file"]),
+input[type="checkbox"],
+input[type="radio"],
+input[type="file"] {
+  cursor: pointer;
+}
+button,
+summary,
+select,
+input[type="checkbox"],
+input[type="radio"],
+label:has(> input[type="checkbox"]),
+label:has(> input[type="radio"]),
+label:has(> input[type="file"]),
+[role="option"] {
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms ease, filter 150ms ease;
+}
+button:not(:disabled):hover,
+summary:hover,
+label:has(> input[type="file"]):hover,
+[role="option"]:hover {
+  filter: brightness(1.08);
+}
+button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+button:not(:disabled):active {
+  transform: translateY(0);
+  filter: brightness(0.96);
+}
+select:hover,
+input[type="checkbox"]:hover,
+input[type="radio"]:hover {
+  border-color: var(--accent);
+}
+label:has(> input[type="checkbox"]):hover,
+label:has(> input[type="radio"]):hover {
+  color: var(--accent);
+}
+a[href]:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+:is(button, select, input, a[href], summary, label):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+button:disabled,
+[aria-disabled="true"],
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
