@@ -73,6 +73,15 @@ pub async fn cv_extract(cv: String, kind: String) -> Result<String, String> {
         .map_err(|error| error.to_string())
 }
 
+/// Read the text of an uploaded PDF in the agent's PDF reader, outside the webview.
+#[tauri::command]
+pub async fn cv_read_pdf(bytes: Vec<u8>) -> Result<String, String> {
+    tokio::task::spawn_blocking(move || crate::agent::run_read_pdf(&bytes))
+        .await
+        .map_err(|error| error.to_string())?
+        .map_err(|error| error.to_string())
+}
+
 /// Check that the portfolio link is public and answers, and read the text it carries. Read-only:
 /// one GET per hop. The wizard calls it when the user confirms the link, never per keystroke.
 #[tauri::command]

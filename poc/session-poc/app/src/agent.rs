@@ -257,7 +257,7 @@ pub fn write_search_profile(id: &str, payload: &str) -> Result<PathBuf> {
 pub fn run_with_profile(profile: &Path, dry_run: bool) -> Result<String> {
     let dir = agent_dir();
 
-    let output = Command::new("node")
+    let output = Command::new(node_binary())
         .args(run_args(profile, dry_run))
         .current_dir(&dir)
         .output()
@@ -295,13 +295,55 @@ pub fn interpret_extract(exit_code: Option<i32>, stdout: &str, stderr: &str) -> 
     }
 }
 
+/// The Node binary the agent scripts run on. A window opened from Finder does not load the shell
+/// profile, so `node` from nvm or Homebrew is not on its PATH: look in the usual places.
+fn node_binary() -> PathBuf {
+    if let Some(explicit) = std::env::var_os("OPENJOB_NODE") {
+        return PathBuf::from(explicit);
+    }
+    let mut candidates: Vec<PathBuf> = vec![
+        PathBuf::from("/opt/homebrew/bin/node"),
+        PathBuf::from("/usr/local/bin/node"),
+    ];
+    if let Some(home) = std::env::var_os("HOME") {
+        let versions = PathBuf::from(home).join(".nvm/versions/node");
+        if let Ok(entries) = std::fs::read_dir(&versions) {
+            let mut installed: Vec<PathBuf> = entries
+                .flatten()
+                .map(|entry| entry.path().join("bin/node"))
+                .filter(|path| path.exists())
+                .collect();
+            installed.sort();
+            // The newest version is the last one in name order.
+            candidates.extend(installed.into_iter().rev());
+        }
+    }
+    candidates
+        .into_iter()
+        .find(|path| path.exists())
+        .unwrap_or_else(|| PathBuf::from("node"))
+}
+
+/// Read the text of a PDF with the agent's PDF reader. The bytes go in on stdin.
+pub fn run_read_pdf(bytes: &[u8]) -> Result<String> {
+    let (code, stdout, stderr) = pipe_to_agent_script(&["src/pdf-text-cli.ts".to_string()], bytes)?;
+    match code {
+        Some(0) => Ok(stdout),
+        Some(2) => {
+            let reason = stderr.trim();
+            anyhow::bail!("{}", if reason.is_empty() { "the PDF could not be read" } else { reason })
+        }
+        _ => anyhow::bail!("the PDF reader did not finish"),
+    }
+}
+
 /// Run one agent script with `input` on stdin, from the agent package. Returns the exit code,
 /// stdout and stderr. The input never goes in argv.
-fn pipe_to_agent_script(script: &[String], input: &str) -> Result<(Option<i32>, String, String)> {
+fn pipe_to_agent_script(script: &[String], input: impl AsRef<[u8]>) -> Result<(Option<i32>, String, String)> {
     use std::io::Write;
     use std::process::Stdio;
 
-    let mut child = Command::new("node")
+    let mut child = Command::new(node_binary())
         .args(script)
         .current_dir(agent_dir())
         .stdin(Stdio::piped())
@@ -310,7 +352,7 @@ fn pipe_to_agent_script(script: &[String], input: &str) -> Result<(Option<i32>, 
         .spawn()
         .context("starting an agent script")?;
     if let Some(mut stdin) = child.stdin.take() {
-        stdin.write_all(input.as_bytes()).context("sending input to the agent script")?;
+        stdin.write_all(input.as_ref()).context("sending input to the agent script")?;
     }
     let output = child.wait_with_output().context("waiting for the agent script")?;
     Ok((
@@ -411,7 +453,7 @@ pub fn start_bridge() -> Result<Option<Child>> {
     if bridge_is_up() {
         return Ok(None);
     }
-    let child = Command::new("node")
+    let child = Command::new(node_binary())
         .args([
             "src/bridge-cli.ts",
             "--profile",
