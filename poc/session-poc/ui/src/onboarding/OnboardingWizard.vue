@@ -515,7 +515,11 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
             </select>
           </label>
           <span v-if="item.level === null || item.usage === null" class="hint">{{ t('languages.incomplete') }}</span>
-          <button type="button" @click="removeLanguage(item.code)">{{ t('action.remove') }}</button>
+          <button type="button" class="icon-danger" :aria-label="t('action.remove')" :title="t('action.remove')" @click="removeLanguage(item.code)">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6" />
+            </svg>
+          </button>
         </li>
       </ul>
       <div class="row">
@@ -960,5 +964,65 @@ select {
 }
 .notice.busy {
   opacity: 0.8;
+}
+
+/* Selects match the text fields: same height, border, radius and padding. */
+.wizard select {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  min-height: 2.75rem;
+  padding: 0.5rem 2.25rem 0.5rem 0.65rem;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.4;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background-color: var(--surface);
+  color: var(--ink);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+}
+.wizard select:hover {
+  border-color: var(--accent);
+}
+/* The two country pickers stack: their labels are long and side by side they get cramped. */
+.wizard .row:has(> .country-picker) {
+  grid-template-columns: 1fr;
+}
+/* Language rows: the bin sits on the right, in red, with only the icon. */
+.list li > .icon-danger {
+  margin-left: auto;
+}
+.icon-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid #d92d20;
+  background: transparent;
+  color: #d92d20;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, transform 120ms ease;
+}
+.icon-danger:hover {
+  background: #d92d20;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+.icon-danger:active {
+  transform: scale(0.96);
+}
+.icon-danger:focus-visible {
+  outline: 2px solid #d92d20;
+  outline-offset: 2px;
+}
+/* The language selects in each row are wide enough for their labels. */
+.list li label.inline select {
+  min-width: 10rem;
 }
 </style>

@@ -1,10 +1,13 @@
 /**
  * Accepts only the CV file types the wizard reads, and turns the chosen file into its text.
- * The user uploads the file; nothing is typed or pasted. A PDF is read here, in the page, so its
- * text reaches the agent the same way a text file does.
+ * The user uploads the file; nothing is typed or pasted. A PDF is read by the agent, so its text
+ * reaches the agent the same way a text file does.
  */
 
-import { installBinaryPolyfills } from './binary-polyfill';
+import { invoke } from '@tauri-apps/api/core';
+import { z } from 'zod';
+
+const pdfTextSchema = z.string();
 
 export type CvFileKind = 'pdf' | 'text';
 
@@ -18,24 +21,12 @@ export const cvFileKind = (file: { name: string; type: string }): CvFileKind | n
   return null;
 };
 
-const pdfText = async (bytes: ArrayBuffer): Promise<string> => {
-  installBinaryPolyfills();
-  const pdfjs = await import('pdfjs-dist/build/pdf.mjs');
-  const workerUrl = (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default;
-  pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
-  const pdf = await pdfjs.getDocument({ data: new Uint8Array(bytes) }).promise;
-  const pages: string[] = [];
-  for (let number = 1; number <= pdf.numPages; number += 1) {
-    const page = await pdf.getPage(number);
-    const content = await page.getTextContent();
-    pages.push(content.items.map((item) => ('str' in item && typeof item.str === 'string' ? item.str : '')).join(' '));
-  }
-  return pages.join('\n').trim();
-};
-
 export const readCvFile = async (file: File): Promise<string> => {
   const kind = cvFileKind(file);
   if (kind === null) throw new Error('unsupported CV file');
   if (kind === 'text') return (await file.text()).trim();
-  return pdfText(await file.arrayBuffer());
+  // The PDF is read by the agent's reader in Node: the webview's own reader failed on some files.
+  const bytes = Array.from(new Uint8Array(await file.arrayBuffer()));
+  // The text comes from the Rust side: it is checked at this boundary, not trusted.
+  return pdfTextSchema.parse(await invoke<unknown>('cv_read_pdf', { bytes }));
 };
