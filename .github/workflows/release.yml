@@ -2,7 +2,7 @@ name: release
 
 # Runs on a version tag (vX.Y.Z). It builds the desktop app for macOS, Windows and Linux
 # and attaches the installers to a draft GitHub release, to publish by hand after checking it.
-# This workflow has not run yet: it is the encoded intent until the first tag.
+# Publishing that draft triggers the site workflow (site.yml), which deploys the download site.
 
 on:
   push:
