@@ -349,14 +349,14 @@ test('an unknown fact is counted only when its posting is kept, not when it is l
 
 // --- Soft preferences rank, they never drop -----------------------------------------
 
-test('the languages the user speaks are a hard filter, even when the language setting is preferred', () => {
+test('the languages the user speaks are always a hard filter', () => {
   const italian = make({
     id: 'it',
     title: 'Sviluppatore Rust',
     description: 'Lavoro con il team per la nostra azienda e la nostra esperienza con Rust.',
   });
   const english = make({ id: 'en' });
-  const compiled = spec({ languages: ['it'], strengths: { languages: 'preferred' } });
+  const compiled = spec({ languages: ['it'] });
 
   const result = applyHardFilters([italian, english], compiled, new Set(), NOW);
   assert.deepEqual(result.kept.map(postingKey), ['remoteok:it'], 'a posting in a language the user does not speak is not searched');
@@ -374,11 +374,10 @@ test('a posting whose language cannot be read is dropped, never kept as a match'
   assert.equal(result.dropped[0]?.detail, 'language not readable');
 });
 
-test('a posting asking for a level above the user’s own is dropped, whatever the setting', () => {
+test('a posting asking for a level above the user’s own is dropped', () => {
   const needsFluent = make({ id: 'lvl', description: 'We need a fluent English speaker for this remote role.' });
   const compiled = spec({
     language_proficiency: { en: { level: 'basic', usage: 'comfortable' } },
-    strengths: { languages: 'preferred' },
   });
   const result = applyHardFilters([needsFluent], compiled, new Set(), NOW);
   assert.deepEqual(result.kept.map(postingKey), []);
@@ -501,14 +500,13 @@ test('a required language the user does not speak at all drops the posting', () 
   assert.equal(result.dropped[0]?.reason, 'language');
 });
 
-test('a stated level above the user’s is dropped even when the language setting is preferred', () => {
+test('a stated level above the user’s is dropped', () => {
   const posting = make({ id: 'pf', description: 'Team in English. We need fluent English for daily work with the team.' });
   const compiled = spec({
     language_proficiency: { en: { level: 'basic', usage: 'comfortable' } },
-    strengths: { languages: 'preferred' },
   });
   const result = applyHardFilters([posting], compiled, new Set(), NOW);
-  assert.deepEqual(result.kept.map(postingKey), [], 'the level is checked whatever the setting');
+  assert.deepEqual(result.kept.map(postingKey), [], 'the level is always checked');
   assert.equal(result.dropped[0]?.detail, 'requires fluent en');
 });
 

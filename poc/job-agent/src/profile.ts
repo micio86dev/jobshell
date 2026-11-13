@@ -28,9 +28,11 @@ export type SalaryFloor = { amount: number; currency: string; period: SalaryPeri
  */
 export type Strength = 'mandatory' | 'preferred' | 'acceptable';
 
-/** The preferences that can be softened. Exclusions are never soft. */
+/**
+ * The preferences that can be softened. Exclusions are never soft, and the languages are not here:
+ * the languages the user speaks are always a filter on the postings.
+ */
 export const STRENGTH_KEYS = [
-  'languages',
   'remote_modes',
   'onsite_cities',
   'countries',
@@ -66,7 +68,6 @@ export type RemoteScope = (typeof REMOTE_SCOPES)[number];
 
 /** Every preference mandatory: the behaviour of a profile written before strengths. */
 export const DEFAULT_STRENGTHS: Strengths = {
-  languages: 'mandatory',
   remote_modes: 'mandatory',
   onsite_cities: 'mandatory',
   countries: 'mandatory',
