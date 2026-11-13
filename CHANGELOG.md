@@ -2,6 +2,11 @@
 
 All notable changes to the app are listed here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.1.2] - 2026-11-13
+
+### Fixed
+- Windows and macOS bundles include the `.ico` and `.icns` icons. The 0.1.1 release build failed on Windows without them, so 0.1.1 did not publish a complete release.
+
 ## [0.1.1] - 2026-11-13
 
 ### Added
