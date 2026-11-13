@@ -362,7 +362,7 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
       <p v-if="cvFileName" class="notice">{{ t('cv.loaded', { name: cvFileName }) }}</p>
       <div class="actions">
         <button type="button" :disabled="busy || draft.cv.trim() === ''" @click="analyseCv">{{ t('action.analyse') }}</button>
-        <button type="button" @click="next">{{ t('action.next') }}</button>
+        <button type="button" class="primary" @click="next">{{ t('action.next') }}</button>
       </div>
       <fieldset>
         <legend>{{ t('portfolio.title') }}</legend>
@@ -414,7 +414,7 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
       </label>
       <div class="actions">
         <button type="button" @click="back">{{ t('action.back') }}</button>
-        <button type="button" @click="next">{{ t('action.next') }}</button>
+        <button type="button" class="primary" @click="next">{{ t('action.next') }}</button>
         <button type="button" :disabled="busy" @click="saveForLater">{{ t('action.saveLater') }}</button>
       </div>
     </div>
@@ -461,7 +461,7 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
       <p class="hint">{{ t('where.separateHint') }}</p>
       <div class="actions">
         <button type="button" @click="back">{{ t('action.back') }}</button>
-        <button type="button" @click="next">{{ t('action.next') }}</button>
+        <button type="button" class="primary" @click="next">{{ t('action.next') }}</button>
         <button type="button" :disabled="busy" @click="saveForLater">{{ t('action.saveLater') }}</button>
       </div>
     </div>
@@ -515,7 +515,7 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
       </label>
       <div class="actions">
         <button type="button" @click="back">{{ t('action.back') }}</button>
-        <button type="button" @click="next">{{ t('action.summary') }}</button>
+        <button type="button" class="primary" @click="next">{{ t('action.summary') }}</button>
         <button type="button" :disabled="busy" @click="saveForLater">{{ t('action.saveLater') }}</button>
       </div>
     </div>
@@ -557,7 +557,7 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
       </div>
       <div class="actions">
         <button type="button" @click="back">{{ t('action.back') }}</button>
-        <button type="button" :disabled="!finishable || busy" @click="finish">
+        <button type="button" class="primary" :disabled="!finishable || busy" @click="finish">
           {{ mode === 'first' ? t('action.finish') : t('action.saveChange') }}
         </button>
         <button type="button" :disabled="busy" @click="saveForLater">{{ t('action.saveLater') }}</button>
@@ -568,23 +568,298 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
 </template>
 
 <style scoped>
+/* Restrained palette: tinted neutrals and one accent. Dark mode follows the system setting. */
+.wizard {
+  --surface: oklch(0.99 0.003 250);
+  --panel: oklch(0.975 0.005 250);
+  --ink: oklch(0.23 0.012 250);
+  --muted: oklch(0.47 0.012 250);
+  --line: oklch(0.87 0.008 250);
+  --accent: oklch(0.5 0.13 255);
+  --accent-hover: oklch(0.45 0.13 255);
+  --on-accent: oklch(0.99 0.003 250);
+  --focus: oklch(0.6 0.15 255);
+  --danger: oklch(0.5 0.18 27);
+  --danger-tint: oklch(0.96 0.02 27);
+  --info-tint: oklch(0.96 0.02 250);
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 2rem;
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--surface);
+  display: grid;
+  gap: 1rem;
+}
+@media (prefers-color-scheme: dark) {
+  .wizard {
+    --surface: oklch(0.2 0.01 250);
+    --panel: oklch(0.24 0.01 250);
+    --ink: oklch(0.94 0.008 250);
+    --muted: oklch(0.72 0.01 250);
+    --line: oklch(0.37 0.01 250);
+    --accent: oklch(0.7 0.12 255);
+    --accent-hover: oklch(0.76 0.12 255);
+    --on-accent: oklch(0.2 0.01 250);
+    --focus: oklch(0.78 0.13 255);
+    --danger: oklch(0.78 0.14 27);
+    --danger-tint: oklch(0.28 0.04 27);
+    --info-tint: oklch(0.28 0.03 250);
+  }
+}
+
+header {
+  display: grid;
+  gap: 0.75rem;
+}
+h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+/* Steps: a row of pills that wraps on a narrow screen. */
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.steps button {
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.steps button.on {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
 .steps button.has-issues {
-  border-color: #b42318;
-  color: #b42318;
+  border-color: var(--danger);
+  color: var(--danger);
 }
-.flagged {
-  color: #b42318;
+.steps button.on.has-issues {
+  color: var(--on-accent);
+  background: var(--danger);
+  border-color: var(--danger);
 }
-.flagged ul {
-  margin: 0.25rem 0 0.75rem 1.25rem;
+
+/* One step at a time: a panel with the fields in a single column. */
+.pane {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
 }
-.flagged button.link {
+.pane > p {
+  margin: 0;
+  color: var(--muted);
+}
+label {
+  display: grid;
+  gap: 0.3rem;
+  font-weight: 500;
+}
+label:has(> input[type="checkbox"]),
+label:has(> input[type="radio"]) {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 400;
+}
+input,
+select,
+textarea {
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+input[type="checkbox"],
+input[type="radio"] {
+  width: auto;
+  margin: 0;
+  accent-color: var(--accent);
+}
+textarea {
+  resize: vertical;
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+fieldset {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  min-width: 0;
+}
+legend {
+  padding: 0 0.35rem;
+  font-weight: 600;
+}
+
+.row {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+/* Actions: the button that moves forward is marked primary; the others stay quiet. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: flex-end;
+}
+.actions button,
+.wizard button:not(.steps button):not(.link) {
+  font: inherit;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.actions button.primary:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+.actions button.primary:not(:disabled):hover {
+  background: var(--accent-hover);
+}
+.actions button:hover:not(:disabled) {
+  background: var(--panel);
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+button.link {
   background: none;
   border: 0;
   padding: 0;
-  color: #b42318;
-  font-weight: 600;
+  font: inherit;
+  color: var(--accent);
   text-decoration: underline;
   cursor: pointer;
+}
+
+/* Messages: a notice for what happened, a hint for what to do, issues in red. */
+.notice {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  background: var(--info-tint);
+}
+.hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.issues {
+  margin: 0;
+  padding: 0.6rem 0.8rem 0.6rem 2rem;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+.flagged {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--danger);
+  border-radius: 10px;
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+.flagged p {
+  margin: 0;
+  font-weight: 600;
+}
+.flagged ul {
+  margin: 0 0 0.5rem 1.25rem;
+}
+
+/* The summary: a label column and a value column, one column on a narrow screen. */
+.summary {
+  display: grid;
+  grid-template-columns: minmax(8rem, 13rem) 1fr;
+  gap: 0.55rem 1rem;
+  margin: 0;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+}
+.summary dt {
+  color: var(--muted);
+}
+.summary dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.scope {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.scope span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 30rem) {
+  .wizard {
+    padding: 1rem 0.75rem 1.5rem;
+  }
+  .pane {
+    padding: 1rem;
+  }
+  .summary {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+  .summary dt {
+    margin-top: 0.4rem;
+  }
+  .actions button {
+    flex: 1 1 auto;
+  }
 }
 </style>
