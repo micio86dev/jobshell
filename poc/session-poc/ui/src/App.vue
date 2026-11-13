@@ -495,7 +495,7 @@ onMounted(() => {
 main {
   font-family: ui-sans-serif, system-ui, sans-serif;
   margin: 1.25rem 1.5rem;
-  color: #14181f;
+  color: var(--fg);
 }
 header {
   display: flex;
@@ -519,33 +519,33 @@ nav button {
   font: inherit;
   padding: 0.25rem 0.6rem;
   border-radius: 6px;
-  border: 1px solid #c3c9d4;
-  background: #fff;
+  border: 1px solid var(--border);
+  background: var(--bg);
   cursor: pointer;
 }
 nav button.on {
-  background: #14181f;
-  color: #fff;
-  border-color: #14181f;
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: var(--accent);
 }
 .status {
   margin-left: auto;
   font-family: ui-monospace, monospace;
   font-size: 0.75rem;
-  color: #45505f;
+  color: var(--fg-muted);
 }
 .hint {
   font-size: 0.78rem;
-  color: #8a93a1;
+  color: var(--fg-muted);
   margin: 0 0 0.8rem;
 }
 .meta {
   font-size: 0.85rem;
-  color: #45505f;
+  color: var(--fg-muted);
 }
 .empty {
   font-size: 0.9rem;
-  color: #45505f;
+  color: var(--fg-muted);
   max-width: 42rem;
 }
 .results {
@@ -557,19 +557,19 @@ nav button.on {
   display: flex;
   gap: 0.9rem;
   padding: 0.7rem 0;
-  border-bottom: 1px solid #e3e7ee;
+  border-bottom: 1px solid var(--border);
 }
 .score {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: #475569;
+  color: var(--fg-muted);
   min-width: 3.2rem;
 }
 .score.good {
   color: #166534;
 }
 .body a {
-  color: #1d4ed8;
+  color: var(--accent);
   font-weight: 600;
   text-decoration: none;
 }
@@ -579,7 +579,7 @@ nav button.on {
 .sub {
   margin: 0.15rem 0 0;
   font-size: 0.8rem;
-  color: #45505f;
+  color: var(--fg-muted);
 }
 .gap {
   margin: 0.15rem 0 0;
@@ -588,19 +588,19 @@ nav button.on {
 }
 .dropped {
   font-size: 0.8rem;
-  color: #45505f;
+  color: var(--fg-muted);
 }
 .chip {
   display: inline-block;
   margin-right: 0.4rem;
   padding: 0 0.4rem;
   border-radius: 9999px;
-  background: #f1f5f9;
+  background: var(--bg-raised);
 }
 .path {
   font-family: ui-monospace, monospace;
   font-size: 0.7rem;
-  color: #8a93a1;
+  color: var(--fg-muted);
   margin-top: 1.2rem;
 }
 .keyrow {
@@ -617,15 +617,15 @@ nav button.on {
 .keyrow input {
   padding: 0.35rem 0.5rem;
   font: inherit;
-  border: 1px solid #c3c9d4;
+  border: 1px solid var(--border);
   border-radius: 6px;
 }
 .keyrow button {
   font: inherit;
   padding: 0.3rem 0.7rem;
   border-radius: 6px;
-  border: 1px solid #c3c9d4;
-  background: #f6f8fb;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
   cursor: pointer;
 }
 .ok {
@@ -649,8 +649,8 @@ nav button.on {
   font: inherit;
   padding: 0.4rem 0.8rem;
   border-radius: 6px;
-  border: 1px solid #c3c9d4;
-  background: #f6f8fb;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
   cursor: pointer;
 }
 table {
@@ -662,7 +662,7 @@ th,
 td {
   text-align: left;
   padding: 0.35rem 0.5rem;
-  border-bottom: 1px solid #e3e7ee;
+  border-bottom: 1px solid var(--border);
 }
 .keyring {
   font-size: 0.85rem;
@@ -670,7 +670,7 @@ td {
 code {
   font-family: ui-monospace, monospace;
   font-size: 0.85em;
-  background: #f1f5f9;
+  background: var(--bg-raised);
   padding: 0 0.25rem;
   border-radius: 4px;
 }

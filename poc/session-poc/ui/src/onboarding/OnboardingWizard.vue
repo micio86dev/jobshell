@@ -570,18 +570,16 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
 <style scoped>
 /* Restrained palette: tinted neutrals and one accent. Dark mode follows the system setting. */
 .wizard {
-  --surface: oklch(0.99 0.003 250);
-  --panel: oklch(0.975 0.005 250);
-  --ink: oklch(0.23 0.012 250);
-  --muted: oklch(0.47 0.012 250);
-  --line: oklch(0.87 0.008 250);
-  --accent: oklch(0.5 0.13 255);
-  --accent-hover: oklch(0.45 0.13 255);
-  --on-accent: oklch(0.99 0.003 250);
-  --focus: oklch(0.6 0.15 255);
+  --surface: var(--bg);
+  --panel: var(--bg-raised);
+  --ink: var(--fg);
+  --muted: var(--fg-muted);
+  --line: var(--border);
+  --accent-hover: var(--accent);
+  --on-accent: var(--accent-fg);
   --danger: oklch(0.5 0.18 27);
   --danger-tint: oklch(0.96 0.02 27);
-  --info-tint: oklch(0.96 0.02 250);
+  --info-tint: var(--accent-soft);
   max-width: 42rem;
   margin: 0 auto;
   padding: 1.25rem 1rem 2rem;
@@ -595,18 +593,8 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
 }
 @media (prefers-color-scheme: dark) {
   .wizard {
-    --surface: oklch(0.2 0.01 250);
-    --panel: oklch(0.24 0.01 250);
-    --ink: oklch(0.94 0.008 250);
-    --muted: oklch(0.72 0.01 250);
-    --line: oklch(0.37 0.01 250);
-    --accent: oklch(0.7 0.12 255);
-    --accent-hover: oklch(0.76 0.12 255);
-    --on-accent: oklch(0.2 0.01 250);
-    --focus: oklch(0.78 0.13 255);
     --danger: oklch(0.78 0.14 27);
     --danger-tint: oklch(0.28 0.04 27);
-    --info-tint: oklch(0.28 0.03 250);
   }
 }
 
