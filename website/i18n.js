@@ -29,7 +29,7 @@
       "f5.title": "English, Italian and Spanish",
       "f5.text": "The app interface is available in all three languages and follows your system language.",
       "home.statusTitle": "Status",
-      "home.status": "Jobshell is at version 0.1.3. Builds for macOS, Windows and Linux are produced by the release workflow. Only the macOS build has been tested by hand so far. See the <a href=\"https://github.com/micio86dev/jobshell/blob/main/CHANGELOG.md\">changelog</a> for what is in each version.",
+      "home.status": "Jobshell is at version __VERSION__. Builds for macOS, Windows and Linux are produced by the release workflow. Only the macOS build has been tested by hand so far. See the <a href=\"https://github.com/micio86dev/jobshell/blob/main/CHANGELOG.md\">changelog</a> for what is in each version.",
       "home.footer": "Jobshell is released under the Apache-2.0 licence. <a href=\"https://github.com/micio86dev/jobshell\">Source on GitHub</a>.",
       "home.history": "All previous releases stay available on <a href=\"https://github.com/micio86dev/jobshell/releases\">GitHub</a>.",
 
@@ -81,7 +81,7 @@
       "f5.title": "Inglese, italiano e spagnolo",
       "f5.text": "L'interfaccia dell'app è disponibile in tutte e tre le lingue e segue la lingua del sistema.",
       "home.statusTitle": "Stato",
-      "home.status": "Jobshell è alla versione 0.1.3. Le build per macOS, Windows e Linux sono prodotte dal workflow di release; finora solo la build macOS è stata provata a mano. Vedi il <a href=\"https://github.com/micio86dev/jobshell/blob/main/CHANGELOG.md\">changelog</a> per il contenuto di ogni versione.",
+      "home.status": "Jobshell è alla versione __VERSION__. Le build per macOS, Windows e Linux sono prodotte dal workflow di release; finora solo la build macOS è stata provata a mano. Vedi il <a href=\"https://github.com/micio86dev/jobshell/blob/main/CHANGELOG.md\">changelog</a> per il contenuto di ogni versione.",
       "home.footer": "Jobshell è rilasciato con licenza Apache-2.0. <a href=\"https://github.com/micio86dev/jobshell\">Codice su GitHub</a>.",
       "home.history": "Tutte le versioni precedenti restano disponibili su <a href=\"https://github.com/micio86dev/jobshell/releases\">GitHub</a>.",
 
@@ -133,7 +133,7 @@
       "f5.title": "Inglés, italiano y español",
       "f5.text": "La interfaz de la app está disponible en los tres idiomas y sigue el idioma del sistema.",
       "home.statusTitle": "Estado",
-      "home.status": "Jobshell está en la versión 0.1.3. Las versiones para macOS, Windows y Linux las genera el flujo de publicación; hasta ahora solo la de macOS se ha probado a mano. Consulta el <a href=\"https://github.com/micio86dev/jobshell/blob/main/CHANGELOG.md\">changelog</a> para ver qué incluye cada versión.",
+      "home.status": "Jobshell está en la versión __VERSION__. Las versiones para macOS, Windows y Linux las genera el flujo de publicación; hasta ahora solo la de macOS se ha probado a mano. Consulta el <a href=\"https://github.com/micio86dev/jobshell/blob/main/CHANGELOG.md\">changelog</a> para ver qué incluye cada versión.",
       "home.footer": "Jobshell se publica con licencia Apache-2.0. <a href=\"https://github.com/micio86dev/jobshell\">Código en GitHub</a>.",
       "home.history": "Todas las versiones anteriores siguen disponibles en <a href=\"https://github.com/micio86dev/jobshell/releases\">GitHub</a>.",
 
