@@ -244,7 +244,7 @@ pub fn wait_for_callback(expected_state: &str, timeout: std::time::Duration) -> 
         let answer = match parse_callback(first_line) {
             Ok(callback) if callback.state == expected_state => {
                 let _ = stream.write_all(
-                    b"HTTP/1.1 200 OK\r\ncontent-type: text/html\r\n\r\n<h1>openjob.dev</h1><p>Autorizzazione completata: puoi chiudere questa scheda.</p>",
+                    b"HTTP/1.1 200 OK\r\ncontent-type: text/html\r\n\r\n<h1>openjob.dev</h1><p>Authorization complete: you can close this tab.</p>",
                 );
                 return Ok(callback.code);
             }

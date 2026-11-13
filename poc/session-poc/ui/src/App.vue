@@ -62,13 +62,13 @@ const running = ref<'' | 'dry' | 'real'>('');
 
 const runAgent = async (dryRun: boolean): Promise<void> => {
   running.value = dryRun ? 'dry' : 'real';
-  status.value = dryRun ? 'giro a secco in corso…' : 'giro in corso… può durare un minuto';
+  status.value = dryRun ? 'Dry run in progress…' : 'Run in progress… this can take a minute';
   try {
     await invoke<string>('agent_run', { dryRun });
-    status.value = dryRun ? 'giro a secco completato' : 'giro completato';
+    status.value = dryRun ? 'Dry run complete' : 'Run complete';
     await loadRun();
   } catch (error) {
-    status.value = `giro fallito: ${String(error)}`;
+    status.value = `Run failed: ${String(error)}`;
   } finally {
     running.value = '';
   }
@@ -312,16 +312,16 @@ onMounted(() => {
     <section v-if="tab === 'results'">
       <div class="actions">
         <button type="button" :disabled="running !== ''" @click="runAgent(true)">
-          {{ running === 'dry' ? 'giro a secco…' : 'Prova a secco' }}
+          {{ running === 'dry' ? 'Dry run in progress…' : 'Dry run' }}
         </button>
         <button type="button" :disabled="running !== ''" @click="runAgent(false)">
-          {{ running === 'real' ? 'giro in corso…' : 'Cerca adesso' }}
+          {{ running === 'real' ? 'Search in progress…' : 'Search now' }}
         </button>
-        <button type="button" :disabled="running !== ''" @click="loadRun">Ricarica</button>
+        <button type="button" :disabled="running !== ''" @click="loadRun">Reload</button>
       </div>
       <p class="hint">
-        "Prova a secco" scarica e filtra senza spendere token. "Cerca adesso" giudica con Jev e
-        richiede la chiave TypeSafe nel tab Impostazioni.
+        "Dry run" fetches and filters without spending tokens. "Search now" judges with Jev and
+        needs the TypeSafe key in the Settings tab.
       </p>
 
       <div class="actions">
@@ -336,36 +336,35 @@ onMounted(() => {
       <p v-if="sourcesMessage.length > 0" class="status">{{ sourcesMessage }}</p>
 
       <p v-if="loaded && run === null" class="empty">
-        Nessun giro ancora. Premi <strong>Prova a secco</strong> per il primo: scarica gli
-        annunci pubblici senza spendere token.
+        No run yet. Press <strong>Dry run</strong> for the first one: it fetches the public
+        postings without spending tokens.
       </p>
 
       <template v-if="run !== null">
         <p class="meta">
-          ultimo giro {{ when(run.summary.run_at) }} · soglia
+          last run {{ when(run.summary.run_at) }} · threshold
           {{ Math.round(run.summary.threshold * 100) }}% ·
-          {{ run.summary.fetched }} annunci scaricati · {{ run.summary.kept }} tenuti ·
-          <strong>{{ run.summary.judged }} giudicati su {{ run.summary.kept }}</strong> ·
-          {{ run.summary.input_tokens }} token
+          {{ run.summary.fetched }} postings fetched · {{ run.summary.kept }} kept ·
+          <strong>{{ run.summary.judged }} judged of {{ run.summary.kept }}</strong> ·
+          {{ run.summary.input_tokens }} tokens
         </p>
 
         <p
           v-if="run.summary.judged > 0 && run.summary.judged < run.summary.kept"
           class="empty"
         >
-          Tetto di questo profilo: {{ run.summary.budget }} giudizi per giro. Gli altri
-          {{ run.summary.kept - run.summary.judged }} annunci tenuti non sono stati giudicati:
-          alza <code>scoring_budget</code> nel profilo per includerli.
+          Scoring budget of this profile: {{ run.summary.budget }} judgements per run. The other
+          {{ run.summary.kept - run.summary.judged }} kept postings were not judged: raise
+          <code>scoring_budget</code> in the profile to include them.
         </p>
 
         <p v-if="run.summary.selected.length === 0 && run.summary.judged === 0" class="empty">
-          Nessun giudizio in questo giro: la prova a secco scarica e filtra ma non spende
-          token. Premi <strong>Cerca adesso</strong> per giudicare i {{ run.summary.kept }}
-          annunci tenuti.
+          No judgement in this run: the dry run fetches and filters but spends no tokens.
+          Press <strong>Search now</strong> to judge the {{ run.summary.kept }} kept postings.
         </p>
         <p v-else-if="run.summary.selected.length === 0" class="empty">
-          Niente sopra la soglia in quel giro. È il prodotto che funziona, non un errore:
-          meglio due annunci ottimi che cento inutili.
+          Nothing above the threshold in this run. That is the product working, not an error:
+          two excellent postings are better than a hundred useless ones.
         </p>
 
         <ul class="results">
