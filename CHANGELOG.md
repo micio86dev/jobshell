@@ -2,6 +2,11 @@
 
 All notable changes to the app are listed here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.1.4] - 2026-11-13
+
+### Changed
+- The download site is published automatically when a release is published, and shows the version of that release. The app itself has no changes since 0.1.3.
+
 ## [0.1.3] - 2026-11-13
 
 ### Added
