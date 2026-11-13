@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Install Jobshell on macOS</title>
+  <meta name="description" content="How to open Jobshell on macOS when the app is not signed with an Apple developer certificate.">
+  <link rel="icon" type="image/png" href="/icon.png">
+  <meta name="color-scheme" content="light dark">
+  <style>
+    :root { --bg: #f7f7f5; --fg: #1c1c1a; --muted: #5c5c57; --card: #fff; --line: #deddd8; --accent: #1f6f4a; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) { --bg: #161614; --fg: #f1f1ee; --muted: #a9a9a3; --card: #1f1f1c; --line: #33332f; --accent: #3fb07a; }
+    }
+    :root[data-theme="dark"] { --bg: #161614; --fg: #f1f1ee; --muted: #a9a9a3; --card: #1f1f1c; --line: #33332f; --accent: #3fb07a; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    main { max-width: 760px; margin: 0 auto; padding: 48px 16px; }
+    h1 { font-size: 2rem; margin: 0 0 12px; }
+    h2 { font-size: 1.25rem; margin: 32px 0 12px; }
+    p, li { color: var(--fg); }
+    .muted { color: var(--muted); }
+    ol li { margin-bottom: 12px; }
+    code, pre { font-family: ui-monospace, Menlo, monospace; font-size: 0.9rem; }
+    pre { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px; overflow-x: auto; }
+    code { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+    .warn { border-left: 3px solid var(--accent); padding-left: 12px; color: var(--muted); }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main>
+    <p><a href="/">← Jobshell</a></p>
+    <h1>Install Jobshell on macOS</h1>
+    <p class="muted">Jobshell is not signed with an Apple developer certificate yet, so macOS blocks the first launch. The steps below open it once; after that it starts normally. This applies to Apple Silicon Macs (M1 and later), the only architecture the current build produces.</p>
+
+    <h2>1. Download and install</h2>
+    <ol>
+      <li>Download the <code>.dmg</code> file for macOS from the <a href="https://github.com/micio86dev/jobshell/releases/latest">latest release</a>.</li>
+      <li>Open the <code>.dmg</code> and drag <strong>Jobshell</strong> into <strong>Applications</strong>.</li>
+      <li>Eject the disk image.</li>
+    </ol>
+
+    <h2>2. First launch (recommended way)</h2>
+    <ol>
+      <li>Open <strong>Applications</strong> and double-click <strong>Jobshell</strong>. macOS says it cannot verify the app. Click <strong>Done</strong>.</li>
+      <li>Open <strong>System Settings</strong> → <strong>Privacy &amp; Security</strong>.</li>
+      <li>Scroll down to the message <em>“Jobshell” was blocked to protect your Mac</em> and click <strong>Open Anyway</strong>.</li>
+      <li>Enter your Mac password (or use Touch ID). In the dialog that appears, click <strong>Open</strong>.</li>
+    </ol>
+    <p class="warn">On macOS Sequoia and later, right-click → Open no longer bypasses this check. Use the Privacy &amp; Security path above. The button stays available for about an hour after the first blocked attempt.</p>
+
+    <h2>2b. First launch (Terminal alternative)</h2>
+    <p>If you prefer the Terminal, remove the download quarantine flag from the app only:</p>
+    <pre>xattr -dr com.apple.quarantine /Applications/Jobshell.app
+open /Applications/Jobshell.app</pre>
+    <p class="muted">The command removes the flag that macOS adds to files downloaded from the internet. It does not change system security settings. Run it only on the app you downloaded from the official repository.</p>
+
+    <h2>Updates</h2>
+    <p>Each new version is a new download, so the steps repeat the first time you install it.</p>
+
+    <h2>Something else?</h2>
+    <p>If the app still does not open, send the exact message macOS shows and your macOS version in an issue on <a href="https://github.com/micio86dev/jobshell/issues">GitHub</a>.</p>
+  </main>
+</body>
+</html>

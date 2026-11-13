@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jobshell — find the jobs that match your CV</title>
+  <meta name="description" content="Jobshell reads your CV, builds your profile with AI and ranks job postings by how well they match, with the reasons for each match.">
+  <link rel="icon" type="image/png" href="/icon.png">
+  <meta name="color-scheme" content="light dark">
+  <style>
+    :root {
+      --bg: #f7f7f5;
+      --fg: #1c1c1a;
+      --muted: #5c5c57;
+      --card: #ffffff;
+      --line: #deddd8;
+      --accent: #1f6f4a;
+      --accent-fg: #ffffff;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #161614;
+        --fg: #f1f1ee;
+        --muted: #a9a9a3;
+        --card: #1f1f1c;
+        --line: #33332f;
+        --accent: #3fb07a;
+        --accent-fg: #0f1f16;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #161614;
+      --fg: #f1f1ee;
+      --muted: #a9a9a3;
+      --card: #1f1f1c;
+      --line: #33332f;
+      --accent: #3fb07a;
+      --accent-fg: #0f1f16;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    main { max-width: 760px; margin: 0 auto; padding: 0 16px; }
+    header, section, footer { padding: 48px 0; }
+    header { padding-top: 72px; }
+    h1 { font-size: clamp(2rem, 6vw, 3rem); line-height: 1.15; margin: 0 0 16px; }
+    h2 { font-size: 1.4rem; margin: 0 0 12px; }
+    p { margin: 0 0 16px; color: var(--muted); }
+    .lead { font-size: 1.15rem; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 32px; }
+    .brand img { width: 32px; height: 32px; border-radius: 8px; }
+    .downloads { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-top: 24px; }
+    .btn {
+      display: block; text-align: center; text-decoration: none;
+      background: var(--accent); color: var(--accent-fg);
+      padding: 14px 16px; border-radius: 10px; font-weight: 600;
+    }
+    .btn small { display: block; font-weight: 400; opacity: 0.85; font-size: 0.85rem; }
+    .note { font-size: 0.92rem; border-left: 3px solid var(--line); padding-left: 12px; }
+    ul.features { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+    ul.features li { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+    ul.features strong { display: block; color: var(--fg); }
+    footer { color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--line); }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="brand"><img src="/icon.png" alt="" width="32" height="32"> Jobshell</div>
+      <h1>Find the jobs that match your CV.</h1>
+      <p class="lead">Jobshell reads your CV, builds your profile with AI and ranks job postings by how well they fit you, showing the reasons behind every match.</p>
+
+      <div class="downloads" id="downloads">
+        <a class="btn" href="https://github.com/micio86dev/jobshell/releases/latest" data-os="macos">Download for macOS<small>Apple Silicon (M1 and later)</small></a>
+        <a class="btn" href="https://github.com/micio86dev/jobshell/releases/latest" data-os="windows">Download for Windows<small>Windows 10 and later</small></a>
+        <a class="btn" href="https://github.com/micio86dev/jobshell/releases/latest" data-os="linux">Download for Linux<small>AppImage and .deb</small></a>
+      </div>
+      <p class="note" style="margin-top:20px">Builds are not code-signed yet. macOS blocks the first launch: follow the <a href="/install-macos.html">macOS install guide</a>. Windows SmartScreen may show a warning too. The source code is public on <a href="https://github.com/micio86dev/jobshell">GitHub</a>.</p>
+    </header>
+
+    <section>
+      <h2>What it does</h2>
+      <ul class="features">
+        <li><strong>Upload your CV</strong>PDF, .txt or .md. The file stays on your computer.</li>
+        <li><strong>An AI-built profile</strong>Jobshell fills in your profile from the CV and flags the fields still missing.</li>
+        <li><strong>Ranked job postings</strong>Each posting gets a match score and the reasons for it, so you can see why it ranks where it does.</li>
+        <li><strong>Your keys stay safe</strong>API keys are kept in the operating system keychain and read only by the app.</li>
+        <li><strong>English, Italian and Spanish</strong>The app interface is available in all three languages and follows your system language.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Status</h2>
+      <p>Jobshell is at version 0.1.0. The macOS build is the one tested so far; Windows and Linux builds are produced by the release workflow and are still being verified. See the <a href="https://github.com/micio86dev/jobshell/blob/main/CHANGELOG.md">changelog</a> for what is in each version.</p>
+    </section>
+
+    <footer>
+      <p>Jobshell is released under the Apache-2.0 licence. <a href="https://github.com/micio86dev/jobshell">Source on GitHub</a>.</p>
+    </footer>
+  </main>
+</body>
+</html>
