@@ -335,7 +335,8 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
 <template>
   <section class="wizard" aria-labelledby="wizard-title">
     <header>
-      <h2 id="wizard-title">{{ mode === 'first' ? t('title.first') : t('title.edit') }}</h2>
+      <h1 v-if="mode === 'first'" id="wizard-title">{{ t('title.first') }}</h1>
+      <h2 v-else id="wizard-title">{{ t('title.edit') }}</h2>
       <nav class="steps" :aria-label="t('steps.aria')">
         <button
           v-for="(item, index) in STEPS"
@@ -576,7 +577,8 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
   --muted: var(--fg-muted);
   --line: var(--border);
   --accent-hover: var(--accent);
-  --on-accent: var(--accent-fg);
+  --on-accent: var(--cta-fg);
+  --danger-strong: oklch(0.46 0.17 27);
   --danger: oklch(0.5 0.18 27);
   --danger-tint: oklch(0.96 0.02 27);
   --info-tint: var(--accent-soft);
@@ -626,18 +628,18 @@ h2 {
   cursor: pointer;
 }
 .steps button.on {
-  background: var(--accent);
-  color: var(--on-accent);
-  border-color: var(--accent);
+  background: var(--cta);
+  color: var(--cta-fg);
+  border-color: var(--cta);
 }
 .steps button.has-issues {
   border-color: var(--danger);
   color: var(--danger);
 }
 .steps button.on.has-issues {
-  color: var(--on-accent);
-  background: var(--danger);
-  border-color: var(--danger);
+  color: var(--cta-fg);
+  background: var(--danger-strong);
+  border-color: var(--danger-strong);
 }
 
 /* One step at a time: a panel with the fields in a single column. */
@@ -739,12 +741,12 @@ legend {
   cursor: pointer;
 }
 .actions button.primary:not(:disabled) {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--on-accent);
+  background: var(--cta);
+  border-color: var(--cta);
+  color: var(--cta-fg);
 }
 .actions button.primary:not(:disabled):hover {
-  background: var(--accent-hover);
+  background: var(--cta-hover);
 }
 .actions button:hover:not(:disabled) {
   background: var(--panel);

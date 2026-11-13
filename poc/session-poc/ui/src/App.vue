@@ -523,9 +523,9 @@ nav button {
   cursor: pointer;
 }
 nav button.on {
-  background: var(--accent);
-  color: var(--accent-fg);
-  border-color: var(--accent);
+  background: var(--cta);
+  color: var(--cta-fg);
+  border-color: var(--cta);
 }
 .status {
   margin-left: auto;
