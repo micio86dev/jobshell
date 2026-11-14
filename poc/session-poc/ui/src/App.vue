@@ -5,6 +5,13 @@ import OnboardingWizard from './onboarding/OnboardingWizard.vue';
 import { setPrimaryLanguage, t } from './i18n/store';
 import { primaryOf } from './onboarding/schema';
 import { describeKeyCheck, parseKeyCheckReport, type KeyCheckView } from './settings/key-check';
+import { modelOptions, validateChoice, type ChoiceProblem, type ProviderChoiceView } from './settings/provider-settings';
+
+const CHOICE_COPY: Record<ChoiceProblem, string> = {
+  'llm-model-missing': 'scegli un modello per il provider che legge il CV',
+  'judgment-model-missing': 'scegli un modello per il servizio che giudica',
+  'laya-address-missing': 'Laya ha bisogno dell’indirizzo dove gira',
+};
 
 type SelectedView = {
   key: string;
@@ -133,12 +140,59 @@ const when = (iso: string): string => {
 };
 
 // Settings view: the keys are written to the OS keychain by the Rust side, never to a file.
-type KeyAccount = 'typesafe' | 'anthropic' | 'qwen';
+type KeyAccount = 'typesafe' | 'anthropic' | 'openai' | 'gemini' | 'qwen';
+const KEY_ACCOUNTS: KeyAccount[] = ['typesafe', 'anthropic', 'openai', 'gemini', 'qwen'];
+const LLM_OPTIONS = ['anthropic', 'openai', 'gemini', 'qwen'];
+const JUDGMENT_OPTIONS = ['typesafe', 'ollama', 'laya'];
 
-const keyInputs = ref<Record<KeyAccount, string>>({ typesafe: '', anthropic: '', qwen: '' });
+const keyInputs = ref<Record<KeyAccount, string>>({ typesafe: '', anthropic: '', openai: '', gemini: '', qwen: '' });
 const keyStatus = ref<Record<string, boolean> | null>(null);
 const keyMessage = ref('');
-const keyChecks = ref<Record<KeyAccount, KeyCheckView | null>>({ typesafe: null, anthropic: null, qwen: null });
+const keyChecks = ref<Record<KeyAccount, KeyCheckView | null>>({
+  typesafe: null,
+  anthropic: null,
+  openai: null,
+  gemini: null,
+  qwen: null,
+});
+
+// The provider choice: names and an address only. The models come from each provider's own list.
+const providerChoice = ref<ProviderChoiceView | null>(null);
+const offeredModels = ref<Record<string, string[]>>({});
+const choiceMessage = ref('');
+
+const loadChoice = async (): Promise<void> => {
+  try {
+    providerChoice.value = await invoke<ProviderChoiceView>('agent_get_settings');
+  } catch (error) {
+    choiceMessage.value = `lettura della scelta fallita: ${String(error)}`;
+  }
+};
+
+const loadModels = async (account: string): Promise<void> => {
+  choiceMessage.value = `elenco modelli di ${account}…`;
+  try {
+    offeredModels.value[account] = await invoke<string[]>('agent_list_models', { account });
+    choiceMessage.value = `${offeredModels.value[account]?.length ?? 0} modelli disponibili per ${account}`;
+  } catch (error) {
+    choiceMessage.value = `elenco modelli non disponibile: ${String(error)}`;
+  }
+};
+
+const saveChoice = async (): Promise<void> => {
+  if (providerChoice.value === null) return;
+  const problem = validateChoice(providerChoice.value);
+  if (problem !== null) {
+    choiceMessage.value = CHOICE_COPY[problem];
+    return;
+  }
+  try {
+    await invoke('agent_save_settings', { settings: providerChoice.value });
+    choiceMessage.value = 'scelta salvata';
+  } catch (error) {
+    choiceMessage.value = `salvataggio fallito: ${String(error)}`;
+  }
+};
 
 // Ask the provider whether the stored key is accepted. The key itself never reaches the window.
 const verifyKey = async (account: KeyAccount): Promise<void> => {
@@ -301,6 +355,7 @@ const editingProfile = ref(false);
 onMounted(() => {
   void loadRun();
   void loadKeyStatus();
+  void loadChoice();
   invoke<boolean>('onboarding_status')
     .then((done) => (onboardingDone.value = done))
     .catch(() => (onboardingDone.value = true));
@@ -420,11 +475,45 @@ onMounted(() => {
         @done="editingProfile = false"
         @cancel="editingProfile = false"
       />
+      <h2>Servizio AI</h2>
+      <div v-if="providerChoice !== null" class="choice">
+        <label for="llm-provider">modello per leggere il CV e cercare</label>
+        <select id="llm-provider" v-model="providerChoice.llm_provider" @change="loadModels(providerChoice.llm_provider)">
+          <option v-for="name in LLM_OPTIONS" :key="name" :value="name">{{ name }}</option>
+        </select>
+        <select id="llm-model" v-model="providerChoice.llm_model">
+          <option v-for="name in modelOptions(offeredModels[providerChoice.llm_provider] ?? [], providerChoice.llm_model)" :key="name" :value="name">{{ name }}</option>
+        </select>
+        <button type="button" @click="loadModels(providerChoice.llm_provider)">Aggiorna elenco</button>
+
+        <label for="judgment-service">servizio che giudica le offerte</label>
+        <select id="judgment-service" v-model="providerChoice.judgment_service">
+          <option v-for="name in JUDGMENT_OPTIONS" :key="name" :value="name">{{ name }}</option>
+        </select>
+        <input
+          v-if="providerChoice.judgment_service !== 'typesafe'"
+          v-model="providerChoice.judgment_model"
+          type="text"
+          placeholder="nome del modello"
+        />
+        <select v-else v-model="providerChoice.judgment_model">
+          <option v-for="name in modelOptions(offeredModels['typesafe'] ?? [], providerChoice.judgment_model)" :key="name" :value="name">{{ name }}</option>
+        </select>
+        <input
+          v-if="providerChoice.judgment_service === 'laya'"
+          v-model="providerChoice.judgment_address"
+          type="text"
+          placeholder="indirizzo dove gira Laya, es. http://127.0.0.1:9000/v1/systemone"
+        />
+        <button type="button" @click="saveChoice">Salva scelta</button>
+      </div>
+      <p class="status">{{ choiceMessage }}</p>
+
       <p class="meta">
         Le chiavi finiscono nel portachiavi di macOS, mai in un file. Il portachiavi è
         l'unico posto che l'agente legge.
       </p>
-      <template v-for="account in (['typesafe', 'anthropic', 'qwen'] as KeyAccount[])" :key="account">
+      <template v-for="account in KEY_ACCOUNTS" :key="account">
         <div class="keyrow">
           <label :for="account">
             {{ account }}
@@ -623,6 +712,24 @@ nav button.on {
   font-size: 0.7rem;
   color: var(--fg-muted);
   margin-top: 1.2rem;
+}
+.choice {
+  display: grid;
+  grid-template-columns: 14rem 1fr auto;
+  gap: 0.5rem 0.6rem;
+  align-items: center;
+  margin: 0.6rem 0;
+}
+.choice label {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.choice select,
+.choice input {
+  padding: 0.35rem 0.5rem;
+  font: inherit;
+  border: 1px solid var(--border);
+  border-radius: 6px;
 }
 .keycheck {
   margin: -0.2rem 0 0.6rem 12.6rem;

@@ -43,3 +43,14 @@ export const providerChoiceFromEnv = (values: Record<string, string | undefined>
   llm: llmFrom(values),
   judgment: judgmentFrom(values),
 });
+
+/** What the judgment client needs for the chosen service. `null` means its key is missing. */
+export const judgmentDepsFor = (
+  judgment: JudgmentChoice,
+  readKey: (service: JudgmentService) => string | null,
+): { apiKey: string; baseUrl: string; model: string } | null => {
+  if (!judgment.needsKey) return { apiKey: '', baseUrl: judgment.url, model: judgment.model };
+  const key = readKey(judgment.service);
+  if (key === null || key.trim() === '') return null;
+  return { apiKey: key.trim(), baseUrl: judgment.url, model: judgment.model };
+};

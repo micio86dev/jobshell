@@ -67,7 +67,10 @@ pub async fn identity_get(state: State<'_, Arc<AppState>>) -> Result<Option<Vers
 /// written here: the wizard shows the proposal and the user decides field by field.
 #[tauri::command]
 pub async fn cv_extract(cv: String, kind: String) -> Result<String, String> {
-    tokio::task::spawn_blocking(move || crate::agent::run_extract_cv(&cv, &kind))
+    let env = crate::settings::load(&crate::settings_path())
+        .map_err(|error| error.to_string())?
+        .agent_env();
+    tokio::task::spawn_blocking(move || crate::agent::run_extract_cv(&cv, &kind, &env))
         .await
         .map_err(|error| error.to_string())?
         .map_err(|error| error.to_string())

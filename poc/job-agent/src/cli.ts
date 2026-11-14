@@ -26,6 +26,7 @@ import { resolvePolicy } from './policy.ts';
 import { runOnce, type RunEvidence } from './run.ts';
 import { loadSeen, saveSeen } from './seen.ts';
 import { readSecret } from './secrets.ts';
+import { judgmentDepsFor, providerChoiceFromEnv, type ProviderChoice } from './provider-choice.ts';
 import { listSources } from './sources/registry.ts';
 
 const arg = (name: string): string | undefined => {
@@ -75,11 +76,18 @@ const main = async (): Promise<void> => {
   const outDir = arg('out') ?? config.evidence_dir;
   mkdirSync(outDir, { recursive: true });
 
-  const typesafeKey = readSecret('typesafe');
-  if (typesafeKey === null && !dryRun) die(missingKeyMessage('typesafe'));
-  // A dry run buys no judgment, so this placeholder is never sent anywhere. Naming it
-  // makes that explicit instead of passing an empty string that looks like a key.
-  const jevKey = typesafeKey ?? 'dry-run-no-judgment';
+  const choice: ProviderChoice = (() => {
+    try {
+      return providerChoiceFromEnv(process.env);
+    } catch (error) {
+      return die(error instanceof Error ? error.message : 'the provider choice is invalid');
+    }
+  })();
+  // A dry run buys no judgment: its placeholder key is never sent anywhere. Naming it makes that
+  // explicit instead of passing an empty string that looks like a key.
+  const judgment = judgmentDepsFor(choice.judgment, readSecret);
+  if (judgment === null && !dryRun) die(missingKeyMessage(choice.judgment.service));
+  const jevKey = judgment?.apiKey ?? 'dry-run-no-judgment';
 
   const providerKey = readSecret(config.provider);
   // A dry run buys nothing: no judgment and no planner call, so the profile never
@@ -117,8 +125,9 @@ const main = async (): Promise<void> => {
     fetchImpl: defaultFetch,
     jev: {
       apiKey: jevKey,
+      model: choice.judgment.model,
+      baseUrl: judgment?.baseUrl ?? choice.judgment.url,
       fetchImpl: defaultFetch,
-      ...(config.base_url === undefined ? {} : { baseUrl: config.base_url }),
     },
     now: new Date(),
     seen,

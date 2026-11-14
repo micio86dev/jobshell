@@ -3,7 +3,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { providerChoiceFromEnv } from '../src/provider-choice.ts';
+import { judgmentDepsFor, providerChoiceFromEnv } from '../src/provider-choice.ts';
+import { TYPESAFE_URL } from '../src/jev.ts';
 
 test('with nothing set, the defaults are Anthropic for the LLM and TypeSafe Jev for judgments', () => {
   const choice = providerChoiceFromEnv({});
@@ -40,4 +41,23 @@ test('Laya needs its address, and the address goes through the endpoint check', 
 test('the choice never carries a key', () => {
   const choice = providerChoiceFromEnv({ JOBSHELL_LLM_PROVIDER: 'openai', JOBSHELL_LLM_MODEL: 'gpt-x', JOBSHELL_LLM_API_KEY: 'sk-leak' });
   assert.ok(!JSON.stringify(choice).includes('sk-leak'));
+});
+
+
+test('the judgment dependencies follow the chosen service: its key, its address, its model', () => {
+  const typesafe = providerChoiceFromEnv({}).judgment;
+  assert.deepEqual(judgmentDepsFor(typesafe, () => 'ts-key'), { apiKey: 'ts-key', baseUrl: TYPESAFE_URL, model: 'jev-1.14.0' });
+});
+
+test('a service that needs a key but has none stored is reported, never called with an empty key', () => {
+  const typesafe = providerChoiceFromEnv({}).judgment;
+  assert.equal(judgmentDepsFor(typesafe, () => null), null);
+});
+
+test('a local service needs no key, so none is read or sent', () => {
+  const ollama = providerChoiceFromEnv({ JOBSHELL_JUDGMENT_SERVICE: 'ollama', JOBSHELL_JUDGMENT_MODEL: 'nimble' }).judgment;
+  let asked = false;
+  const deps = judgmentDepsFor(ollama, () => { asked = true; return 'should-not-be-read'; });
+  assert.equal(asked, false);
+  assert.deepEqual(deps, { apiKey: '', baseUrl: 'http://localhost:11434/v1/systemone', model: 'nimble' });
 });

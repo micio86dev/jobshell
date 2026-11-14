@@ -34,6 +34,14 @@ pub fn probe_for(account: &str, key: &str) -> Option<Probe> {
                 ("anthropic-version", ANTHROPIC_VERSION.to_string()),
             ],
         }),
+        "openai" => Some(Probe {
+            url: "https://api.openai.com/v1/models",
+            headers: vec![("Authorization", format!("Bearer {key}"))],
+        }),
+        "gemini" => Some(Probe {
+            url: "https://generativelanguage.googleapis.com/v1beta/models",
+            headers: vec![("x-goog-api-key", key.to_string())],
+        }),
         "qwen" => Some(Probe {
             url: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/models",
             headers: vec![("Authorization", format!("Bearer {key}"))],
@@ -98,6 +106,55 @@ pub fn check_key(account: &str, key: &str) -> Result<KeyCheck, String> {
     }
 }
 
+/// The model names in a provider's model-list answer, sorted and without duplicates.
+/// Anything that is not the expected list is an error, never an empty list.
+pub fn parse_model_names(account: &str, body: &str) -> Result<Vec<String>, String> {
+    let value: serde_json::Value = serde_json::from_str(body).map_err(|_| format!("{account}: the answer is not JSON"))?;
+    let mut names: Vec<String> = match account {
+        "openai" | "anthropic" | "qwen" => list_of(&value, "data", "id", account)?,
+        "gemini" => list_of(&value, "models", "name", account)?
+            .into_iter()
+            .map(|name| name.strip_prefix("models/").map(str::to_string).unwrap_or(name))
+            .collect(),
+        "typesafe" => list_of(&value, "models", "name", account)?,
+        _ => return Err(format!("{account}: no model list is known for this service")),
+    };
+    names.sort();
+    names.dedup();
+    Ok(names)
+}
+
+fn list_of(value: &serde_json::Value, field: &str, key: &str, account: &str) -> Result<Vec<String>, String> {
+    let items = value
+        .get(field)
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| format!("{account}: the answer has no {field} list"))?;
+    items
+        .iter()
+        .map(|item| {
+            item.get(key)
+                .and_then(serde_json::Value::as_str)
+                .map(str::to_string)
+                .ok_or_else(|| format!("{account}: a model has no {key}"))
+        })
+        .collect()
+}
+
+/// Ask the provider for its model names with the given key. The key is not part of any error.
+pub fn fetch_model_names(account: &str, key: &str) -> Result<Vec<String>, String> {
+    let probe = probe_for(account, key).ok_or_else(|| format!("unknown key account: {account}"))?;
+    let mut request = ureq::get(probe.url).timeout(TIMEOUT);
+    for (name, value) in &probe.headers {
+        request = request.set(name, value);
+    }
+    let response = request.call().map_err(|error| match error {
+        ureq::Error::Status(status, _) => format!("{account} answered HTTP {status}"),
+        ureq::Error::Transport(error) => format!("no answer from {account}: {}", error.kind()),
+    })?;
+    let body = response.into_string().map_err(|_| format!("{account}: the answer could not be read"))?;
+    parse_model_names(account, &body)
+}
+
 /// Check the key stored for `account` in the OS keyring. A missing key is a report, not an error.
 pub fn verify_stored_key(account: &str) -> Result<KeyCheckReport, String> {
     let Some(key) = secrets::read_secret(account).map_err(|error| error.to_string())? else {
@@ -131,6 +188,53 @@ mod tests {
         let probe = probe_for("qwen", "sk-q").expect("qwen is a known account");
         assert_eq!(probe.url, "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/models");
         assert!(probe.headers.contains(&("Authorization", "Bearer sk-q".to_string())));
+    }
+
+    #[test]
+    fn openai_is_checked_on_its_model_list_with_a_bearer_token() {
+        let probe = probe_for("openai", "sk-o").expect("openai is a known account");
+        assert_eq!(probe.url, "https://api.openai.com/v1/models");
+        assert!(probe.headers.contains(&("Authorization", "Bearer sk-o".to_string())));
+    }
+
+    #[test]
+    fn gemini_is_checked_with_a_header_so_the_key_stays_out_of_the_url() {
+        let probe = probe_for("gemini", "AIza-secret").expect("gemini is a known account");
+        assert_eq!(probe.url, "https://generativelanguage.googleapis.com/v1beta/models");
+        assert!(probe.headers.contains(&("x-goog-api-key", "AIza-secret".to_string())));
+        assert!(!probe.url.contains("AIza-secret"));
+    }
+
+    #[test]
+    fn openai_model_names_are_the_ids_in_data() {
+        let body = r#"{"object":"list","data":[{"id":"gpt-b"},{"id":"gpt-a"}]}"#;
+        assert_eq!(parse_model_names("openai", body).expect("parse"), vec!["gpt-a", "gpt-b"]);
+    }
+
+    #[test]
+    fn gemini_model_names_drop_the_models_prefix() {
+        let body = r#"{"models":[{"name":"models/gemini-2.5-flash"},{"name":"models/gemini-2.5-pro"}]}"#;
+        assert_eq!(
+            parse_model_names("gemini", body).expect("parse"),
+            vec!["gemini-2.5-flash", "gemini-2.5-pro"]
+        );
+    }
+
+    #[test]
+    fn typesafe_model_names_come_from_its_model_list() {
+        let body = r#"{"models":[{"name":"jev-1.14.0"},{"name":"jev-latest"}]}"#;
+        assert_eq!(parse_model_names("typesafe", body).expect("parse"), vec!["jev-1.14.0", "jev-latest"]);
+    }
+
+    #[test]
+    fn an_answer_that_is_not_a_model_list_is_an_error_not_an_empty_list() {
+        assert!(parse_model_names("openai", "<html>oops</html>").is_err());
+        assert!(parse_model_names("gemini", r#"{"models":"nope"}"#).is_err());
+    }
+
+    #[test]
+    fn a_service_without_a_known_model_list_is_refused() {
+        assert!(parse_model_names("laya", "{}").is_err());
     }
 
     #[test]

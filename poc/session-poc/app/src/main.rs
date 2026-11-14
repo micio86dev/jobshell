@@ -7,6 +7,7 @@
 
 mod agent;
 mod key_check;
+mod settings;
 mod profile;
 mod ziprecruiter;
 
@@ -116,7 +117,7 @@ async fn fail_task(
 }
 
 /// The accounts the settings view can hold a key for.
-const KEY_ACCOUNTS: [&str; 3] = ["typesafe", "anthropic", "qwen"];
+const KEY_ACCOUNTS: [&str; 5] = ["typesafe", "anthropic", "openai", "gemini", "qwen"];
 
 /// Store an API key in the OS keyring.
 ///
@@ -298,6 +299,39 @@ fn agent_key_status() -> Result<std::collections::BTreeMap<String, bool>, String
     Ok(status)
 }
 
+/// Where the provider choice is saved. Names and an address only: keys stay in the keychain.
+pub(crate) fn settings_path() -> std::path::PathBuf {
+    default_data_dir("openjob-phase0").join("provider-settings.json")
+}
+
+/// The provider and model the user chose in Settings.
+#[tauri::command]
+fn agent_get_settings() -> Result<settings::ProviderSettings, String> {
+    settings::load(&settings_path()).map_err(|error| error.to_string())
+}
+
+/// Save the provider and model choice. A refused choice is not written.
+#[tauri::command]
+fn agent_save_settings(settings: settings::ProviderSettings) -> Result<(), String> {
+    settings::save(&settings_path(), &settings).map_err(|error| error.to_string())
+}
+
+/// The models a provider offers to the stored key. The key is read here and never returned.
+#[tauri::command]
+async fn agent_list_models(account: String) -> Result<Vec<String>, String> {
+    if !KEY_ACCOUNTS.contains(&account.as_str()) {
+        return Err(format!("unknown key account: {account}"));
+    }
+    tauri::async_runtime::spawn_blocking(move || {
+        let key = secrets::read_secret(&account)
+            .map_err(|error| error.to_string())?
+            .ok_or_else(|| format!("no {account} key is stored: add it first"))?;
+        key_check::fetch_model_names(&account, key.trim())
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
 /// Check the key stored for one account with its provider, without spending tokens.
 #[tauri::command]
 async fn agent_verify_key(account: String) -> Result<key_check::KeyCheckReport, String> {
@@ -372,6 +406,9 @@ fn main() {
             agent_save_key,
             agent_key_status,
             agent_verify_key,
+            agent_get_settings,
+            agent_save_settings,
+            agent_list_models,
             agent_run,
             agent_open_sources,
             agent_stop_sources,

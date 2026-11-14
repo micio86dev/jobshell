@@ -256,9 +256,12 @@ pub fn write_search_profile(id: &str, payload: &str) -> Result<PathBuf> {
 /// One run of the agent from an explicit profile file.
 pub fn run_with_profile(profile: &Path, dry_run: bool) -> Result<String> {
     let dir = agent_dir();
+    // The provider and judgment service the user chose in Settings, as names only.
+    let env = crate::settings::load(&crate::settings_path())?.agent_env();
 
     let output = Command::new(node_binary())
         .args(run_args(profile, dry_run))
+        .envs(env.iter().map(|(name, value)| (name.as_str(), value.as_str())))
         .current_dir(&dir)
         .output()
         .with_context(|| format!("starting the agent in {}", dir.display()))?;
@@ -326,7 +329,7 @@ fn node_binary() -> PathBuf {
 
 /// Read the text of a PDF with the agent's PDF reader. The bytes go in on stdin.
 pub fn run_read_pdf(bytes: &[u8]) -> Result<String> {
-    let (code, stdout, stderr) = pipe_to_agent_script(&["src/pdf-text-cli.ts".to_string()], bytes)?;
+    let (code, stdout, stderr) = pipe_to_agent_script(&["src/pdf-text-cli.ts".to_string()], bytes, &[])?;
     match code {
         Some(0) => Ok(stdout),
         Some(2) => {
@@ -339,13 +342,18 @@ pub fn run_read_pdf(bytes: &[u8]) -> Result<String> {
 
 /// Run one agent script with `input` on stdin, from the agent package. Returns the exit code,
 /// stdout and stderr. The input never goes in argv.
-fn pipe_to_agent_script(script: &[String], input: impl AsRef<[u8]>) -> Result<(Option<i32>, String, String)> {
+fn pipe_to_agent_script(
+    script: &[String],
+    input: impl AsRef<[u8]>,
+    env: &[(String, String)],
+) -> Result<(Option<i32>, String, String)> {
     use std::io::Write;
     use std::process::Stdio;
 
     let mut child = Command::new(node_binary())
         .args(script)
         .current_dir(agent_dir())
+        .envs(env.iter().map(|(name, value)| (name.as_str(), value.as_str())))
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -363,8 +371,8 @@ fn pipe_to_agent_script(script: &[String], input: impl AsRef<[u8]>) -> Result<(O
 }
 
 /// Run the extractor on one CV or portfolio text and return its JSON verdict.
-pub fn run_extract_cv(cv: &str, kind: &str) -> Result<String> {
-    let (code, stdout, stderr) = pipe_to_agent_script(&extract_cv_args(kind)?, cv)?;
+pub fn run_extract_cv(cv: &str, kind: &str, env: &[(String, String)]) -> Result<String> {
+    let (code, stdout, stderr) = pipe_to_agent_script(&extract_cv_args(kind)?, cv, env)?;
     interpret_extract(code, &stdout, &stderr)
 }
 
@@ -384,7 +392,7 @@ pub fn interpret_portfolio_check(exit_code: Option<i32>, stdout: &str, stderr: &
 
 /// Check that a portfolio link is public and answers. The link goes in on stdin, never in argv.
 pub fn run_check_portfolio(link: &str) -> Result<String> {
-    let (code, stdout, stderr) = pipe_to_agent_script(&["src/portfolio-link-cli.ts".to_string()], link)?;
+    let (code, stdout, stderr) = pipe_to_agent_script(&["src/portfolio-link-cli.ts".to_string()], link, &[])?;
     interpret_portfolio_check(code, &stdout, &stderr)
 }
 
@@ -407,7 +415,7 @@ pub fn interpret_validation(exit_code: Option<i32>, stdout: &str) -> Result<()> 
 /// Ask the agent, the single validator, whether a profile payload is valid.
 pub fn run_validate_profile(payload: &str) -> Result<()> {
     let (code, stdout, _stderr) =
-        pipe_to_agent_script(&["src/validate-profile-cli.ts".to_string()], payload)?;
+        pipe_to_agent_script(&["src/validate-profile-cli.ts".to_string()], payload, &[])?;
     interpret_validation(code, &stdout)
 }
 
