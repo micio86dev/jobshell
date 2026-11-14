@@ -15,7 +15,6 @@ import {
   posting,
   text,
   toIsoDate,
-  type Posting,
   type SearchOptions,
   type SourceAdapter,
 } from './types.ts';

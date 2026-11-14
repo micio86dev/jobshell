@@ -74,10 +74,14 @@ const targetsOf = (): { targets: Target[]; skipped: Array<{ source: string; reas
   return { targets, skipped };
 };
 
-const fetchText = async (url: string): Promise<{ status: number; text: string } | { error: string }> => {
+const fetchText = async (
+  url: string,
+  redirect: 'follow' | 'manual',
+): Promise<{ status: number; text: string } | { error: string }> => {
   try {
     const response = await fetch(url, {
       method: 'GET',
+      redirect,
       headers: { 'user-agent': USER_AGENT, accept: 'application/json, application/rss+xml, application/xml, text/xml, */*' },
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
@@ -95,7 +99,8 @@ const robotsFor = async (origin: string, pacer: Pacer, cache: Map<string, Robots
   const cached = cache.get(origin);
   if (cached !== undefined) return cached;
   await pacer.next();
-  const response = await fetchText(`${origin}/robots.txt`);
+  // RFC 9309 asks crawlers to follow redirects for robots.txt itself, since a publisher may host it on its own domain.
+  const response = await fetchText(`${origin}/robots.txt`, 'follow');
   let robots: Robots;
   if ('error' in response) robots = { status: response.error, text: null };
   else if (response.status === 200) robots = { status: 200, text: response.text };
@@ -142,7 +147,8 @@ const main = async (): Promise<void> => {
     }
 
     await pacer.next();
-    const response = await fetchText(target.url);
+    // A data request does not follow redirects: its target may be another origin whose robots.txt was never read.
+    const response = await fetchText(target.url, 'manual');
     if ('error' in response) {
       records.push({ ...row, robots_allowed: true, verdict: 'http_error', error: response.error });
       continue;

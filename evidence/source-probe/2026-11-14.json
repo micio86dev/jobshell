@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-14T23:52:25.237Z",
+  "generated_at": "2026-11-14T23:57:02.548Z",
   "method": "read-only GET, self-identifying user agent, one request every 1200 ms, robots.txt read first per origin; a URL refused by robots.txt is not requested; no credential, no cookie, no browser",
   "user_agent": "jobshell-job-agent/0.1 (read-only source probe)",
   "per_source": [
@@ -11,15 +11,6 @@
         "ok"
       ],
       "outcome": "added"
-    },
-    {
-      "source": "ashby",
-      "targets": 8,
-      "postings": 0,
-      "verdicts": [
-        "not_probed"
-      ],
-      "outcome": "not_added"
     },
     {
       "source": "greenhouse",
@@ -67,15 +58,6 @@
       "outcome": "added"
     },
     {
-      "source": "jobspresso",
-      "targets": 1,
-      "postings": 0,
-      "verdicts": [
-        "empty"
-      ],
-      "outcome": "not_added"
-    },
-    {
       "source": "lever",
       "targets": 3,
       "postings": 421,
@@ -112,15 +94,6 @@
       "outcome": "added"
     },
     {
-      "source": "remotive",
-      "targets": 1,
-      "postings": 0,
-      "verdicts": [
-        "blocked_by_robots"
-      ],
-      "outcome": "not_added"
-    },
-    {
       "source": "weworkremotely",
       "targets": 1,
       "postings": 25,
@@ -141,12 +114,24 @@
   ],
   "skipped": [
     {
+      "source": "ashby",
+      "reason": "policy: prohibited"
+    },
+    {
       "source": "indeed",
       "reason": "policy: measurement_only"
     },
     {
+      "source": "jobspresso",
+      "reason": "policy: prohibited"
+    },
+    {
       "source": "linkedin",
       "reason": "policy: measurement_only"
+    },
+    {
+      "source": "remotive",
+      "reason": "policy: prohibited"
     }
   ],
   "records": [
@@ -167,118 +152,6 @@
       "error": null,
       "robots_allowed": true,
       "verdict": "ok"
-    },
-    {
-      "source": "ashby",
-      "tenant": "satispay",
-      "url": "https://api.ashbyhq.com/posting-api/job-board/satispay",
-      "robots_status": 401,
-      "status": null,
-      "bytes": 0,
-      "challenge": null,
-      "postings": 0,
-      "sample_titles": [],
-      "error": "robots.txt could not be read",
-      "robots_allowed": null,
-      "verdict": "not_probed"
-    },
-    {
-      "source": "ashby",
-      "tenant": "docebo",
-      "url": "https://api.ashbyhq.com/posting-api/job-board/docebo",
-      "robots_status": 401,
-      "status": null,
-      "bytes": 0,
-      "challenge": null,
-      "postings": 0,
-      "sample_titles": [],
-      "error": "robots.txt could not be read",
-      "robots_allowed": null,
-      "verdict": "not_probed"
-    },
-    {
-      "source": "ashby",
-      "tenant": "vanta",
-      "url": "https://api.ashbyhq.com/posting-api/job-board/vanta",
-      "robots_status": 401,
-      "status": null,
-      "bytes": 0,
-      "challenge": null,
-      "postings": 0,
-      "sample_titles": [],
-      "error": "robots.txt could not be read",
-      "robots_allowed": null,
-      "verdict": "not_probed"
-    },
-    {
-      "source": "ashby",
-      "tenant": "notion",
-      "url": "https://api.ashbyhq.com/posting-api/job-board/notion",
-      "robots_status": 401,
-      "status": null,
-      "bytes": 0,
-      "challenge": null,
-      "postings": 0,
-      "sample_titles": [],
-      "error": "robots.txt could not be read",
-      "robots_allowed": null,
-      "verdict": "not_probed"
-    },
-    {
-      "source": "ashby",
-      "tenant": "ramp",
-      "url": "https://api.ashbyhq.com/posting-api/job-board/ramp",
-      "robots_status": 401,
-      "status": null,
-      "bytes": 0,
-      "challenge": null,
-      "postings": 0,
-      "sample_titles": [],
-      "error": "robots.txt could not be read",
-      "robots_allowed": null,
-      "verdict": "not_probed"
-    },
-    {
-      "source": "ashby",
-      "tenant": "openai",
-      "url": "https://api.ashbyhq.com/posting-api/job-board/openai",
-      "robots_status": 401,
-      "status": null,
-      "bytes": 0,
-      "challenge": null,
-      "postings": 0,
-      "sample_titles": [],
-      "error": "robots.txt could not be read",
-      "robots_allowed": null,
-      "verdict": "not_probed"
-    },
-    {
-      "source": "ashby",
-      "tenant": "replit",
-      "url": "https://api.ashbyhq.com/posting-api/job-board/replit",
-      "robots_status": 401,
-      "status": null,
-      "bytes": 0,
-      "challenge": null,
-      "postings": 0,
-      "sample_titles": [],
-      "error": "robots.txt could not be read",
-      "robots_allowed": null,
-      "verdict": "not_probed"
-    },
-    {
-      "source": "ashby",
-      "tenant": "linear",
-      "url": "https://api.ashbyhq.com/posting-api/job-board/linear",
-      "robots_status": 401,
-      "status": null,
-      "bytes": 0,
-      "challenge": null,
-      "postings": 0,
-      "sample_titles": [],
-      "error": "robots.txt could not be read",
-      "robots_allowed": null,
-      "verdict": "not_probed"
     },
     {
       "source": "greenhouse",
@@ -592,7 +465,7 @@
       "url": "https://hn.algolia.com/api/v1/search?query=who%20is%20hiring&tags=comment",
       "robots_status": 404,
       "status": 200,
-      "bytes": 43068,
+      "bytes": 43073,
       "challenge": "none",
       "postings": 20,
       "sample_titles": [
@@ -639,20 +512,6 @@
       "error": null,
       "robots_allowed": true,
       "verdict": "ok"
-    },
-    {
-      "source": "jobspresso",
-      "tenant": null,
-      "url": "https://jobspresso.co/feed/",
-      "robots_status": 200,
-      "status": 200,
-      "bytes": 1189,
-      "challenge": "none",
-      "postings": 0,
-      "sample_titles": [],
-      "error": null,
-      "robots_allowed": true,
-      "verdict": "empty"
     },
     {
       "source": "lever",
@@ -760,20 +619,6 @@
       "error": null,
       "robots_allowed": true,
       "verdict": "ok"
-    },
-    {
-      "source": "remotive",
-      "tenant": null,
-      "url": "https://remotive.com/api/remote-jobs",
-      "robots_status": 200,
-      "status": null,
-      "bytes": 0,
-      "challenge": null,
-      "postings": 0,
-      "sample_titles": [],
-      "error": null,
-      "robots_allowed": false,
-      "verdict": "blocked_by_robots"
     },
     {
       "source": "weworkremotely",
