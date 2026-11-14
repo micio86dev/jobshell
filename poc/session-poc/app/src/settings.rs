@@ -19,6 +19,8 @@ pub struct ProviderSettings {
     pub judgment_service: String,
     pub judgment_model: String,
     pub judgment_address: String,
+    /// The share of postings that must clear, from 1 to 100. Saved as a percentage.
+    pub match_threshold: u8,
 }
 
 impl Default for ProviderSettings {
@@ -29,6 +31,7 @@ impl Default for ProviderSettings {
             judgment_service: "typesafe".to_string(),
             judgment_model: "jev-1.14.0".to_string(),
             judgment_address: String::new(),
+            match_threshold: 70,
         }
     }
 }
@@ -45,6 +48,9 @@ impl ProviderSettings {
         if self.llm_model.trim().is_empty() {
             bail!("choose a model for {}", self.llm_provider);
         }
+        if !(1..=100).contains(&self.match_threshold) {
+            bail!("the match threshold must be a whole percentage from 1 to 100");
+        }
         Ok(())
     }
 
@@ -56,6 +62,7 @@ impl ProviderSettings {
             ("JOBSHELL_JUDGMENT_SERVICE".to_string(), self.judgment_service.clone()),
             ("JOBSHELL_JUDGMENT_MODEL".to_string(), self.judgment_model.clone()),
             ("JOBSHELL_JUDGMENT_ADDRESS".to_string(), self.judgment_address.clone()),
+            ("JOBSHELL_MATCH_THRESHOLD".to_string(), self.match_threshold.to_string()),
         ]
     }
 }
@@ -124,6 +131,34 @@ mod tests {
         let text = std::fs::read_to_string(&path).expect("read");
         assert!(!text.to_lowercase().contains("key"), "no key-like field: {text}");
         assert!(!text.to_lowercase().contains("token"), "no token-like field: {text}");
+    }
+
+    #[test]
+    fn the_match_threshold_defaults_to_seventy_percent() {
+        assert_eq!(ProviderSettings::default().match_threshold, 70);
+    }
+
+    #[test]
+    fn a_threshold_outside_one_to_one_hundred_is_refused() {
+        for bad in [0_u8, 101] {
+            let settings = ProviderSettings { match_threshold: bad, ..Default::default() };
+            assert!(settings.validate().is_err(), "{bad} must be refused");
+        }
+        let edge = ProviderSettings { match_threshold: 100, ..Default::default() };
+        assert!(edge.validate().is_ok());
+    }
+
+    #[test]
+    fn a_file_saved_before_the_threshold_existed_gets_the_default() {
+        let path = temp_file("old-format");
+        std::fs::write(&path, r#"{"llm_provider":"anthropic","llm_model":"m","judgment_service":"typesafe","judgment_model":"jev-1.14.0","judgment_address":""}"#).expect("write");
+        assert_eq!(load(&path).expect("load").match_threshold, 70);
+    }
+
+    #[test]
+    fn the_agent_environment_carries_the_threshold() {
+        let env = ProviderSettings { match_threshold: 85, ..Default::default() }.agent_env();
+        assert!(env.contains(&("JOBSHELL_MATCH_THRESHOLD".to_string(), "85".to_string())));
     }
 
     #[test]

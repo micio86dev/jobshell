@@ -27,6 +27,7 @@ import { runOnce, type RunEvidence } from './run.ts';
 import { loadSeen, saveSeen } from './seen.ts';
 import { readSecret } from './secrets.ts';
 import { judgmentDepsFor, providerChoiceFromEnv, type ProviderChoice } from './provider-choice.ts';
+import { thresholdOverride } from './match-threshold.ts';
 import { listSources } from './sources/registry.ts';
 
 const arg = (name: string): string | undefined => {
@@ -60,7 +61,18 @@ const main = async (): Promise<void> => {
     profilePath,
     ...(configPath === undefined ? {} : { configPath }),
   });
-  const { config, profile, spec } = runtime;
+  const { config, profile } = runtime;
+  // The threshold the user chose in Settings replaces the profile's for this run, when it is set.
+  const spec = {
+    ...runtime.spec,
+    threshold: (() => {
+      try {
+        return thresholdOverride(process.env, runtime.spec.threshold);
+      } catch (error) {
+        return die(error instanceof Error ? error.message : 'the match threshold is invalid');
+      }
+    })(),
+  };
 
   // Only sources the policy allows unattended. A board feed that needs a tenant is
   // kept out too: `runOnce` reports it as a skip instead of crashing.

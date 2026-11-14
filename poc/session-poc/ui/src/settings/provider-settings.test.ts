@@ -7,6 +7,7 @@ const choice = (overrides: Partial<ProviderChoiceView>): ProviderChoiceView => (
   judgment_service: 'typesafe',
   judgment_model: 'jev-1.14.0',
   judgment_address: '',
+  match_threshold: 70,
   ...overrides,
 });
 
@@ -27,6 +28,19 @@ describe('validateChoice', () => {
     expect(
       validateChoice(choice({ judgment_service: 'laya', judgment_model: 'm', judgment_address: 'http://127.0.0.1:9000/v1/systemone' })),
     ).toBeNull();
+  });
+});
+
+describe('validateChoice threshold', () => {
+  it('accepts a whole percentage from 1 to 100', () => {
+    expect(validateChoice(choice({ match_threshold: 1 }))).toBeNull();
+    expect(validateChoice(choice({ match_threshold: 100 }))).toBeNull();
+  });
+
+  it('refuses a percentage outside that range, or not whole', () => {
+    expect(validateChoice(choice({ match_threshold: 0 }))).toBe('threshold-out-of-range');
+    expect(validateChoice(choice({ match_threshold: 101 }))).toBe('threshold-out-of-range');
+    expect(validateChoice(choice({ match_threshold: 70.5 }))).toBe('threshold-out-of-range');
   });
 });
 

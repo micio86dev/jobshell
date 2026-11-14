@@ -11,6 +11,7 @@ const CHOICE_COPY: Record<ChoiceProblem, string> = {
   'llm-model-missing': 'scegli un modello per il provider che legge il CV',
   'judgment-model-missing': 'scegli un modello per il servizio che giudica',
   'laya-address-missing': 'Laya ha bisogno dell’indirizzo dove gira',
+  'threshold-out-of-range': 'la soglia di corrispondenza va da 1% a 100%',
 };
 
 type SelectedView = {
@@ -505,6 +506,14 @@ onMounted(() => {
           type="text"
           placeholder="indirizzo dove gira Laya, es. http://127.0.0.1:9000/v1/systemone"
         />
+        <label for="match-threshold">soglia di corrispondenza</label>
+        <div class="threshold">
+          <input id="match-threshold" v-model.number="providerChoice.match_threshold" type="range" min="1" max="100" step="1" />
+          <output for="match-threshold">{{ providerChoice.match_threshold }}%</output>
+        </div>
+        <p class="meta threshold-note">
+          Mostra le offerte con almeno questa probabilità di corrispondenza. Più è bassa, più offerte vedrai.
+        </p>
         <button type="button" @click="saveChoice">Salva scelta</button>
       </div>
       <p class="status">{{ choiceMessage }}</p>
@@ -723,6 +732,14 @@ nav button.on {
 .choice label {
   font-weight: 600;
   font-size: 0.85rem;
+}
+.threshold {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.threshold-note {
+  grid-column: 1 / -1;
 }
 .choice select,
 .choice input {
