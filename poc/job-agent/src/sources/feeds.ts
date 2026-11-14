@@ -82,10 +82,11 @@ const bareList = (payload: unknown): unknown[] => {
 /** A feed, JSON or RSS, is data; only a page that is not a feed can be a challenge. */
 const feedChallenge = challengeOf;
 
-const salaryRange = (min: number | null, max: number | null, currency: string): string | null => {
+/** A salary range as the source published it. An amount with no currency is kept without one, never guessed. */
+const salaryRange = (min: number | null, max: number | null, currency: string | null): string | null => {
   if (min === null && max === null) return null;
-  if (min !== null && max !== null) return `${min}-${max} ${currency}`;
-  return `${min ?? max} ${currency}`;
+  const amount = min !== null && max !== null ? `${min}-${max}` : String(min ?? max);
+  return currency === null ? amount : `${amount} ${currency}`;
 };
 
 /** A JSON feed adapter: URL, then a mapper from the parsed payload. */
@@ -341,6 +342,74 @@ export const iprogrammatori = rssFeed(
         mentionsRemote(item.title) ||
         mentionsRemote(item.description) ||
         /smart working/i.test(`${item.title} ${item.description ?? ''}`),
+      description: item.description,
+      published_at: item.published_at,
+      salary: null,
+    }),
+);
+
+const himalayasJob = z.object({
+  guid: httpsLink,
+  title: shortText,
+  companyName: shortText,
+  applicationLink: httpsLink,
+  description: shortText,
+  locationRestrictions: z.array(z.string()).nullish().catch(null),
+  minSalary: number,
+  maxSalary: number,
+  currency: shortText,
+  pubDate: z.unknown().optional(),
+});
+
+/**
+ * Himalayas: a remote-only job board with a public JSON endpoint. Every job on it is remote by
+ * definition. The canonical link is the job's own page (`guid`), without the API's tracking
+ * parameter on `applicationLink`.
+ */
+export const himalayas: SourceAdapter = {
+  id: 'himalayas',
+  buildSearchUrl: () => 'https://himalayas.app/jobs/api?limit=100',
+  detectChallenge: feedChallenge,
+  extractPostings: (body) => {
+    const payload = safeJson(body);
+    const jobs = listUnder(payload, 'jobs');
+    return parseEach(jobs, himalayasJob)
+      .filter((job) => job.title !== null && (job.guid ?? job.applicationLink) !== null)
+      .map((job) => {
+        const restrictions = job.locationRestrictions?.filter((value) => value.trim().length > 0) ?? [];
+        const location = restrictions.length > 0 ? restrictions.join(', ') : null;
+        return posting({
+          source: 'himalayas',
+          id: job.guid ?? job.applicationLink ?? '',
+          title: job.title ?? '',
+          company: job.companyName,
+          location,
+          url: job.guid ?? job.applicationLink ?? '',
+          remote_hint: true,
+          description: job.description === null ? null : text(job.description),
+          published_at: toIsoDate(job.pubDate),
+          salary: salaryRange(job.minSalary, job.maxSalary, job.currency),
+        });
+      });
+  },
+};
+
+/**
+ * Jobspresso: a remote-jobs board published as WordPress RSS. The channel can be empty on a given
+ * day; an empty channel is an empty list, never an error.
+ */
+export const jobspresso = rssFeed(
+  'jobspresso',
+  () => 'https://jobspresso.co/feed/',
+  (item) =>
+    posting({
+      source: 'jobspresso',
+      id: item.guid ?? item.link,
+      title: item.title,
+      company: null,
+      location: null,
+      url: item.link,
+      remote_hint: true,
       description: item.description,
       published_at: item.published_at,
       salary: null,

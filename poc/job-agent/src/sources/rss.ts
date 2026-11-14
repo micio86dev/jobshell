@@ -37,12 +37,14 @@ export const parseRss = (xml: string): RssItem[] => {
     if (link === null || link.length === 0) continue;
 
     const description = tag(item, 'description');
+    const guid = tag(item, 'guid');
     items.push({
       title: text(title),
       link: text(link),
       description: description === null ? null : text(description),
       published_at: toIsoDate(tag(item, 'pubDate')),
-      guid: tag(item, 'guid'),
+      // Decoded like every other field: a guid with "&amp;" is the same identifier as its "&".
+      guid: guid === null ? null : text(guid),
     });
   }
   return items;
