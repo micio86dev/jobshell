@@ -131,9 +131,68 @@ test('a session-driven source is always refused by the runner', async () => {
 });
 
 test('a board feed without a tenant is a skip, not a crash', async () => {
-  const evidence = await runOnce(deps(() => ({ status: 200, text: FEED }), { sources: ['greenhouse'] }));
+  // No verified tenant registered for the source: the runner has nothing to build a URL from.
+  const evidence = await runOnce(
+    deps(() => ({ status: 200, text: FEED }), { sources: ['greenhouse'], boards: {} }),
+  );
   assert.match(evidence.sources[0]?.skipped ?? '', /cannot build a URL: greenhouse: a board feed needs a tenant/);
   assert.equal(evidence.sources[0]?.postings, 0);
+});
+
+test('a board source fetches one URL per verified tenant, in registry order', async () => {
+  const urls: string[] = [];
+  const route: Route = (url) => {
+    if (url.includes('boards-api.greenhouse.io')) {
+      urls.push(url);
+      return { status: 200, text: JSON.stringify({ jobs: [] }) };
+    }
+    return { status: 200, text: JUDGEMENT(0.95, 0, 'not_specified') };
+  };
+  const evidence = await runOnce(
+    deps(route, {
+      sources: ['greenhouse'],
+      boards: {
+        greenhouse: [
+          { tenant: 'acme', verified: '2026-11-14' },
+          { tenant: 'beta', verified: '2026-11-14' },
+        ],
+      },
+    }),
+  );
+
+  assert.deepEqual(urls, [
+    'https://boards-api.greenhouse.io/v1/boards/acme/jobs?content=true',
+    'https://boards-api.greenhouse.io/v1/boards/beta/jobs?content=true',
+  ]);
+  assert.equal(evidence.sources[0]?.pages, 2);
+  assert.equal(evidence.sources[0]?.status, 200);
+});
+
+test('the tenant list is capped by the page ceiling, the same rule as every other source', async () => {
+  const urls: string[] = [];
+  const route: Route = (url) => {
+    if (url.includes('boards-api.greenhouse.io')) {
+      urls.push(url);
+      return { status: 200, text: JSON.stringify({ jobs: [] }) };
+    }
+    return { status: 200, text: JUDGEMENT(0.95, 0, 'not_specified') };
+  };
+  const config = { ...defaultConfig(), max_pages_per_run: 1 };
+  await runOnce(
+    deps(route, {
+      config,
+      sources: ['greenhouse'],
+      boards: {
+        greenhouse: [
+          { tenant: 'acme', verified: '2026-11-14' },
+          { tenant: 'beta', verified: '2026-11-14' },
+        ],
+      },
+    }),
+  );
+
+  assert.equal(urls.length, 1, 'the ceiling of one page per run also limits boards');
+  assert.match(urls[0] ?? '', /\/acme\/jobs/);
 });
 
 test('an unknown source is reported as skipped, never fetched', async () => {

@@ -37,7 +37,11 @@ export type SourceAdapter = {
   id: string;
   buildSearchUrl(query: string, options: SearchOptions): string;
   detectChallenge(body: string): Challenge;
-  extractPostings(body: string): Posting[];
+  /**
+   * `options` is the request the body answered. A feed that names no employer (Personio's XML)
+   * needs the tenant it was fetched for to build each posting's link.
+   */
+  extractPostings(body: string, options?: SearchOptions): Posting[];
 };
 
 /** Decode the few entities these pages use, strip tags, collapse whitespace. */

@@ -12,8 +12,9 @@ import { judgePosting, type FetchLike, type HttpResponse, type JeDeps, type Stac
 import { assertAutomationAllowed, Pacer, resolvePolicy } from './policy.ts';
 import type { Spec } from './profile.ts';
 import { adapterFor } from './sources/registry.ts';
+import { tenantsFor, type Tenant } from './sources/tenants.ts';
 import { postingsFile, readPostings } from './sources/ziprecruiter.ts';
-import type { Challenge, Posting } from './sources/types.ts';
+import type { Challenge, Posting, SearchOptions } from './sources/types.ts';
 
 /** Fallback when neither the caller nor the profile sets a budget. */
 export const DEFAULT_SCORING_BUDGET = 120;
@@ -76,6 +77,8 @@ export type RunDeps = {
   spec: Spec;
   queries: { list: string[]; source: 'model' | 'fallback'; reason: string | null };
   sources: string[];
+  /** Board tenants per source. Absent means the verified registry; a map without a source means none. */
+  boards?: Readonly<Record<string, readonly Tenant[]>>;
   fetchImpl: FetchLike;
   jev: JeDeps;
   now: Date;
@@ -179,14 +182,35 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
     // A feed ignores the query, so several queries resolve to the same URL. Fetching it
     // once per query would multiply the load on the publisher for identical bytes.
     const urls: string[] = [];
-    for (const query of deps.queries.list.slice(0, Math.min(policy.maxPages, Math.max(1, deps.queries.list.length)))) {
-      try {
-        const url = adapter.buildSearchUrl(query, {});
-        if (!urls.includes(url)) urls.push(url);
-      } catch (error) {
-        // A board feed needs a tenant; a missing one is a skip, never a crash.
-        report.skipped = `cannot build a URL: ${error instanceof Error ? error.message : String(error)}`;
-        break;
+    // The options each URL was built from, so the extraction knows the employer behind a feed.
+    const requestOptions = new Map<string, SearchOptions>();
+    const boards = deps.boards === undefined ? tenantsFor(sourceId) : (deps.boards[sourceId] ?? []);
+    if (boards.length > 0) {
+      // A board source is one request per verified employer, in registry order. The page
+      // ceiling caps the boards as it caps every other request.
+      for (const board of boards.slice(0, policy.maxPages)) {
+        try {
+          const options: SearchOptions = { tenant: board.tenant };
+          const url = adapter.buildSearchUrl('', options);
+          if (!urls.includes(url)) {
+            urls.push(url);
+            requestOptions.set(url, options);
+          }
+        } catch (error) {
+          report.skipped = `cannot build a URL: ${error instanceof Error ? error.message : String(error)}`;
+          break;
+        }
+      }
+    } else {
+      for (const query of deps.queries.list.slice(0, Math.min(policy.maxPages, Math.max(1, deps.queries.list.length)))) {
+        try {
+          const url = adapter.buildSearchUrl(query, {});
+          if (!urls.includes(url)) urls.push(url);
+        } catch (error) {
+          // A board feed needs a tenant; a missing one is a skip, never a crash.
+          report.skipped = `cannot build a URL: ${error instanceof Error ? error.message : String(error)}`;
+          break;
+        }
       }
     }
     report.pages = urls.length;
@@ -220,7 +244,7 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
         break;
       }
 
-      const postings = adapter.extractPostings(response.text);
+      const postings = adapter.extractPostings(response.text, requestOptions.get(url) ?? {});
       report.postings += postings.length;
       fetched.push(...postings);
     }
