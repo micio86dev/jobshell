@@ -23,10 +23,19 @@ test('LinkedIn and Indeed default to measurement_only', () => {
 });
 
 test('ATS feeds default to allowed at the configured floor', () => {
-  for (const source of ['greenhouse', 'lever', 'ashby', 'recruitee']) {
+  for (const source of ['greenhouse', 'lever', 'recruitee']) {
     const policy = resolvePolicy(source, config());
     assert.equal(policy.automation, 'allowed', source);
     assert.equal(policy.paceMs, 8000, source);
+  }
+});
+
+test('a source leaves the allowlist when its live probe does not prove it (2026-11-14)', () => {
+  // Ashby: its API robots.txt answers 401, so its policy cannot be read and it is not probed.
+  // Remotive: robots.txt disallows /api/*, the path the adapter reads.
+  // Jobspresso: the feed answered 200 with zero items, so nothing is proven.
+  for (const source of ['ashby', 'remotive', 'jobspresso']) {
+    assert.equal(resolvePolicy(source, config()).automation, 'prohibited', source);
   }
 });
 

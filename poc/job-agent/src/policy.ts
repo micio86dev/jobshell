@@ -30,16 +30,16 @@ const ALLOWED: readonly string[] = [
   // ATS board feeds.
   'greenhouse',
   'lever',
-  'ashby',
   'recruitee',
+  'personio',
   // Public feeds that answered a plain GET with no credential in the Phase 0.5 probe.
   'remoteok',
-  'remotive',
   'arbeitnow',
   'jobicy',
   'weworkremotely',
   'workingnomads',
   'iprogrammatori',
+  'himalayas',
   'hn',
   // Fetched by the desktop app through ZipRecruiter's MCP server, with the user's OAuth;
   // the agent only reads the file it leaves behind.
