@@ -17,7 +17,6 @@ import { judgePosting, type JeDeps } from './jev.ts';
 import { parsePosting } from './posting-input.ts';
 import type { UserProfile } from './profile.ts';
 import { loadSeen } from './seen.ts';
-import type { Posting } from './sources/types.ts';
 
 export { loadSeen };
 

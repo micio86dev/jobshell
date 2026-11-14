@@ -13,7 +13,8 @@ OUT   := $(ROOT)/evidence/run/$(shell date -u +%Y%m%dT%H%M%SZ)
 
 .PHONY: test test-ts test-rs typecheck wiring agent-test ui-test agent agent-bridge agent-mcp bench probe persistence crash soak chrome spike desktop dmg phase0 clean clean-deps
 
-test: test-ts test-rs typecheck wiring agent-test ui-test
+# Every check, in the order a change should pass them. `lint` needs the root install (`pnpm install`).
+test: test-ts test-rs typecheck wiring agent-test ui-test lint clippy
 
 test-ts:
 	cd poc/runtime-bench && set -a && . ../../scripts/env.sh && set +a && \
@@ -37,6 +38,17 @@ typecheck:
 		../runtime-bench/node_modules/.bin/tsc --noEmit
 	cd poc/session-poc/ui && set -a && . ../../../scripts/env.sh && set +a && \
 		npm run typecheck
+
+# ESLint over every TypeScript and Vue file (config: eslint.config.mjs at the root).
+lint:
+	./node_modules/.bin/eslint .
+
+# Rust: warnings are errors, on every target (tests and binaries included).
+clippy:
+	cd poc/session-poc/src-tauri && set -a && . ../../../scripts/env.sh && set +a && \
+		../../../scripts/cargo.sh clippy --all-targets -- -D warnings
+	cd poc/session-poc/app && set -a && . ../../../scripts/env.sh && set +a && \
+		../../../scripts/cargo.sh clippy --all-targets -- -D warnings
 
 # Every name the Vue UI passes to invoke() must exist in generate_handler!.
 wiring:

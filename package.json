@@ -1,0 +1,12 @@
+{
+  "name": "jobshell-workspace",
+  "private": true,
+  "description": "Lint tooling shared by the TypeScript packages under poc/",
+  "devDependencies": {
+    "eslint": "10.13.0",
+    "eslint-plugin-vue": "10.12.0",
+    "typescript-eslint": "8.72.1",
+    "vue-eslint-parser": "10.4.1"
+  },
+  "license": "Apache-2.0"
+}

@@ -175,9 +175,6 @@ const SENIORITIES: readonly Seniority[] = ['junior', 'mid', 'senior', 'lead'];
 const PERIODS: readonly SalaryPeriod[] = ['year', 'day', 'hour'];
 const STRENGTHS: readonly Strength[] = ['mandatory', 'preferred', 'acceptable'];
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
 const clean = (values: string[]): string[] => values.map((value) => value.trim()).filter((value) => value.length > 0);
 const notBlank = (value: string): boolean => value.trim().length > 0;
 const nonNegativeFinite = (value: number): boolean => Number.isFinite(value) && value >= 0;
