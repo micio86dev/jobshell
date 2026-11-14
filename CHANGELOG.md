@@ -2,6 +2,18 @@
 
 All notable changes to the app are listed here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-11-14
+
+### Added
+- Choose the AI provider for reading CVs and searching: Anthropic, OpenAI, Gemini or Qwen, and the model for it. The model list comes from the provider with your key.
+- Choose the judgment service: TypeSafe Jev, Ollama on this machine, or Laya at an address you name.
+- Verifica checks each key with its provider without spending tokens: valid, rejected (wrong, expired or revoked), or not verified.
+- Keys for OpenAI and Gemini in Settings, next to the others. Keys stay in the OS keychain, and an address is only used when it is HTTPS on an approved host or on this machine.
+
+### Fixed
+- A refused key says so and names the provider, instead of "provider answered 401".
+- A network failure while planning a search falls back instead of stopping the run.
+
 ## [0.1.9] - 2026-11-14
 
 ### Added
