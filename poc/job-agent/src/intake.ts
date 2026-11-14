@@ -11,7 +11,7 @@
  */
 import { z } from 'zod';
 
-import { ANTHROPIC_URL, ANTHROPIC_VERSION } from './planner.ts';
+import { llmAnswer, llmRequest, LLM_LABEL, type LlmProvider } from './llm-providers.ts';
 import type { FetchLike } from './jev.ts';
 import { LANGUAGE_LEVELS, type LanguageLevel, type Seniority } from './profile.ts';
 
@@ -24,6 +24,7 @@ export const DEFAULT_EXTRACT_MAX_TOKENS = 4000;
 export type IntakeDeps = {
   apiKey: string;
   model: string;
+  provider?: LlmProvider;
   maxTokens?: number | undefined;
   baseUrl?: string;
   fetchImpl: FetchLike;
@@ -160,33 +161,33 @@ export const extractCandidateFields = async (
   deps: IntakeDeps,
   kind: IntakeKind = 'cv',
 ): Promise<IntakeResult> => {
-  const url = deps.baseUrl ?? ANTHROPIC_URL;
-  const init = {
-    method: 'POST',
-    headers: {
-      'x-api-key': deps.apiKey,
-      'anthropic-version': ANTHROPIC_VERSION,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: deps.model,
-      max_tokens: deps.maxTokens ?? DEFAULT_EXTRACT_MAX_TOKENS,
-      messages: [{ role: 'user', content: instruction(text, kind) }],
-    }),
-  };
-
+  const provider: LlmProvider = deps.provider ?? 'anthropic';
+  const label = LLM_LABEL[provider];
   const fallback = (reason: string): IntakeResult => ({ fields: emptyFields(), source: 'fallback', reason });
+
+  let request: ReturnType<typeof llmRequest>;
+  try {
+    request = llmRequest(provider, {
+      apiKey: deps.apiKey,
+      model: deps.model,
+      prompt: instruction(text, kind),
+      maxTokens: deps.maxTokens ?? DEFAULT_EXTRACT_MAX_TOKENS,
+      baseUrl: deps.baseUrl,
+    });
+  } catch (error) {
+    return fallback(error instanceof Error ? error.message : 'provider endpoint refused');
+  }
 
   // A network failure proposes nothing, and its raw text is never returned: it may carry the key.
   let response: Awaited<ReturnType<FetchLike>>;
   try {
-    response = await deps.fetchImpl(url, init);
+    response = await deps.fetchImpl(request.url, request.init);
   } catch {
     return fallback('provider request failed');
   }
   if (response.status === 401 || response.status === 403) {
     return fallback(
-      `the Anthropic key was refused (HTTP ${response.status}): it is wrong or expired, replace it in Settings`,
+      `the ${label} key was refused (HTTP ${response.status}): it is wrong or expired, replace it in Settings`,
     );
   }
   if (response.status !== 200) return fallback(`provider answered ${response.status}`);
@@ -197,15 +198,12 @@ export const extractCandidateFields = async (
   } catch {
     return fallback('provider answer was not JSON');
   }
-  const record = isRecord(parsed) ? parsed : {};
+  const answer = llmAnswer(provider, parsed);
   // A reasoning model that runs out of tokens returns a partial answer: say so, not that the format is wrong.
-  if (record['stop_reason'] === 'max_tokens') {
+  if (answer.truncated) {
     return fallback('provider answer was cut off by the token limit; raise JOBSHELL_EXTRACT_MAX_TOKENS');
   }
-  const blocks = Array.isArray(record['content']) ? (record['content'] as unknown[]) : [];
-  const answerText = blocks
-    .map((block) => (isRecord(block) && typeof block['text'] === 'string' ? block['text'] : ''))
-    .join('');
+  const answerText = answer.text;
 
   const object = extractObject(answerText);
   if (object === null) return fallback('provider answer had no JSON object');

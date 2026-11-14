@@ -128,6 +128,14 @@ test('a refused key says the key is wrong or expired, and where to replace it', 
   assert.deepEqual(result.fields.capabilities, [], 'a refused key proposes nothing');
 });
 
+test('with OpenAI selected, the CV goes to OpenAI and a refused key names OpenAI', async () => {
+  const { calls, fetchImpl } = fakeFetch(401, 'invalid');
+  const result = await extractCandidateFields(CV, { ...deps(fetchImpl), provider: 'openai', model: 'gpt-test' });
+
+  assert.equal(calls[0]?.url, 'https://api.openai.com/v1/chat/completions');
+  assert.match(result.reason ?? '', /OpenAI key was refused/);
+});
+
 test('a network failure falls back too, without leaking the raw error text', async () => {
   const fetchImpl: FetchLike = async () => {
     throw new Error('getaddrinfo ENOTFOUND api.anthropic.com key=test-key');

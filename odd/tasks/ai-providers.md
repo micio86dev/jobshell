@@ -10,9 +10,9 @@ S5. "Mi raccomando alla sicurezza delle chiavi API" — keys only in the OS keyc
 S6. Assumption: the model list endpoints are GET /v1/models (TypeSafe documented; OpenAI and Anthropic standard; Ollama GET /api/tags). Marked unverified until a live check.
 
 ## Tasks
-T1 | S5 | endpoint allowlist (job-agent, pure) | inline | status: in progress
-T2 | S2 | System One client parametric by service (job-agent) | inline | pending
-T3 | S1 | OpenAI and Gemini wire formats (job-agent) | inline | pending
+T1 | S5 | endpoint allowlist (job-agent) | inline | done: endpoints.test.ts, 6 pass
+T2 | S2 | System One services typesafe, ollama, laya (job-agent) | inline | done: judgment-services.test.ts, 7 pass
+T3 | S1 | LLM providers anthropic, openai, gemini, qwen (job-agent) | inline | done: llm-providers.test.ts, planner and intake routed through it; suite 295 pass
 T4 | S4,S5 | desktop: keys and Verifica per provider, model list (Rust) | inline | pending
 T5 | S1,S3,S4 | Settings UI: provider and model selection, key replace (UI) | inline | pending
 

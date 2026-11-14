@@ -11,6 +11,7 @@
 import { z } from 'zod';
 import { compileQueries, type UserProfile } from './profile.ts';
 import type { FetchLike } from './jev.ts';
+import { llmAnswer, llmRequest, type LlmProvider } from './llm-providers.ts';
 
 export const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 export const ANTHROPIC_VERSION = '2023-06-01';
@@ -18,7 +19,7 @@ export const QWEN_URL =
   'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions';
 
 export type PlannerDeps = {
-  provider: 'anthropic' | 'qwen';
+  provider: LlmProvider;
   apiKey: string;
   model: string;
   baseUrl?: string;
@@ -37,8 +38,6 @@ export type PlanResult = {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-/** `Array.isArray` on an unknown narrows to any[], which the standard forbids. */
-const asArray = (value: unknown): unknown[] => (Array.isArray(value) ? (value as unknown[]) : []);
 
 const instruction = (context: string, maxQueries: number): string =>
   [
@@ -96,44 +95,25 @@ export const planQueries = async (profile: UserProfile, deps: PlannerDeps): Prom
 
   const prompt = instruction(context, limit);
 
-  const request = deps.provider === 'anthropic'
-    ? {
-        url: deps.baseUrl ?? ANTHROPIC_URL,
-        init: {
-          method: 'POST',
-          headers: {
-            'x-api-key': deps.apiKey,
-            'anthropic-version': ANTHROPIC_VERSION,
-            'content-type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: deps.model,
-            max_tokens: 400,
-            messages: [{ role: 'user', content: prompt }],
-          }),
-        },
-      }
-    : {
-        url: deps.baseUrl ?? QWEN_URL,
-        init: {
-          method: 'POST',
-          headers: {
-            authorization: `Bearer ${deps.apiKey}`,
-            'content-type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: deps.model,
-            messages: [{ role: 'user', content: prompt }],
-          }),
-        },
-      };
-
   const fallback = (reason: string): PlanResult => ({
     queries: compileQueries(profile, limit),
     source: 'fallback',
     reason,
     usage: { input_tokens: 0, output_tokens: 0 },
   });
+
+  let request: ReturnType<typeof llmRequest>;
+  try {
+    request = llmRequest(deps.provider, {
+      apiKey: deps.apiKey,
+      model: deps.model,
+      prompt,
+      maxTokens: 400,
+      baseUrl: deps.baseUrl,
+    });
+  } catch (error) {
+    return fallback(error instanceof Error ? error.message : 'provider endpoint refused');
+  }
 
   const response = await deps.fetchImpl(request.url, request.init);
   if (response.status !== 200) return fallback(`provider answered ${response.status}`);
@@ -147,16 +127,8 @@ export const planQueries = async (profile: UserProfile, deps: PlannerDeps): Prom
   const record = isRecord(parsed) ? parsed : {};
   const usage = usageFrom(record);
 
-  const answerText = deps.provider === 'anthropic'
-    ? asArray(record['content'])
-        .map((block) => (isRecord(block) && typeof block['text'] === 'string' ? block['text'] : ''))
-        .join('')
-    : (() => {
-        const first = asArray(record['choices'])[0];
-        if (!isRecord(first) || !isRecord(first['message'])) return '';
-        const content = first['message']['content'];
-        return typeof content === 'string' ? content : '';
-      })();
+  const answer = llmAnswer(deps.provider, record);
+  const answerText = answer.text;
 
   const queries = extractQueries(answerText, limit);
   if (queries === null) return { ...fallback('provider answer had no usable query array'), usage };
