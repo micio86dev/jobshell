@@ -2,6 +2,12 @@
 
 All notable changes to the app are listed here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.1.7] - 2026-11-14
+
+### Changed
+- Lint and strict checks run on every change: ESLint covers every TypeScript and Vue file, clippy runs with warnings as errors, and `make test` runs them with the typecheck and the UI tests.
+- The project no longer tracks its local harness state.
+
 ## [0.1.6] - 2026-11-14
 
 ### Changed
