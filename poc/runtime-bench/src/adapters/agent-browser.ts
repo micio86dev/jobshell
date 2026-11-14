@@ -15,7 +15,7 @@ const DEFAULT_BIN = path.resolve(
   import.meta.dirname,
   '../../../agent-browser-probe/node_modules/agent-browser/bin/agent-browser-darwin-arm64',
 );
-const BIN = process.env['OPENJOB_AGENT_BROWSER_BIN'] ?? DEFAULT_BIN;
+const BIN = process.env['JOBSHELL_AGENT_BROWSER_BIN'] ?? DEFAULT_BIN;
 
 export type AgentBrowserOptions = {
   name: string;

@@ -74,7 +74,7 @@ const annotate = (results) => {
     const badge = document.createElement('span');
     const percent = Math.round(result.probability * 100);
     badge.textContent = ` ${percent}%`;
-    badge.title = `openjob: ${result.verdict} (${result.stack_stance})`;
+    badge.title = `jobshell: ${result.verdict} (${result.stack_stance})`;
     badge.style.cssText = [
       'display:inline-block',
       'margin-left:6px',

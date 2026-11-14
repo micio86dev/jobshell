@@ -1,4 +1,4 @@
-# openjob.dev
+# jobshell.dev
 
 A local-first desktop application for global AI-assisted job discovery is the eventual
 product. **This repository is Phase 0: a feasibility proof of concept, not the product.**
@@ -111,10 +111,10 @@ Only four project variables exist, and every one of them is optional:
 
 | Variable | Read by | Effect when unset |
 | --- | --- | --- |
-| `OPENJOB_REAL_LOGIN_URL` | `poc/session-poc/persistence.ts` | the real-service login variant is skipped and recorded as skipped |
-| `OPENJOB_REAL_LOGGED_IN_SELECTOR` | same | same; both are required together |
-| `OPENJOB_AGENT_BROWSER_BIN` | `poc/runtime-bench/src/adapters/agent-browser.ts` | defaults to the binary inside `poc/agent-browser-probe` |
-| `OPENJOB_RUST_TOOLCHAIN` | `scripts/cargo.sh` | defaults to `1.98.1-aarch64-apple-darwin` |
+| `JOBSHELL_REAL_LOGIN_URL` | `poc/session-poc/persistence.ts` | the real-service login variant is skipped and recorded as skipped |
+| `JOBSHELL_REAL_LOGGED_IN_SELECTOR` | same | same; both are required together |
+| `JOBSHELL_AGENT_BROWSER_BIN` | `poc/runtime-bench/src/adapters/agent-browser.ts` | defaults to the binary inside `poc/agent-browser-probe` |
+| `JOBSHELL_RUST_TOOLCHAIN` | `scripts/cargo.sh` | defaults to `1.98.1-aarch64-apple-darwin` |
 
 The variables `scripts/env.sh` exports (`CARGO_TARGET_DIR`, `PLAYWRIGHT_BROWSERS_PATH`,
 `npm_config_store_dir`, `PNPM_HOME`, `TMPDIR`) are artifact placement, not configuration.

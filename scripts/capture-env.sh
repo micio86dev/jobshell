@@ -2,7 +2,7 @@
 # Capture the host state that all Phase 0 measurements depend on.
 # Output: evidence/run/<ts>/env.json  (git-ignored, reproducible)
 set -euo pipefail
-ROOT="${OPENJOB_ROOT:-$(git rev-parse --show-toplevel)}"
+ROOT="${JOBSHELL_ROOT:-$(git rev-parse --show-toplevel)}"
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
 OUT="$ROOT/evidence/run/$TS"
 mkdir -p "$OUT"

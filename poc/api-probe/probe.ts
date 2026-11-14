@@ -96,7 +96,7 @@ const robotsOrigins = (urls: string[]): string[] => [
   ...new Set(urls.map((url) => new URL(url).origin)),
 ];
 
-const USER_AGENT = 'openjob-phase0-probe';
+const USER_AGENT = 'jobshell-phase0-probe';
 const outDir = path.resolve(process.argv[2] ?? path.join(REPO_ROOT, 'evidence/run', new Date().toISOString().replace(/[:.]/g, '-')));
 fs.mkdirSync(outDir, { recursive: true });
 

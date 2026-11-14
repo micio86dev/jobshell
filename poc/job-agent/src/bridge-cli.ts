@@ -20,7 +20,7 @@ const arg = (name: string): string | undefined => {
 
 const profilePath = arg('profile');
 if (profilePath === undefined) {
-  process.stderr.write('openjob: --profile <path> is required\n');
+  process.stderr.write('jobshell: --profile <path> is required\n');
   process.exit(2);
 }
 
@@ -33,7 +33,7 @@ const logPath = arg('log');
 
 const port = Number.parseInt(rawPort, 10);
 if (!Number.isInteger(port) || port < 0 || port > 65535) {
-  process.stderr.write(`openjob: --port must be an integer between 0 and 65535 (got ${rawPort})\n`);
+  process.stderr.write(`jobshell: --port must be an integer between 0 and 65535 (got ${rawPort})\n`);
   process.exit(2);
 }
 
@@ -57,11 +57,11 @@ const server = await startBridge(
 
 process.stdout.write(
   [
-    `openjob bridge listening on http://127.0.0.1:${server.port}`,
+    `jobshell bridge listening on http://127.0.0.1:${server.port}`,
     `  profile:   ${runtime.profile.headline}`,
     `  threshold: ${Math.round(runtime.spec.threshold * 100)}%`,
     '',
-    '  settings:  the openjob app, tab Impostazioni  ← the keys live there',
+    '  settings:  the jobshell app, tab Impostazioni  ← the keys live there',
     '',
     'The extension finds this bridge on its own: open a job page and press "Score this page".',
     'This process reads the page only when the extension asks it to. Ctrl+C to stop.',

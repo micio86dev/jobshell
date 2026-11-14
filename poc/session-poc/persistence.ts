@@ -18,7 +18,7 @@
  * mechanism it is not allowed to inspect.
  *
  * The real-service variant runs only when the maintainer sets both
- * OPENJOB_REAL_LOGIN_URL and OPENJOB_REAL_LOGGED_IN_SELECTOR; it opens a headed
+ * JOBSHELL_REAL_LOGIN_URL and JOBSHELL_REAL_LOGGED_IN_SELECTOR; it opens a headed
  * browser, waits for the human to sign in, and asserts that selector after a
  * restart.
  */
@@ -157,12 +157,12 @@ try {
 }
 
 // --- Optional real-service variant (human in the loop, behaviour-only) -------
-const realLoginUrl = process.env['OPENJOB_REAL_LOGIN_URL'];
-const realLoggedInSelector = process.env['OPENJOB_REAL_LOGGED_IN_SELECTOR'];
+const realLoginUrl = process.env['JOBSHELL_REAL_LOGIN_URL'];
+const realLoggedInSelector = process.env['JOBSHELL_REAL_LOGGED_IN_SELECTOR'];
 const realService: { ran: boolean; reason: string; result: string | null } = {
   ran: false,
   reason:
-    'skipped: OPENJOB_REAL_LOGIN_URL and OPENJOB_REAL_LOGGED_IN_SELECTOR are not both set, so no third-party account was used',
+    'skipped: JOBSHELL_REAL_LOGIN_URL and JOBSHELL_REAL_LOGGED_IN_SELECTOR are not both set, so no third-party account was used',
   result: null,
 };
 if (realLoginUrl !== undefined && realLoginUrl.length > 0 && realLoggedInSelector !== undefined) {

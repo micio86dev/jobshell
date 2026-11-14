@@ -23,7 +23,7 @@ fi
 
 APP_NAME="$(basename "$APP" .app)"
 VOL_NAME="${DMG_VOLUME_NAME:-$APP_NAME}"
-STAGE="$(mktemp -d "${TMPDIR:-/tmp}/openjob-dmg.XXXXXX")"
+STAGE="$(mktemp -d "${TMPDIR:-/tmp}/jobshell-dmg.XXXXXX")"
 trap 'rm -rf "$STAGE"' EXIT
 
 mkdir -p "$(dirname "$OUT")"

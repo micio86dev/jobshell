@@ -3,7 +3,7 @@ import { test } from 'node:test';
 
 import { isAllowed, parseRobots, robotsPathOf, robotsPolicyFor } from '../src/lib/robots.ts';
 
-const UA = 'openjob-phase0-probe';
+const UA = 'jobshell-phase0-probe';
 
 test('robotsPathOf keeps the query string, which patterns are matched against', () => {
   assert.equal(robotsPathOf('https://example.com/a/b?c=1'), '/a/b?c=1');
@@ -18,17 +18,17 @@ test('a wildcard group applies when no specific agent matches', () => {
 });
 
 test('a specific agent group wins over the wildcard', () => {
-  const text = ['User-agent: *', 'Disallow: /', '', 'User-agent: openjob', 'Disallow: /only-this'].join('\n');
+  const text = ['User-agent: *', 'Disallow: /', '', 'User-agent: jobshell', 'Disallow: /only-this'].join('\n');
   const rules = parseRobots(text, UA);
-  assert.equal(rules.matched_group, 'openjob');
+  assert.equal(rules.matched_group, 'jobshell');
   assert.equal(isAllowed('https://example.com/anything', rules), true);
   assert.equal(isAllowed('https://example.com/only-this', rules), false);
 });
 
 test('the longest matching agent token wins', () => {
-  const text = ['User-agent: openjob', 'Disallow: /a', '', 'User-agent: openjob-phase0-probe', 'Disallow: /b'].join('\n');
+  const text = ['User-agent: jobshell', 'Disallow: /a', '', 'User-agent: jobshell-phase0-probe', 'Disallow: /b'].join('\n');
   const rules = parseRobots(text, UA);
-  assert.equal(rules.matched_group, 'openjob-phase0-probe');
+  assert.equal(rules.matched_group, 'jobshell-phase0-probe');
   assert.equal(isAllowed('https://example.com/a', rules), true);
   assert.equal(isAllowed('https://example.com/b', rules), false);
 });
@@ -75,12 +75,12 @@ test('Allow breaks a tie at equal pattern length', () => {
 });
 
 test('crawl-delay is reported from the matched group', () => {
-  const rules = parseRobots('User-agent: openjob\nCrawl-delay: 2.5\nDisallow: /z\n', UA);
+  const rules = parseRobots('User-agent: jobshell\nCrawl-delay: 2.5\nDisallow: /z\n', UA);
   assert.equal(rules.crawl_delay_seconds, 2.5);
 });
 
 test('crawl-delay from the wildcard group does not override a specific group', () => {
-  const text = ['User-agent: *', 'Crawl-delay: 10', '', 'User-agent: openjob', 'Disallow: /z'].join('\n');
+  const text = ['User-agent: *', 'Crawl-delay: 10', '', 'User-agent: jobshell', 'Disallow: /z'].join('\n');
   const rules = parseRobots(text, UA);
   assert.equal(rules.crawl_delay_seconds, null);
 });

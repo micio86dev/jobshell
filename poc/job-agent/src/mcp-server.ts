@@ -22,7 +22,7 @@ import type { Posting } from './sources/types.ts';
 export { loadSeen };
 
 export const PROTOCOL_VERSION = '2024-11-05';
-export const SERVER_INFO = { name: 'openjob-agent', version: '0.1.0' };
+export const SERVER_INFO = { name: 'jobshell-agent', version: '0.1.0' };
 
 export type McpDeps = {
   profile: UserProfile;
@@ -243,7 +243,7 @@ export const serveStdio = (deps: McpDeps): void => {
       // rejection is swallowed on purpose: an unhandled rejection exits Node, which
       // would kill the MCP server on a network error in a notification.
       handleMcpRequest(frame.request, deps).catch((error: unknown) => {
-        process.stderr.write(`openjob-agent: notification failed: ${error instanceof Error ? error.message : String(error)}\n`);
+        process.stderr.write(`jobshell-agent: notification failed: ${error instanceof Error ? error.message : String(error)}\n`);
       });
       return;
     }
@@ -251,7 +251,7 @@ export const serveStdio = (deps: McpDeps): void => {
     handleMcpRequest(request, deps)
       .then((response) => process.stdout.write(`${JSON.stringify(response)}\n`))
       .catch((error: unknown) => {
-        process.stderr.write(`openjob-agent: request failed: ${error instanceof Error ? error.message : String(error)}\n`);
+        process.stderr.write(`jobshell-agent: request failed: ${error instanceof Error ? error.message : String(error)}\n`);
         process.stdout.write(
           `${JSON.stringify(internalErrorResponse(request.id, error))}\n`,
         );

@@ -137,8 +137,8 @@ test('an answer cut off by the token limit says so, instead of blaming the forma
 
 test('the token budget comes from the environment, with a default large enough for a reasoning model', () => {
   assert.equal(maxTokensForExtraction({}), 4000);
-  assert.equal(maxTokensForExtraction({ OPENJOB_EXTRACT_MAX_TOKENS: '8000' }), 8000);
-  assert.equal(maxTokensForExtraction({ OPENJOB_EXTRACT_MAX_TOKENS: 'lots' }), 4000, 'a value that is not a number is ignored');
+  assert.equal(maxTokensForExtraction({ JOBSHELL_EXTRACT_MAX_TOKENS: '8000' }), 8000);
+  assert.equal(maxTokensForExtraction({ JOBSHELL_EXTRACT_MAX_TOKENS: 'lots' }), 4000, 'a value that is not a number is ignored');
 });
 
 test('the contract types a CV or portfolio states are proposed; an unknown one is dropped', async () => {

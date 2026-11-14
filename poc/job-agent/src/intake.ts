@@ -195,7 +195,7 @@ export const extractCandidateFields = async (
   const record = isRecord(parsed) ? parsed : {};
   // A reasoning model that runs out of tokens returns a partial answer: say so, not that the format is wrong.
   if (record['stop_reason'] === 'max_tokens') {
-    return fallback('provider answer was cut off by the token limit; raise OPENJOB_EXTRACT_MAX_TOKENS');
+    return fallback('provider answer was cut off by the token limit; raise JOBSHELL_EXTRACT_MAX_TOKENS');
   }
   const blocks = Array.isArray(record['content']) ? (record['content'] as unknown[]) : [];
   const answerText = blocks

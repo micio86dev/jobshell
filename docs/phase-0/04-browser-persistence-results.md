@@ -60,7 +60,7 @@ So a browser crash is detectable and recoverable at the process level without co
 
 ## Not tested, and why
 
-- **Session persistence on a real third-party service.** Requires a maintainer-provided account, URL and logged-in selector. The script supports it (`OPENJOB_REAL_LOGIN_URL`, `OPENJOB_REAL_LOGGED_IN_SELECTOR`) and deletes the resulting profile in a `finally` block, but no such account was used in this phase.
+- **Session persistence on a real third-party service.** Requires a maintainer-provided account, URL and logged-in selector. The script supports it (`JOBSHELL_REAL_LOGIN_URL`, `JOBSHELL_REAL_LOGGED_IN_SELECTOR`) and deletes the resulting profile in a `finally` block, but no such account was used in this phase.
 - **Restoring a session cookie after a crash rather than a clean close.** Not attempted: it depends on Chrome's session-restore behaviour and on flags the product would have to ship deliberately.
 - **Multi-profile isolation.** Only one profile at a time was exercised.
 

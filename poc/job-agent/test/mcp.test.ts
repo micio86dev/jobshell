@@ -25,7 +25,7 @@ test('mcp: initialize advertises the protocol and the tool capability', async ()
   const result = response.result as { protocolVersion: string; capabilities: { tools: unknown }; serverInfo: { name: string } };
   assert.equal(result.protocolVersion, '2024-11-05');
   assert.deepEqual(result.capabilities.tools, {});
-  assert.equal(result.serverInfo.name, 'openjob-agent');
+  assert.equal(result.serverInfo.name, 'jobshell-agent');
 });
 
 test('mcp: the three tools are listed with schemas', async () => {
@@ -106,7 +106,7 @@ test('mcp: a frame without an id is a notification, and an invalid frame is refu
 test('mcp: a seen file that was asked for and cannot be read is an error, not an empty set', () => {
   assert.throws(() => loadSeen('/nonexistent/seen.json'), /unreadable/);
 
-  const dir = mkdtempSync(join(tmpdir(), 'openjob-seen-'));
+  const dir = mkdtempSync(join(tmpdir(), 'jobshell-seen-'));
   const corrupt = join(dir, 'corrupt.json');
   writeFileSync(corrupt, 'not json', 'utf8');
   assert.throws(() => loadSeen(corrupt), /unreadable/);

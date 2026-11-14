@@ -54,19 +54,19 @@ agent-test:
 
 # PROFILE=/path/to/profile.json [DRY=1]
 agent:
-	@test -n "$(PROFILE)" || (echo "openjob: PROFILE is required."; echo "  make $@ PROFILE=./profile.json"; echo "  a real profile is personal data: copy poc/job-agent/profile.example.json"; exit 2)
+	@test -n "$(PROFILE)" || (echo "jobshell: PROFILE is required."; echo "  make $@ PROFILE=./profile.json"; echo "  a real profile is personal data: copy poc/job-agent/profile.example.json"; exit 2)
 	cd poc/job-agent && set -a && . ../../scripts/env.sh && set +a && \
 		node src/cli.ts --profile "$(abspath $(PROFILE))" $(if $(DRY),--dry-run,)
 
 # PROFILE=/path/to/profile.json [PORT=8787] [LOG=path.jsonl] — writes the token to a 0600 file.
 agent-bridge:
-	@test -n "$(PROFILE)" || (echo "openjob: PROFILE is required."; echo "  make $@ PROFILE=./profile.json"; echo "  a real profile is personal data: copy poc/job-agent/profile.example.json"; exit 2)
+	@test -n "$(PROFILE)" || (echo "jobshell: PROFILE is required."; echo "  make $@ PROFILE=./profile.json"; echo "  a real profile is personal data: copy poc/job-agent/profile.example.json"; exit 2)
 	cd poc/job-agent && set -a && . ../../scripts/env.sh && set +a && \
 		node src/bridge-cli.ts --profile "$(abspath $(PROFILE))" --port $(or $(PORT),8787) $(if $(LOG),--log "$(abspath $(LOG))",)
 
 # PROFILE=/path/to/profile.json — MCP over stdio for the user's own assistant.
 agent-mcp:
-	@test -n "$(PROFILE)" || (echo "openjob: PROFILE is required."; echo "  make $@ PROFILE=./profile.json"; echo "  a real profile is personal data: copy poc/job-agent/profile.example.json"; exit 2)
+	@test -n "$(PROFILE)" || (echo "jobshell: PROFILE is required."; echo "  make $@ PROFILE=./profile.json"; echo "  a real profile is personal data: copy poc/job-agent/profile.example.json"; exit 2)
 	cd poc/job-agent && set -a && . ../../scripts/env.sh && set +a && \
 		node src/mcp-cli.ts --profile "$(abspath $(PROFILE))"
 
@@ -131,8 +131,8 @@ desktop:
 dmg: desktop
 	mkdir -p "$(OUT)"
 	set -a && . ./scripts/env.sh && set +a && \
-		./scripts/make-dmg.sh "$$CARGO_TARGET_DIR/release/bundle/macos/openjob-phase0.app" \
-			"$(OUT)/openjob-phase0_0.0.0_aarch64.dmg" | tee "$(OUT)/dmg.json"
+		./scripts/make-dmg.sh "$$CARGO_TARGET_DIR/release/bundle/macos/Jobshell.app" \
+			"$(OUT)/jobshell_0.0.0_aarch64.dmg" | tee "$(OUT)/dmg.json"
 
 phase0: test bench probe persistence crash soak chrome spike desktop
 	@echo "Phase 0 evidence written to $(OUT)"

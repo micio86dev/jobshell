@@ -81,8 +81,8 @@ const parseGroups = (text: string): Group[] => {
  * Select the group for `userAgent`.
  *
  * A token matches when it is a case-insensitive substring of the user agent, which
- * is how real crawlers identify themselves ("openjob-phase0-probe/1.0" matches a
- * `openjob` group). The longest matching token wins; `*` applies only when nothing
+ * is how real crawlers identify themselves ("jobshell-phase0-probe/1.0" matches a
+ * `jobshell` group). The longest matching token wins; `*` applies only when nothing
  * more specific matched.
  */
 export const parseRobots = (text: string, userAgent: string): RobotsRules => {

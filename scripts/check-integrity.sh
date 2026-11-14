@@ -44,11 +44,11 @@ sys.exit(1 if bad else 0)
 PY
 
 echo "== 2. Git object database =="
-if git fsck --full --no-dangling >/tmp/openjob-fsck.log 2>&1; then
+if git fsck --full --no-dangling >/tmp/jobshell-fsck.log 2>&1; then
   echo "   git fsck: clean"
 else
   echo "   git fsck: FAILED"
-  sed -n '1,10p' /tmp/openjob-fsck.log
+  sed -n '1,10p' /tmp/jobshell-fsck.log
   fail=1
 fi
 
@@ -80,11 +80,11 @@ echo "== 5. Dependency trees typecheck =="
 set -a; . ./scripts/env.sh; set +a
 for project in runtime-bench api-probe session-poc chrome-connect; do
   if [ -x "poc/runtime-bench/node_modules/.bin/tsc" ]; then
-    if (cd "poc/$project" && ../runtime-bench/node_modules/.bin/tsc --noEmit >/tmp/openjob-tsc.log 2>&1); then
+    if (cd "poc/$project" && ../runtime-bench/node_modules/.bin/tsc --noEmit >/tmp/jobshell-tsc.log 2>&1); then
       echo "   $project: ok"
     else
       echo "   $project: FAILED"
-      sed -n '1,5p' /tmp/openjob-tsc.log
+      sed -n '1,5p' /tmp/jobshell-tsc.log
       fail=1
     fi
   fi
@@ -92,11 +92,11 @@ done
 
 # The desktop UI uses its own toolchain (vue-tsc) and its own node_modules.
 if [ -x "poc/session-poc/ui/node_modules/.bin/vue-tsc" ]; then
-  if (cd poc/session-poc/ui && ./node_modules/.bin/vue-tsc --noEmit >/tmp/openjob-vuetsc.log 2>&1); then
+  if (cd poc/session-poc/ui && ./node_modules/.bin/vue-tsc --noEmit >/tmp/jobshell-vuetsc.log 2>&1); then
     echo "   desktop ui: ok"
   else
     echo "   desktop ui: FAILED"
-    sed -n '1,5p' /tmp/openjob-vuetsc.log
+    sed -n '1,5p' /tmp/jobshell-vuetsc.log
     fail=1
   fi
 fi

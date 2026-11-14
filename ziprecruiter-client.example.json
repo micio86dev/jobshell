@@ -1,7 +1,7 @@
 {
-  "client_id": "https://REPLACE-WITH-YOUR-DOMAIN/openjob-client.json",
-  "client_name": "openjob.dev",
-  "client_uri": "https://openjob.dev",
+  "client_id": "https://REPLACE-WITH-YOUR-DOMAIN/jobshell-client.json",
+  "client_name": "jobshell.dev",
+  "client_uri": "https://jobshell.dev",
   "redirect_uris": [
     "http://127.0.0.1:8788/callback"
   ],

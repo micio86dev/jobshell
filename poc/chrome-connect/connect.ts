@@ -128,7 +128,7 @@ const message = (error: unknown): string =>
 
     // The same endpoint answers an anonymous HTTP client: that is the boundary.
     const probe = await fetch(`http://127.0.0.1:${port}/json/list`, {
-      headers: { 'user-agent': 'openjob-phase0-probe' },
+      headers: { 'user-agent': 'jobshell-phase0-probe' },
       signal: AbortSignal.timeout(2000),
     });
     const listed = await probe.json();
@@ -166,7 +166,7 @@ const message = (error: unknown): string =>
     JSON.stringify(
       {
         manifest_version: 3,
-        name: 'openjob phase0 probe',
+        name: 'jobshell phase0 probe',
         version: '0.0.1',
         description: 'Load test for the Phase 0 extension experiment.',
         background: { service_worker: 'background.js' },

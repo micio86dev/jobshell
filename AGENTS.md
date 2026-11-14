@@ -1,4 +1,4 @@
-# openjob.dev — coding standards
+# jobshell.dev — coding standards
 
 Project-wide rules for this repository. Phase 0 is a feasibility experiment; product code does not exist yet.
 
@@ -36,7 +36,7 @@ Project-wide rules for this repository. Phase 0 is a feasibility experiment; pro
 
 - Never read, print, copy, transmit or commit credentials, `.env` files, keychains, private keys or cookies.
 - The OS keyring is the mechanism this rule prescribes, not one it forbids. The agent reads only
-  the dedicated service `dev.openjob.desktop`, which only the openjob desktop app writes to, for
+  the dedicated service `dev.openjob.desktop`, which only the jobshell desktop app writes to, for
   the keys the agent needs (`typesafe`, `anthropic`, `qwen`). It never reads another service, and
   never another application's credentials or the browser cookie store. An agent that needs a key
   reads it from that service; it never writes one.

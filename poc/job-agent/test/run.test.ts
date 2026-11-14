@@ -229,7 +229,7 @@ test('a source request is a GET with no body, which is what Node fetch requires'
   assert.equal(seen.length, 1);
   assert.equal(seen[0]?.method, 'GET');
   assert.equal(seen[0]?.body, undefined, 'a GET with a body is rejected by the real fetch');
-  assert.match(seen[0]?.headers['user-agent'] ?? '', /openjob/);
+  assert.match(seen[0]?.headers['user-agent'] ?? '', /jobshell/);
 });
 
 test('a URL that does not depend on the query is fetched once, not once per query', async () => {

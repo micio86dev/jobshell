@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import { loadRuntime } from '../src/bootstrap.ts';
 
 test('a profile file that is not JSON fails without quoting its text', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'openjob-boot-'));
+  const dir = mkdtempSync(join(tmpdir(), 'jobshell-boot-'));
   const profilePath = join(dir, 'profile.json');
   const leaked = 'Mario Rossi sk-ant-LEAK-personal-text';
   writeFileSync(profilePath, `{"headline": ${leaked}}`, 'utf8');

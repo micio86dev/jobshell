@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "openjob.dev \u2014 score this page",
+  "name": "jobshell.dev \u2014 score this page",
   "version": "0.1.0",
-  "description": "Reads the job postings on the page you have open and asks your local openjob agent to score them against your profile. It never reads cookies and never navigates on its own.",
+  "description": "Reads the job postings on the page you have open and asks your local jobshell agent to score them against your profile. It never reads cookies and never navigates on its own.",
   "permissions": [
     "activeTab",
     "scripting",

@@ -119,10 +119,10 @@ Only four environment variables exist:
 
 | Variable | Read by | Effect when unset |
 | --- | --- | --- |
-| `OPENJOB_REAL_LOGIN_URL` | `poc/session-poc/persistence.ts` | the real-service login variant is skipped and recorded as skipped |
-| `OPENJOB_REAL_LOGGED_IN_SELECTOR` | same | same; both are required together |
-| `OPENJOB_AGENT_BROWSER_BIN` | `poc/runtime-bench/src/adapters/agent-browser.ts` | defaults to the binary inside `poc/agent-browser-probe` |
-| `OPENJOB_RUST_TOOLCHAIN` | `scripts/cargo.sh` | defaults to `1.98.1-aarch64-apple-darwin` |
+| `JOBSHELL_REAL_LOGIN_URL` | `poc/session-poc/persistence.ts` | the real-service login variant is skipped and recorded as skipped |
+| `JOBSHELL_REAL_LOGGED_IN_SELECTOR` | same | same; both are required together |
+| `JOBSHELL_AGENT_BROWSER_BIN` | `poc/runtime-bench/src/adapters/agent-browser.ts` | defaults to the binary inside `poc/agent-browser-probe` |
+| `JOBSHELL_RUST_TOOLCHAIN` | `scripts/cargo.sh` | defaults to `1.98.1-aarch64-apple-darwin` |
 
 If you later want to exercise an aggregator, you would first have to write the client: nothing exists to consume an Adzuna `app_id`, a Jooble key, an InfoJobs OAuth pair or a SEEK approval. Inventing a key would change nothing.
 
@@ -149,8 +149,8 @@ The script never reads the browser cookie store: session presence is judged by t
 
 ```bash
 cd poc/session-poc && set -a; . ../../scripts/env.sh; set +a
-OPENJOB_REAL_LOGIN_URL="https://example-service.test/login" \
-OPENJOB_REAL_LOGGED_IN_SELECTOR="#account-menu" \
+JOBSHELL_REAL_LOGIN_URL="https://example-service.test/login" \
+JOBSHELL_REAL_LOGGED_IN_SELECTOR="#account-menu" \
 node persistence.ts /tmp/persistence-real
 ```
 
@@ -277,9 +277,9 @@ Run it with `set -o pipefail` if you pipe it anywhere: `make test | grep …` re
 
 ### 7.2 Manual checks worth doing
 
-1. **Watch the desktop app.** `make desktop`, then `open "$CARGO_TARGET_DIR/release/bundle/macos/openjob-phase0.app"`. It opens a window and stays up (measured: alive after 12 s at 114 MB RSS). **The UI wiring is verified statically by `make wiring`, and the click path has been observed once by hand**: `evidence/summary/ui-click-path.json` transcribes the maintainer clicking start, crash, recover and retry, with the sqlite output of each step. That artifact states its own limits — nothing here presses the buttons automatically, and the `fail` branch was not clicked. Confirm the table and the keyring line yourself before ticking them — see §6.1 for what `attempts` should read after each click.
+1. **Watch the desktop app.** `make desktop`, then `open "$CARGO_TARGET_DIR/release/bundle/macos/Jobshell.app"`. It opens a window and stays up (measured: alive after 12 s at 114 MB RSS). **The UI wiring is verified statically by `make wiring`, and the click path has been observed once by hand**: `evidence/summary/ui-click-path.json` transcribes the maintainer clicking start, crash, recover and retry, with the sqlite output of each step. That artifact states its own limits — nothing here presses the buttons automatically, and the `fail` branch was not clicked. Confirm the table and the keyring line yourself before ticking them — see §6.1 for what `attempts` should read after each click.
 2. **Kill it mid-task.** Force-quit with a task in `running` and relaunch, then click **Recover interrupted**: the equivalent recovery is proven at the library level by `make spike` (`phase1.json` → `phase2.json`), and the button path now reaches the same audited core functions. The interrupted row offers **retry** instead of start, which begins the second attempt (`attempts` 2) — see §6.1.
-3. **Mount the DMG.** `hdiutil attach <dmg>` shows `openjob-phase0.app` and an `Applications` symlink.
+3. **Mount the DMG.** `hdiutil attach <dmg>` shows `Jobshell.app` and an `Applications` symlink.
 4. **Read one evidence file end to end** and check that every number in the document you are reading appears there. That is the whole point of the phase.
 
 ### 7.3 Known operational failure and its recovery
@@ -331,7 +331,7 @@ Tick only what you observed. Each line names the command and the observable resu
 - [ ] The desktop app's buttons behave as §6.1 describes: `start` moves a queued row to `running` with `attempts` 1, `Recover interrupted` after a force-quit moves a `running` row to `interrupted`, and `retry` on that row brings `attempts` to 2.
 - [ ] `api/api-probes.json` lists SmartRecruiters under `skipped_by_robots` with `origin_allowed: false`.
 - [ ] `chrome/chrome-connect.json` shows branded Chrome failing the extension mode and Chrome for Testing passing it.
-- [ ] `make desktop` produces `openjob-phase0.app`; `open` launches it and it stays up.
+- [ ] `make desktop` produces `Jobshell.app`; `open` launches it and it stays up.
 - [ ] `make dmg` produces an image that `hdiutil verify` calls VALID and that mounts with the app and an `Applications` link.
 - [ ] The SQLite database has the four tables and `sources` is empty — confirming that search is not implemented.
 - [ ] You read at least one document and matched its numbers to an artifact.

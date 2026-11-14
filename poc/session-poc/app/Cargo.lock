@@ -2041,6 +2041,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "jobshell-spike"
+version = "0.1.5"
+dependencies = [
+ "anyhow",
+ "base64 0.22.1",
+ "serde",
+ "serde_json",
+ "session-poc-core",
+ "sha2",
+ "sqlx",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-notification",
+ "tokio",
+ "ureq",
+]
+
+[[package]]
 name = "js-sys"
 version = "0.3.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2673,24 +2691,6 @@ name = "once_cell"
 version = "1.21.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
-
-[[package]]
-name = "openjob-spike"
-version = "0.1.5"
-dependencies = [
- "anyhow",
- "base64 0.22.1",
- "serde",
- "serde_json",
- "session-poc-core",
- "sha2",
- "sqlx",
- "tauri",
- "tauri-build",
- "tauri-plugin-notification",
- "tokio",
- "ureq",
-]
 
 [[package]]
 name = "option-ext"

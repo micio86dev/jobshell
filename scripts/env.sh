@@ -6,8 +6,8 @@
 #
 # Usage: `set -a; . ./scripts/env.sh; set +a`
 
-# The repository root: from the git checkout, or OPENJOB_ROOT when set explicitly.
-PROJECT_ROOT="${OPENJOB_ROOT:-$(git rev-parse --show-toplevel)}"
+# The repository root: from the git checkout, or JOBSHELL_ROOT when set explicitly.
+PROJECT_ROOT="${JOBSHELL_ROOT:-$(git rev-parse --show-toplevel)}"
 
 export CARGO_TARGET_DIR="$PROJECT_ROOT/.cache/target"
 export PLAYWRIGHT_BROWSERS_PATH="$PROJECT_ROOT/.cache/pw-browsers"

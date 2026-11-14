@@ -8,7 +8,7 @@ import { test } from 'node:test';
 
 import { loadSeen, saveSeen } from '../src/seen.ts';
 
-const dir = (): string => mkdtempSync(join(tmpdir(), 'openjob-seen-'));
+const dir = (): string => mkdtempSync(join(tmpdir(), 'jobshell-seen-'));
 
 test('no path at all is a legitimate first run', () => {
   assert.deepEqual([...loadSeen(null)], []);

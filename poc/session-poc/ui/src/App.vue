@@ -433,7 +433,7 @@ onMounted(() => {
       </p>
       <div class="keyrow">
         <label for="zipclient">client id (URL del document)</label>
-        <input id="zipclient" v-model="zipClientId" type="text" placeholder="https://tuo-dominio/openjob-client.json" />
+        <input id="zipclient" v-model="zipClientId" type="text" placeholder="https://tuo-dominio/jobshell-client.json" />
         <button type="button" @click="connectZipRecruiter">Collega</button>
       </div>
       <div class="actions">

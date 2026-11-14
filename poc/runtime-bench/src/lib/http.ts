@@ -24,7 +24,7 @@ export type ProbeOptions = {
 export const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const probeJson = async (url: string, options: ProbeOptions = {}): Promise<ProbeResult> => {
-  const { timeoutMs = 15_000, userAgent = 'openjob-phase0-probe', headers = {} } = options;
+  const { timeoutMs = 15_000, userAgent = 'jobshell-phase0-probe', headers = {} } = options;
   const started = performance.now();
   try {
     const res = await fetch(url, {

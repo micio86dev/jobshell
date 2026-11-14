@@ -199,7 +199,7 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
       try {
         // No body: a GET with one is rejected by Node's fetch, which would make every
         // source fail while a permissive test fake kept the suite green.
-        response = await deps.fetchImpl(url, { method: 'GET', headers: { 'user-agent': 'openjob-job-agent/0.1' } });
+        response = await deps.fetchImpl(url, { method: 'GET', headers: { 'user-agent': 'jobshell-job-agent/0.1' } });
       } catch (error) {
         report.skipped = `fetch failed: ${error instanceof Error ? error.message : String(error)}`;
         break;

@@ -34,8 +34,8 @@ pub fn redirect_uri() -> String {
 pub fn client_document(client_id_url: &str) -> String {
     serde_json::json!({
         "client_id": client_id_url,
-        "client_name": "openjob.dev",
-        "client_uri": "https://openjob.dev",
+        "client_name": "jobshell.dev",
+        "client_uri": "https://jobshell.dev",
         "redirect_uris": [redirect_uri()],
         "grant_types": ["authorization_code", "refresh_token"],
         "response_types": ["code"],
@@ -244,7 +244,7 @@ pub fn wait_for_callback(expected_state: &str, timeout: std::time::Duration) -> 
         let answer = match parse_callback(first_line) {
             Ok(callback) if callback.state == expected_state => {
                 let _ = stream.write_all(
-                    b"HTTP/1.1 200 OK\r\ncontent-type: text/html\r\n\r\n<h1>openjob.dev</h1><p>Authorization complete: you can close this tab.</p>",
+                    b"HTTP/1.1 200 OK\r\ncontent-type: text/html\r\n\r\n<h1>jobshell.dev</h1><p>Authorization complete: you can close this tab.</p>",
                 );
                 return Ok(callback.code);
             }
@@ -293,7 +293,7 @@ pub fn initialize_request(id: u64) -> serde_json::Value {
         serde_json::json!({
             "protocolVersion": "2024-11-05",
             "capabilities": {},
-            "clientInfo": { "name": "openjob.dev", "version": "0.1.0" },
+            "clientInfo": { "name": "jobshell.dev", "version": "0.1.0" },
         }),
     )
 }
@@ -484,7 +484,7 @@ mod tests {
     fn the_session_starts_with_initialize() {
         let request = initialize_request(1);
         assert_eq!(request["method"], "initialize");
-        assert_eq!(request["params"]["clientInfo"]["name"], "openjob.dev");
+        assert_eq!(request["params"]["clientInfo"]["name"], "jobshell.dev");
     }
 
     #[test]

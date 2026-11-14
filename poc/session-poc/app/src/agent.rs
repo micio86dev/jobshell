@@ -55,7 +55,7 @@ pub struct AgentRunView {
 
 /// Where the agent writes its evidence: the same default it uses, overridable for a test.
 pub fn evidence_dir() -> PathBuf {
-    if let Ok(dir) = std::env::var("OPENJOB_EVIDENCE_DIR") {
+    if let Ok(dir) = std::env::var("JOBSHELL_EVIDENCE_DIR") {
         return PathBuf::from(dir);
     }
     let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
@@ -179,9 +179,9 @@ pub fn project_run(raw: &str, path: &str) -> Result<AgentRunView> {
 /// Where the agent package lives.
 ///
 /// Baked in at compile time, because this is a development-stage app that runs the agent
-/// from the repository. A packaged build overrides it with `OPENJOB_AGENT_DIR`.
+/// from the repository. A packaged build overrides it with `JOBSHELL_AGENT_DIR`.
 pub fn agent_dir() -> PathBuf {
-    if let Ok(dir) = std::env::var("OPENJOB_AGENT_DIR") {
+    if let Ok(dir) = std::env::var("JOBSHELL_AGENT_DIR") {
         return PathBuf::from(dir);
     }
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../../job-agent")
@@ -189,7 +189,7 @@ pub fn agent_dir() -> PathBuf {
 
 /// The profile the run uses: the app's own copy, not a file the user has to place.
 pub fn profile_path() -> PathBuf {
-    if let Ok(path) = std::env::var("OPENJOB_PROFILE") {
+    if let Ok(path) = std::env::var("JOBSHELL_PROFILE") {
         return PathBuf::from(path);
     }
     evidence_dir().join("profile.json")
@@ -298,7 +298,7 @@ pub fn interpret_extract(exit_code: Option<i32>, stdout: &str, stderr: &str) -> 
 /// The Node binary the agent scripts run on. A window opened from Finder does not load the shell
 /// profile, so `node` from nvm or Homebrew is not on its PATH: look in the usual places.
 fn node_binary() -> PathBuf {
-    if let Some(explicit) = std::env::var_os("OPENJOB_NODE") {
+    if let Some(explicit) = std::env::var_os("JOBSHELL_NODE") {
         return PathBuf::from(explicit);
     }
     let mut candidates: Vec<PathBuf> = vec![
@@ -414,7 +414,7 @@ pub fn run_validate_profile(payload: &str) -> Result<()> {
 /// The browser the app drives: a dedicated Chrome for Testing, because a branded Chrome
 /// ignores `--load-extension` (the finding recorded in the Phase 0 evidence).
 pub fn chrome_path() -> PathBuf {
-    if let Ok(path) = std::env::var("OPENJOB_CHROME") {
+    if let Ok(path) = std::env::var("JOBSHELL_CHROME") {
         return PathBuf::from(path);
     }
     Path::new(env!("CARGO_MANIFEST_DIR")).join(
@@ -470,7 +470,7 @@ pub fn open_browser() -> Result<Child> {
     let chrome = chrome_path();
     if !chrome.exists() {
         anyhow::bail!(
-            "no browser at {}. Set OPENJOB_CHROME to a Chrome for Testing binary.",
+            "no browser at {}. Set JOBSHELL_CHROME to a Chrome for Testing binary.",
             chrome.display()
         );
     }
@@ -588,7 +588,7 @@ mod tests {
 
     #[test]
     fn the_starter_profile_is_written_once_and_never_overwritten() {
-        let dir = std::env::temp_dir().join(format!("openjob-profile-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("jobshell-profile-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         let path = dir.join("profile.json");
 
@@ -631,7 +631,7 @@ mod tests {
 
     #[test]
     fn the_newest_run_wins_and_a_missing_directory_is_not_an_error() {
-        let dir = std::env::temp_dir().join(format!("openjob-evidence-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("jobshell-evidence-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
 
         assert!(latest_run(&dir).expect("missing dir").is_none(), "no directory yet is an empty answer");

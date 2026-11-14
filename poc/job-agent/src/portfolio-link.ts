@@ -13,7 +13,7 @@ import { text } from './sources/types.ts';
 const TIMEOUT_MS = 10_000;
 const MAX_HOPS = 3;
 const MAX_BODY_BYTES = 1_000_000;
-const USER_AGENT = 'openjob-agent (portfolio link check)';
+const USER_AGENT = 'jobshell-agent (portfolio link check)';
 
 const PRIVATE_V4 = [
   /^10\./, /^127\./, /^0\./, /^169\.254\./, /^192\.168\./, /^172\.(1[6-9]|2\d|3[01])\./,

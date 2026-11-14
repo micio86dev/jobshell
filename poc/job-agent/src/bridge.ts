@@ -261,7 +261,7 @@ export const startBridge = async (deps: BridgeDeps, port = 0): Promise<BridgeSer
             send(
               response,
               409,
-              { error: 'no TypeSafe key: add it in the openjob app settings.' },
+              { error: 'no TypeSafe key: add it in the jobshell app settings.' },
               origin,
               boundPort,
             );

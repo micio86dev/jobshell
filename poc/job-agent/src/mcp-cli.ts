@@ -6,7 +6,7 @@
  * Usage: node src/mcp-cli.ts --profile <path> [--config <path>] [--seen <seen.json>]
  *
  * Point any MCP client at it, for example:
- *   {"mcpServers":{"openjob":{"command":"node","args":["src/mcp-cli.ts","--profile","…"]}}}
+ *   {"mcpServers":{"jobshell":{"command":"node","args":["src/mcp-cli.ts","--profile","…"]}}}
  */
 import { loadRuntime, missingKeyMessage } from './bootstrap.ts';
 import { defaultFetch } from './jev.ts';
@@ -20,7 +20,7 @@ const arg = (name: string): string | undefined => {
 
 const profilePath = arg('profile');
 if (profilePath === undefined) {
-  process.stderr.write('openjob: --profile <path> is required\n');
+  process.stderr.write('jobshell: --profile <path> is required\n');
   process.exit(2);
 }
 
@@ -29,7 +29,7 @@ const runtime = loadRuntime({ profilePath, ...(configPath === undefined ? {} : {
 
 const typesafeKey = readSecret('typesafe');
 if (typesafeKey === null) {
-  process.stderr.write(`openjob: ${missingKeyMessage('typesafe')}\n`);
+  process.stderr.write(`jobshell: ${missingKeyMessage('typesafe')}\n`);
   process.exit(2);
 }
 
@@ -39,7 +39,7 @@ const seenPath = arg('seen') ?? null;
 try {
   loadSeen(seenPath);
 } catch (error) {
-  process.stderr.write(`openjob: ${error instanceof Error ? error.message : String(error)}\n`);
+  process.stderr.write(`jobshell: ${error instanceof Error ? error.message : String(error)}\n`);
   process.exit(2);
 }
 

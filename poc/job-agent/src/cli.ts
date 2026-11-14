@@ -36,7 +36,7 @@ const arg = (name: string): string | undefined => {
 const flag = (name: string): boolean => process.argv.includes(`--${name}`);
 
 const die = (message: string): never => {
-  process.stderr.write(`openjob: ${message}\n`);
+  process.stderr.write(`jobshell: ${message}\n`);
   process.exit(2);
 };
 
@@ -133,7 +133,7 @@ const main = async (): Promise<void> => {
   if (selectedKeys.length > 0) saveSeen(seenPath, selectedKeys);
 
   const lines: string[] = [];
-  lines.push(`openjob run ${evidence.run_at}${dryRun ? ' (dry run: no judgment bought)' : ''}`);
+  lines.push(`jobshell run ${evidence.run_at}${dryRun ? ' (dry run: no judgment bought)' : ''}`);
   for (const report of evidence.sources) {
     lines.push(
       `  ${report.source.padEnd(15)} ${report.policy.padEnd(16)} ` +

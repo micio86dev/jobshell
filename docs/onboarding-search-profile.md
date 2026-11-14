@@ -72,8 +72,8 @@ On macOS the Rust tests need the toolchain 1.98.1 and `RUSTFLAGS="-C link-arg=-W
 
 | Variable | Effect | Default |
 | --- | --- | --- |
-| `OPENJOB_EXTRACT_MODEL` | model that reads a CV or portfolio | provider default (`claude-sonnet-5-5`) |
-| `OPENJOB_EXTRACT_MAX_TOKENS` | token budget for the answer | 4000 |
+| `JOBSHELL_EXTRACT_MODEL` | model that reads a CV or portfolio | provider default (`claude-sonnet-5-5`) |
+| `JOBSHELL_EXTRACT_MAX_TOKENS` | token budget for the answer | 4000 |
 
 A value that is not a positive integer for the budget is ignored; a blank model counts as unset.
 
@@ -81,7 +81,7 @@ A value that is not a positive integer for the budget is ignored; a blank model 
 
 - **Done live:** one extraction on the English CV (Sonnet 5.5 and Haiku 5.5), and one read-only fetch of the RemoteOK feed (98 postings, all https links).
 - **Not run:** the real desktop window (`cargo tauri dev`), by hand. Extraction on the Italian and Spanish CVs needs the user's explicit approval, since it sends the CV to the provider.
-- **Not decided:** removing the old `openjob-agent` keychain entries, which is irreversible and waits for the user's go-ahead.
+- **Not decided:** removing the old `jobshell-agent` keychain entries, which is irreversible and waits for the user's go-ahead.
 - **Limit:** a scanned PDF with no text layer is not read (no OCR). The UI has no styling pass yet.
 - **Model limit:** strength is one value per group (contract types, remote modes), not per item, because the agent schema has no per-item strength. Languages are always a hard filter.
 - **Interface limit:** only the wizard and the navigation are translated (Italian, English). The results and task panels of `App.vue` keep their Italian labels.

@@ -9,7 +9,7 @@ import { findFilesNamed, parseJsonUnknown, run } from '../src/lib/fs-scan.ts';
 const tmpRoots: string[] = [];
 
 const makeTree = (): string => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'openjob-scan-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'jobshell-scan-'));
   tmpRoots.push(root);
   const layout = ['cli/Cargo.toml', 'Cargo.toml', 'node_modules/x/Cargo.toml', 'deep/a/b/c/Cargo.toml'];
   for (const rel of layout) {
@@ -37,7 +37,7 @@ test('findFilesNamed returns relative paths sorted for stable evidence', () => {
 });
 
 test('findFilesNamed throws for a missing directory instead of reporting no match', () => {
-  assert.throws(() => findFilesNamed('/nonexistent-openjob-dir', '/tmp', 'Cargo.toml', 1));
+  assert.throws(() => findFilesNamed('/nonexistent-jobshell-dir', '/tmp', 'Cargo.toml', 1));
 });
 
 test('run distinguishes success from failure and keeps stderr', () => {
@@ -54,7 +54,7 @@ test('run distinguishes success from failure and keeps stderr', () => {
 });
 
 test('run reports failure with a non-zero exit code for a missing binary', () => {
-  const failed = run(os.tmpdir(), 'openjob-definitely-not-a-binary', []);
+  const failed = run(os.tmpdir(), 'jobshell-definitely-not-a-binary', []);
   assert.equal(failed.ok, false);
   assert.equal(failed.stdout, '');
   assert.notEqual(failed.exit_code, 0);

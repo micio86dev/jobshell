@@ -203,7 +203,7 @@ async fn ziprecruiter_connect(client_id: String) -> Result<String, String> {
 #[tauri::command]
 async fn ziprecruiter_client_document(client_id: String) -> Result<String, String> {
     tauri::async_runtime::spawn_blocking(move || -> Result<String, String> {
-        let path = agent::evidence_dir().join("openjob-client.json");
+        let path = agent::evidence_dir().join("jobshell-client.json");
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent)
                 .map_err(|error| format!("creo {}: {error}", parent.display()))?;

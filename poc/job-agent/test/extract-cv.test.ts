@@ -125,8 +125,8 @@ test('a portfolio is sent framed as a portfolio, and an unknown kind is refused 
   assert.equal(keyReads, 0);
 });
 
-test('the extraction model comes from OPENJOB_EXTRACT_MODEL when it is set, and from the provider default otherwise', async () => {
-  assert.equal(modelForExtraction({ OPENJOB_EXTRACT_MODEL: 'claude-haiku-5-5' }), 'claude-haiku-5-5');
+test('the extraction model comes from JOBSHELL_EXTRACT_MODEL when it is set, and from the provider default otherwise', async () => {
+  assert.equal(modelForExtraction({ JOBSHELL_EXTRACT_MODEL: 'claude-haiku-5-5' }), 'claude-haiku-5-5');
   assert.equal(modelForExtraction({}), DEFAULT_MODEL.anthropic);
-  assert.equal(modelForExtraction({ OPENJOB_EXTRACT_MODEL: '   ' }), DEFAULT_MODEL.anthropic, 'a blank value is unset');
+  assert.equal(modelForExtraction({ JOBSHELL_EXTRACT_MODEL: '   ' }), DEFAULT_MODEL.anthropic, 'a blank value is unset');
 });
