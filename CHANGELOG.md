@@ -2,6 +2,11 @@
 
 All notable changes to the app are listed here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] - 2026-11-14
+
+### Added
+- Settings: choose the match threshold as a percentage, from 1% to 100%. It defaults to 70%, and it applies to the next search.
+
 ## [0.2.0] - 2026-11-14
 
 ### Added
