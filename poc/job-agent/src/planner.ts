@@ -115,7 +115,13 @@ export const planQueries = async (profile: UserProfile, deps: PlannerDeps): Prom
     return fallback(error instanceof Error ? error.message : 'provider endpoint refused');
   }
 
-  const response = await deps.fetchImpl(request.url, request.init);
+  // A network failure proposes nothing, and its raw text is never returned: it may carry the key.
+  let response: Awaited<ReturnType<FetchLike>>;
+  try {
+    response = await deps.fetchImpl(request.url, request.init);
+  } catch {
+    return fallback('provider request failed');
+  }
   if (response.status !== 200) return fallback(`provider answered ${response.status}`);
 
   let parsed: unknown;

@@ -205,6 +205,16 @@ test('a provider error falls back instead of failing the run', async () => {
   assert.match(result.reason ?? '', /429/);
 });
 
+test('a network failure falls back, and its raw text is never returned', async () => {
+  const fetchImpl = async (): Promise<never> => {
+    throw new Error('connect failed with sk-secret-123');
+  };
+  const result = await planQueries(profile, { provider: 'anthropic', apiKey: 'sk-secret-123', model: 'm', fetchImpl });
+  assert.equal(result.source, 'fallback');
+  assert.equal(result.reason, 'provider request failed');
+  assert.ok(!JSON.stringify(result).includes('sk-secret-123'));
+});
+
 test('the answer parser accepts fences and rejects garbage', () => {
   assert.deepEqual(extractQueries('```json\n["a","b"]\n```', 8), ['a', 'b']);
   assert.equal(extractQueries('no array here', 8), null);
