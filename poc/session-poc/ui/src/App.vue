@@ -4,6 +4,7 @@ import { onMounted, ref } from 'vue';
 import OnboardingWizard from './onboarding/OnboardingWizard.vue';
 import { setPrimaryLanguage, t } from './i18n/store';
 import { primaryOf } from './onboarding/schema';
+import { describeKeyCheck, type KeyCheckReport, type KeyCheckView } from './settings/key-check';
 
 type SelectedView = {
   key: string;
@@ -137,6 +138,18 @@ type KeyAccount = 'typesafe' | 'anthropic' | 'qwen';
 const keyInputs = ref<Record<KeyAccount, string>>({ typesafe: '', anthropic: '', qwen: '' });
 const keyStatus = ref<Record<string, boolean> | null>(null);
 const keyMessage = ref('');
+const keyChecks = ref<Record<KeyAccount, KeyCheckView | null>>({ typesafe: null, anthropic: null, qwen: null });
+
+// Ask the provider whether the stored key is accepted. The key itself never reaches the window.
+const verifyKey = async (account: KeyAccount): Promise<void> => {
+  keyChecks.value[account] = { tone: 'unknown', text: 'verifica in corso…' };
+  try {
+    const report = await invoke<KeyCheckReport>('agent_verify_key', { account });
+    keyChecks.value[account] = describeKeyCheck(report);
+  } catch (error) {
+    keyChecks.value[account] = { tone: 'unknown', text: `verifica fallita: ${String(error)}` };
+  }
+};
 
 const loadKeyStatus = async (): Promise<void> => {
   try {
@@ -203,6 +216,7 @@ const saveKey = async (account: KeyAccount): Promise<void> => {
   try {
     await invoke('agent_save_key', { account, value });
     keyInputs.value[account] = '';
+    keyChecks.value[account] = null;
     keyMessage.value = `${account}: salvata nel portachiavi`;
     await loadKeyStatus();
   } catch (error) {
@@ -408,22 +422,28 @@ onMounted(() => {
         Le chiavi finiscono nel portachiavi di macOS, mai in un file. Il portachiavi è
         l'unico posto che l'agente legge.
       </p>
-      <div v-for="account in (['typesafe', 'anthropic', 'qwen'] as KeyAccount[])" :key="account" class="keyrow">
-        <label :for="account">
-          {{ account }}
-          <span v-if="keyStatus !== null" :class="keyStatus[account] === true ? 'ok' : 'missing'">
-            {{ keyStatus[account] === true ? 'configurata' : 'mancante' }}
-          </span>
-        </label>
-        <input
-          :id="account"
-          v-model="keyInputs[account]"
-          type="password"
-          autocomplete="off"
-          :placeholder="account === 'typesafe' ? 'richiesta per giudicare' : 'opzionale'"
-        />
-        <button type="button" @click="saveKey(account)">Salva</button>
-      </div>
+      <template v-for="account in (['typesafe', 'anthropic', 'qwen'] as KeyAccount[])" :key="account">
+        <div class="keyrow">
+          <label :for="account">
+            {{ account }}
+            <span v-if="keyStatus !== null" :class="keyStatus[account] === true ? 'ok' : 'missing'">
+              {{ keyStatus[account] === true ? 'configurata' : 'mancante' }}
+            </span>
+          </label>
+          <input
+            :id="account"
+            v-model="keyInputs[account]"
+            type="password"
+            autocomplete="off"
+            :placeholder="account === 'typesafe' ? 'richiesta per giudicare' : 'opzionale'"
+          />
+          <button type="button" @click="saveKey(account)">Salva</button>
+          <button type="button" @click="verifyKey(account)">Verifica</button>
+        </div>
+        <p v-if="keyChecks[account]" class="keycheck" :class="keyChecks[account]?.tone">
+          {{ keyChecks[account]?.text }}
+        </p>
+      </template>
       <p class="status">{{ keyMessage }}</p>
 
       <h2>ZipRecruiter</h2>
@@ -602,9 +622,20 @@ nav button.on {
   color: var(--fg-muted);
   margin-top: 1.2rem;
 }
+.keycheck {
+  margin: -0.2rem 0 0.6rem 12.6rem;
+  font-size: 0.8rem;
+  color: var(--muted, #555);
+}
+.keycheck.ok {
+  color: #166534;
+}
+.keycheck.bad {
+  color: #9a3412;
+}
 .keyrow {
   display: grid;
-  grid-template-columns: 12rem 1fr auto;
+  grid-template-columns: 12rem 1fr auto auto;
   gap: 0.6rem;
   align-items: center;
   margin: 0.6rem 0;

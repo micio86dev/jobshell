@@ -6,6 +6,7 @@
 //! and exposes those capabilities over Tauri commands.
 
 mod agent;
+mod key_check;
 mod profile;
 mod ziprecruiter;
 
@@ -297,6 +298,17 @@ fn agent_key_status() -> Result<std::collections::BTreeMap<String, bool>, String
     Ok(status)
 }
 
+/// Check the key stored for one account with its provider, without spending tokens.
+#[tauri::command]
+async fn agent_verify_key(account: String) -> Result<key_check::KeyCheckReport, String> {
+    if !KEY_ACCOUNTS.contains(&account.as_str()) {
+        return Err(format!("unknown key account: {account}"));
+    }
+    tauri::async_runtime::spawn_blocking(move || key_check::verify_stored_key(&account))
+        .await
+        .map_err(|error| error.to_string())?
+}
+
 /// The last job-agent run, projected for the results view. `None` means the agent has
 /// never run in this profile: the window says so instead of showing an empty table.
 #[tauri::command]
@@ -359,6 +371,7 @@ fn main() {
             agent_last_run,
             agent_save_key,
             agent_key_status,
+            agent_verify_key,
             agent_run,
             agent_open_sources,
             agent_stop_sources,
