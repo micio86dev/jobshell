@@ -18,6 +18,7 @@
 
 import { z } from 'zod';
 import type { Posting } from './sources/types.ts';
+import { checkEndpoint } from './endpoints.ts';
 
 export const TYPESAFE_URL = 'https://api.typesafe.ai/v1/systemone';
 export const DEFAULT_MODEL = 'jev-latest';
@@ -103,12 +104,13 @@ export const askSystemOne = async (
 ): Promise<JeResponse> => {
   const fetchImpl = deps.fetchImpl ?? defaultFetch;
   const url = deps.baseUrl ?? TYPESAFE_URL;
+  const check = checkEndpoint(url);
+  if (!check.ok) throw new Error(`judgment service refused: ${check.reason}`);
+  const headers: Record<string, string> = { 'content-type': 'application/json' };
+  if (deps.apiKey !== '') headers['authorization'] = `Bearer ${deps.apiKey}`;
   const response = await fetchImpl(url, {
     method: 'POST',
-    headers: {
-      authorization: `Bearer ${deps.apiKey}`,
-      'content-type': 'application/json',
-    },
+    headers,
     body: JSON.stringify({
       model: deps.model ?? DEFAULT_MODEL,
       state: request.state,
