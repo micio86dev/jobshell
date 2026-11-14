@@ -97,7 +97,7 @@ test('a failed provider call prints a fallback with a fixed reason, exit 1, and 
   assert.equal(result.exitCode, 1);
   const verdict = JSON.parse(result.stdout) as { source: string; reason: string };
   assert.equal(verdict.source, 'fallback');
-  assert.equal(verdict.reason, 'provider answered 401');
+  assert.match(verdict.reason, /key was refused \(HTTP 401\)/, 'the reason names the refused key');
   assert.ok(!result.stdout.includes(KEY) && !result.stderr.includes(KEY), 'the echoed key is not printed');
 });
 
