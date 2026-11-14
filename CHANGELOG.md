@@ -2,6 +2,11 @@
 
 All notable changes to the app are listed here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.1.6] - 2026-11-14
+
+### Changed
+- The app and the website are renamed Jobshell (formerly openjob). The keychain service, the bundle identifier and the local data folders keep their names, so saved keys and data still work.
+
 ## [0.1.5] - 2026-11-13
 
 ### Fixed
