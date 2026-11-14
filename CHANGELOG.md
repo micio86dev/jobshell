@@ -2,6 +2,11 @@
 
 All notable changes to the app are listed here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.1.8] - 2026-11-14
+
+### Added
+- Settings: a Verifica button next to each API key checks it with its provider, without spending tokens. It tells whether the key is valid, rejected (wrong, expired or revoked) or could not be verified.
+
 ## [0.1.7] - 2026-11-14
 
 ### Changed
