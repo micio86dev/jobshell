@@ -184,6 +184,11 @@ export const extractCandidateFields = async (
   } catch {
     return fallback('provider request failed');
   }
+  if (response.status === 401 || response.status === 403) {
+    return fallback(
+      `the Anthropic key was refused (HTTP ${response.status}): it is wrong or expired, replace it in Settings`,
+    );
+  }
   if (response.status !== 200) return fallback(`provider answered ${response.status}`);
 
   let parsed: unknown;

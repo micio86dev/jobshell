@@ -116,6 +116,18 @@ test('the CV goes once to the Anthropic endpoint, and is framed as data, not ins
   assert.match(prompt, /Twelve years building desktop apps/, 'the CV text is included');
 });
 
+test('a refused key says the key is wrong or expired, and where to replace it', async () => {
+  const { fetchImpl } = fakeFetch(401, '{"error":"invalid x-api-key"}');
+  const result = await extractCandidateFields(CV, deps(fetchImpl));
+
+  assert.equal(result.source, 'fallback');
+  assert.match(result.reason ?? '', /key/);
+  assert.match(result.reason ?? '', /expired|wrong/);
+  assert.match(result.reason ?? '', /Settings/);
+  assert.match(result.reason ?? '', /401/);
+  assert.deepEqual(result.fields.capabilities, [], 'a refused key proposes nothing');
+});
+
 test('a network failure falls back too, without leaking the raw error text', async () => {
   const fetchImpl: FetchLike = async () => {
     throw new Error('getaddrinfo ENOTFOUND api.anthropic.com key=test-key');
