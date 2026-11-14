@@ -1,6 +1,6 @@
 # API integration matrix
 
-Read-only probes of the documented endpoints, run on 2026-11-06 with a self-identifying user agent (`openjob-phase0-probe`), 1200 ms between requests and a 20 s timeout. No credentials, no keys, no writes.
+Read-only probes of the documented endpoints, run on 2026-11-06 with a self-identifying user agent (`jobshell-phase0-probe`), 1200 ms between requests and a 20 s timeout. No credentials, no keys, no writes.
 
 `robots.txt` is fetched per origin **before** any content request, parsed (user-agent groups, `Allow`/`Disallow`, `*` and `$`, longest match wins), and a disallowed URL is never requested. The parser has 15 unit tests (`poc/runtime-bench/test/robots.test.ts`).
 
