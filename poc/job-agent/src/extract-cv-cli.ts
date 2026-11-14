@@ -15,6 +15,7 @@ import { runExtractCv, MAX_CV_CHARS } from './extract-cv.ts';
 import type { IntakeKind } from './intake.ts';
 import { defaultFetch } from './jev.ts';
 import { readSecret } from './secrets.ts';
+import { providerChoiceFromEnv } from './provider-choice.ts';
 
 // Bytes bound what is kept: a UTF-8 character is at most 4 bytes and at least one UTF-16 unit, so
 // an input past 4 * MAX_CV_CHARS bytes is past MAX_CV_CHARS characters too. It is refused whole,
@@ -52,9 +53,22 @@ process.stdin.on('end', () => {
     return;
   }
   const kind: IntakeKind = named;
+  let choice: ReturnType<typeof providerChoiceFromEnv>;
+  try {
+    choice = providerChoiceFromEnv(process.env);
+  } catch (error) {
+    process.stderr.write(`${error instanceof Error ? error.message : 'the provider choice is invalid'}\n`);
+    process.exitCode = 2;
+    return;
+  }
+  // The Anthropic default keeps its model variable, as before the choice existed.
+  const model = process.env['JOBSHELL_LLM_MODEL'] ? choice.llm.model
+    : choice.llm.provider === 'anthropic' ? modelForExtraction(process.env)
+    : choice.llm.model;
   runExtractCv(cv, {
-    readKey: () => readSecret('anthropic'),
-    model: modelForExtraction(process.env),
+    provider: choice.llm.provider,
+    readKey: () => readSecret(choice.llm.provider),
+    model,
     maxTokens: maxTokensForExtraction(process.env),
     fetchImpl: defaultFetch,
   }, kind)

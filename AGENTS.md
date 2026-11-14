@@ -37,7 +37,7 @@ Project-wide rules for this repository. Phase 0 is a feasibility experiment; pro
 - Never read, print, copy, transmit or commit credentials, `.env` files, keychains, private keys or cookies.
 - The OS keyring is the mechanism this rule prescribes, not one it forbids. The agent reads only
   the dedicated service `dev.openjob.desktop`, which only the jobshell desktop app writes to, for
-  the keys the agent needs (`typesafe`, `anthropic`, `qwen`). It never reads another service, and
+  the keys the agent needs (`typesafe`, `anthropic`, `openai`, `gemini`, `qwen`). It never reads another service, and
   never another application's credentials or the browser cookie store. An agent that needs a key
   reads it from that service; it never writes one.
 - Never copy or extract cookies from a user's ordinary browser profile.

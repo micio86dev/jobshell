@@ -7,12 +7,14 @@
  */
 import { extractCandidateFields, type IntakeKind, type IntakeResult } from './intake.ts';
 import type { FetchLike } from './jev.ts';
+import { LLM_LABEL, type LlmProvider } from './llm-providers.ts';
 
 export const MAX_CV_CHARS = 60_000;
 
 export type ExtractDeps = {
-  /** Returns the stored Anthropic key, or null when none is stored. */
+  /** Returns the stored key of the chosen provider, or null when none is stored. */
   readKey: () => string | null;
+  provider?: LlmProvider;
   model: string;
   maxTokens?: number;
   fetchImpl: FetchLike;
@@ -34,16 +36,17 @@ export const runExtractCv = async (
   if (cv.length > MAX_CV_CHARS) return refuse(`the CV is too long (more than ${MAX_CV_CHARS} characters)`);
 
   const apiKey = deps.readKey();
+  const provider: LlmProvider = deps.provider ?? 'anthropic';
   if (apiKey === null || apiKey.length === 0) {
     return refuse(
-      'no Anthropic key is stored under the dev.openjob.desktop service. Add it in the desktop app, or once with: ' +
-        'security add-generic-password -a anthropic -s dev.openjob.desktop -w',
+      `no ${LLM_LABEL[provider]} key is stored under the dev.openjob.desktop service. Add it in the desktop app, or once with: ` +
+        `security add-generic-password -a ${provider} -s dev.openjob.desktop -w`,
     );
   }
 
   const result: IntakeResult = await extractCandidateFields(
     cv,
-    { apiKey, model: deps.model, maxTokens: deps.maxTokens, fetchImpl: deps.fetchImpl },
+    { apiKey, provider, model: deps.model, maxTokens: deps.maxTokens, fetchImpl: deps.fetchImpl },
     kind,
   );
   // The reason is produced by the intake module as a fixed string, so it is safe to print.

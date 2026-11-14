@@ -17,8 +17,8 @@ export type Runner = (command: string, args: string[]) => RunnerResult;
 /** Keychain service shared by every account the agent uses. */
 export const SERVICE = 'dev.openjob.desktop';
 
-/** Accounts the agent reads: `anthropic`, `qwen`, `typesafe`. */
-export const ACCOUNTS = ['anthropic', 'qwen', 'typesafe'] as const;
+/** Accounts the agent reads: one per provider, plus TypeSafe for Jev. */
+export const ACCOUNTS = ['anthropic', 'openai', 'gemini', 'qwen', 'typesafe'] as const;
 
 /** A hung `security` call must not block the agent, so it is abandoned. */
 const TIMEOUT_MS = 10_000;
