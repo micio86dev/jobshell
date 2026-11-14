@@ -4,7 +4,7 @@ import { onMounted, ref } from 'vue';
 import OnboardingWizard from './onboarding/OnboardingWizard.vue';
 import { setPrimaryLanguage, t } from './i18n/store';
 import { primaryOf } from './onboarding/schema';
-import { describeKeyCheck, type KeyCheckReport, type KeyCheckView } from './settings/key-check';
+import { describeKeyCheck, parseKeyCheckReport, type KeyCheckView } from './settings/key-check';
 
 type SelectedView = {
   key: string;
@@ -144,8 +144,10 @@ const keyChecks = ref<Record<KeyAccount, KeyCheckView | null>>({ typesafe: null,
 const verifyKey = async (account: KeyAccount): Promise<void> => {
   keyChecks.value[account] = { tone: 'unknown', text: 'verifica in corso…' };
   try {
-    const report = await invoke<KeyCheckReport>('agent_verify_key', { account });
-    keyChecks.value[account] = describeKeyCheck(report);
+    const report = parseKeyCheckReport(await invoke<unknown>('agent_verify_key', { account }));
+    keyChecks.value[account] = report === null
+      ? { tone: 'unknown', text: 'risposta della verifica non valida' }
+      : describeKeyCheck(report);
   } catch (error) {
     keyChecks.value[account] = { tone: 'unknown', text: `verifica fallita: ${String(error)}` };
   }

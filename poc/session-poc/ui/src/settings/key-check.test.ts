@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeKeyCheck, type KeyCheckReport } from './key-check';
+import { describeKeyCheck, parseKeyCheckReport, type KeyCheckReport } from './key-check';
 
 const report = (overrides: Partial<KeyCheckReport>): KeyCheckReport => ({
   account: 'typesafe',
@@ -36,5 +36,28 @@ describe('describeKeyCheck', () => {
       tone: 'unknown',
       text: 'nessuna chiave salvata',
     });
+  });
+});
+
+describe('parseKeyCheckReport', () => {
+  const valid = { account: 'anthropic', outcome: 'rejected', status: 401, detail: 'expired' };
+
+  it('accepts a report that matches the contract', () => {
+    expect(parseKeyCheckReport(valid)).toEqual(valid);
+  });
+
+  it('refuses an outcome the app does not know', () => {
+    expect(parseKeyCheckReport({ ...valid, outcome: 'maybe' })).toBeNull();
+  });
+
+  it('refuses a report with a field missing or of the wrong type', () => {
+    const { detail: _detail, ...withoutDetail } = valid;
+    expect(parseKeyCheckReport(withoutDetail)).toBeNull();
+    expect(parseKeyCheckReport({ ...valid, status: '401' })).toBeNull();
+  });
+
+  it('refuses anything that is not an object', () => {
+    expect(parseKeyCheckReport('valid')).toBeNull();
+    expect(parseKeyCheckReport(null)).toBeNull();
   });
 });
