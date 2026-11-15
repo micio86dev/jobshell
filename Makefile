@@ -11,7 +11,7 @@ ROOT  := $(shell pwd)
 # scatter one run across several timestamped directories.
 OUT   := $(ROOT)/evidence/run/$(shell date -u +%Y%m%dT%H%M%SZ)
 
-.PHONY: test test-ts test-rs typecheck wiring agent-test ui-test agent agent-bridge agent-mcp bench probe persistence crash soak chrome spike desktop dmg phase0 clean clean-deps
+.PHONY: test test-ts test-rs typecheck wiring agent-test ui-test smoke agent agent-bridge agent-mcp bench probe persistence crash soak chrome spike desktop dmg phase0 clean clean-deps
 
 # Every check, in the order a change should pass them. `lint` needs the root install (`pnpm install`).
 test: test-ts test-rs typecheck wiring agent-test ui-test lint clippy
@@ -58,6 +58,12 @@ wiring:
 ui-test:
 	cd poc/session-poc/ui && set -a && . ../../../scripts/env.sh && set +a && \
 		npx vitest run
+
+# Offline smoke: the agent, the UI and the desktop core, with no network and no API keys.
+# The live part is `make dev` followed by a manual run from the app (see docs/SMOKE.md).
+smoke: agent-test ui-test
+	cd poc/session-poc/app && set -a && . ../../../scripts/env.sh && set +a && \
+		../../../scripts/cargo.sh test
 
 # The Phase 0.5 browser job agent: offline tests, then the three entry points.
 agent-test:
