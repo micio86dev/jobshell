@@ -46,3 +46,10 @@ L6. Second batch, 2026-11-15: ATS tenant boards.
 L7. Verification of this batch: agent suite 389/389, typecheck clean, live probe `ok` for the three sources (evidence/source-probe/2026-11-15.json). Tests: test/ats-boards.test.ts, 5/5. The first version of the Workable adapter referenced a removed variable; the test caught it, and it was fixed before the commit.
 
 L5. Verification on this branch: agent suite 383/383 (`node --test`), `tsc --noEmit` clean. Live probe: the three added sources return `ok` with postings (evidence/source-probe/2026-11-15.json). The first probe, before this change, showed the other registry sources as `ok` or `prohibited` as listed in that run; the second run was not compared line by line for them.
+
+L8. Italian and Spanish tenants, 2026-11-15. Slugs came from web search results on apply.workable.com and teamtailor.com, then each was probed (robots.txt first, one read-only GET, 1.5 s apart).
+- Workable, Italy: impactastrategy, aliprofessional, dentons-europe, erg-media, dmates. Spain: ukio, fernandez, oppizi, crossbordertalents. World: huggingface, semios, platzi.
+- Teamtailor, Italy: wspitaly, coldculture, unobravointernational, roccofortehotelsitaly, swanio, grailtalent-1730296269, tailorfox, huaweitechnologiesitalia, tsgitalia, kosmos. Spain: winid, hiire, inhaus, qida, adsmurai, changegroupspain, cataloniahotels. World: templafy.
+- Left out: pharmaprime (404), wallbox and easyfairsspain (no postings), yousign and valsoft-corp (no clear Italian or Spanish market in the search results).
+- Full probe: Workable 12 targets, 1646 postings; Teamtailor 18 targets, 554 postings; HireHive unchanged, 30 (evidence/source-probe/2026-11-15.json).
+- Known limit: some tenants are multinational (dentons-europe, crossborder, catalonia hotels), so a market preference does not filter their postings.
