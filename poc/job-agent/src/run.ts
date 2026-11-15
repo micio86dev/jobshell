@@ -9,9 +9,6 @@
 import type { AgentConfig } from './config.ts';
 import { applyHardFilters, postingKey, rankAndCap, softBonus, type DropReason, type Scored } from './funnel.ts';
 import { MAX_DESCRIPTION_CHARS } from './report.ts';
-
-const boundedDescription = (text: string | null | undefined): string | null =>
-  typeof text === 'string' ? text.slice(0, MAX_DESCRIPTION_CHARS) : null;
 import { judgePosting, type FetchLike, type HttpResponse, type JeDeps, type StackStance } from './jev.ts';
 import { assertAutomationAllowed, Pacer, resolvePolicy } from './policy.ts';
 import type { Spec } from './profile.ts';
@@ -19,6 +16,9 @@ import { adapterFor } from './sources/registry.ts';
 import { tenantsFor, type Tenant } from './sources/tenants.ts';
 import { postingsFile, readPostings } from './sources/ziprecruiter.ts';
 import type { Challenge, Posting, SearchOptions } from './sources/types.ts';
+
+const boundedDescription = (text: string | null | undefined): string | null =>
+  typeof text === 'string' ? text.slice(0, MAX_DESCRIPTION_CHARS) : null;
 
 /** Fallback when neither the caller nor the profile sets a budget. */
 export const DEFAULT_SCORING_BUDGET = 120;
