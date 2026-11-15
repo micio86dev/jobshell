@@ -7,6 +7,7 @@ import { setPrimaryLanguage, t } from './i18n/store';
 import { primaryOf } from './onboarding/schema';
 import { describeKeyCheck, parseKeyCheckReport, type KeyCheckView } from './settings/key-check';
 import { modelOptions, validateChoice, type ChoiceProblem, type ProviderChoiceView } from './settings/provider-settings';
+import { parseReportResult, type ReportView } from './report/report-result';
 
 const CHOICE_COPY: Record<ChoiceProblem, string> = {
   'llm-model-missing': 'scegli un modello per il provider che legge il CV',
@@ -69,6 +70,32 @@ const loadRun = async (): Promise<void> => {
 };
 
 const running = ref<'' | 'dry' | 'real'>('');
+
+// One report per selected posting, keyed by the posting key. `busy` shows the wait; the report
+// is shown as text, never as HTML.
+type ReportState = { busy: boolean; view: ReportView | null };
+const reports = ref<Record<string, ReportState>>({});
+
+const openReport = async (key: string): Promise<void> => {
+  reports.value = { ...reports.value, [key]: { busy: true, view: null } };
+  let view: ReportView;
+  try {
+    view = parseReportResult(await invoke<string>('agent_report', { key }));
+  } catch (error) {
+    view = { ok: false, reason: String(error) };
+  }
+  reports.value = { ...reports.value, [key]: { busy: false, view } };
+};
+
+const reportMarkdown = (key: string): string | null => {
+  const view = reports.value[key]?.view;
+  return view?.ok === true ? view.markdown : null;
+};
+
+const reportReason = (key: string): string | null => {
+  const view = reports.value[key]?.view;
+  return view?.ok === false ? view.reason : null;
+};
 
 const runAgent = async (dryRun: boolean): Promise<void> => {
   running.value = dryRun ? 'dry' : 'real';
@@ -452,6 +479,17 @@ onMounted(() => {
                 {{ verdictLabel(item.verdict) }} · {{ stackLabel(item.stack_stance) }}
               </p>
               <p v-if="item.gaps.length > 0" class="gap">gap dichiarato: {{ item.gaps.join(', ') }}</p>
+              <button
+                type="button"
+                :disabled="reports[item.key]?.busy === true"
+                @click="openReport(item.key)"
+              >
+                {{ reports[item.key]?.busy ? 'Report in corso…' : 'Report' }}
+              </button>
+              <p v-if="reportReason(item.key) !== null" class="gap">
+                Report non disponibile: {{ reportReason(item.key) }}
+              </p>
+              <pre v-if="reportMarkdown(item.key) !== null" class="report">{{ reportMarkdown(item.key) }}</pre>
             </div>
           </li>
         </ul>
@@ -703,6 +741,19 @@ nav button.on {
   font-size: 0.8rem;
   color: var(--fg-muted);
 }
+.report {
+  margin: 0.5rem 0 0;
+  padding: 0.75rem;
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+
 .gap {
   margin: 0.15rem 0 0;
   font-size: 0.8rem;
