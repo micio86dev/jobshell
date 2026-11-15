@@ -5,8 +5,9 @@
  * The key comes in as a value from the caller, never from a file here. Output is a Markdown
  * report or a fixed reason: never the key, never the CV, never a raw provider or network error.
  */
+import { askModel } from './llm-call.ts';
 import type { FetchLike } from './jev.ts';
-import { llmAnswer, llmRequest, LLM_LABEL, type LlmProvider } from './llm-providers.ts';
+import { LLM_LABEL, type LlmProvider } from './llm-providers.ts';
 
 export const MAX_DESCRIPTION_CHARS = 20_000;
 export const MAX_CV_REPORT_CHARS = 60_000;
@@ -77,49 +78,19 @@ export const reportInstruction = (input: ReportInput): string => {
 /** Write the report with one model call. Every failure is a fixed reason. */
 export const generateReport = async (input: ReportInput, deps: ReportDeps): Promise<ReportResult> => {
   const provider: LlmProvider = deps.provider ?? 'anthropic';
-  const label = LLM_LABEL[provider];
-  const fallback = (reason: string): ReportResult => ({ source: 'fallback', reason });
+  if (input.cv.trim().length === 0) return { source: 'fallback', reason: 'the CV is empty' };
+  if (deps.apiKey.length === 0) return { source: 'fallback', reason: `no ${LLM_LABEL[provider]} key is stored` };
 
-  if (input.cv.trim().length === 0) return fallback('the CV is empty');
-  if (deps.apiKey.length === 0) return fallback(`no ${label} key is stored`);
-
-  let request: ReturnType<typeof llmRequest>;
-  try {
-    request = llmRequest(provider, {
-      apiKey: deps.apiKey,
-      model: deps.model,
-      prompt: reportInstruction(input),
-      maxTokens: deps.maxTokens ?? DEFAULT_REPORT_MAX_TOKENS,
-      baseUrl: deps.baseUrl,
-    });
-  } catch (error) {
-    return fallback(error instanceof Error ? error.message : 'provider endpoint refused');
-  }
-
-  // A network failure proposes nothing, and its raw text is never returned: it may carry the key.
-  let response: Awaited<ReturnType<FetchLike>>;
-  try {
-    response = await deps.fetchImpl(request.url, request.init);
-  } catch {
-    return fallback('provider request failed');
-  }
-  if (response.status === 401 || response.status === 403) {
-    return fallback(`the ${label} key was refused (HTTP ${response.status}): it is wrong or expired, replace it in Settings`);
-  }
-  if (response.status !== 200) return fallback(`provider answered ${response.status}`);
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(response.text);
-  } catch {
-    return fallback('provider answer was not JSON');
-  }
-
-  const answer = llmAnswer(provider, parsed);
-  const markdown = answer.text.trim();
-  if (markdown.length === 0) return fallback('provider answer had no text');
-  if (answer.truncated) return fallback('the report was cut short: raise the report token budget and try again');
-  return { source: 'model', markdown };
+  const answer = await askModel(reportInstruction(input), {
+    apiKey: deps.apiKey,
+    provider,
+    model: deps.model,
+    maxTokens: deps.maxTokens ?? DEFAULT_REPORT_MAX_TOKENS,
+    baseUrl: deps.baseUrl,
+    fetchImpl: deps.fetchImpl,
+  });
+  if (!answer.ok) return { source: 'fallback', reason: answer.reason };
+  return { source: 'model', markdown: answer.text };
 };
 
 export type ReportRequestParse = { ok: true; input: ReportInput } | { ok: false; reason: string };
