@@ -1,10 +1,10 @@
 /**
- * Reads the report command's answer: one JSON line from the agent's report CLI, either the
- * Markdown report or a fixed reason. Anything else is refused, never shown as a report.
+ * Reads a command's answer: one JSON line from the agent's CLI, either the Markdown text, with
+ * the PDF path when one was written, or a fixed reason. Anything else is refused, never shown.
  */
-export type ReportView = { ok: true; markdown: string } | { ok: false; reason: string };
+export type ReportView = { ok: true; markdown: string; pdf: string | null } | { ok: false; reason: string };
 
-const UNREADABLE = 'the report answer could not be read';
+const UNREADABLE = 'the answer could not be read';
 
 export const parseReportResult = (raw: string): ReportView => {
   let parsed: unknown;
@@ -17,8 +17,9 @@ export const parseReportResult = (raw: string): ReportView => {
   const record = parsed as Record<string, unknown>;
   if (record['source'] === 'model') {
     const markdown = record['markdown'];
-    if (typeof markdown === 'string' && markdown.trim().length > 0) return { ok: true, markdown };
-    return { ok: false, reason: UNREADABLE };
+    if (typeof markdown !== 'string' || markdown.trim().length === 0) return { ok: false, reason: UNREADABLE };
+    const pdf = typeof record['pdf'] === 'string' ? record['pdf'] : null;
+    return { ok: true, markdown, pdf };
   }
   if (record['source'] === 'fallback' && typeof record['reason'] === 'string') {
     return { ok: false, reason: record['reason'] };
