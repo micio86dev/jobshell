@@ -1,7 +1,7 @@
 /**
  * TypeSafe System One client: the judgment layer.
  *
- * Two questions are asked per posting, and neither is a keyword test:
+ * Four questions are asked per posting, and none is a keyword test:
  *
  * 1. `stack_stance` — how the posting treats stack: an explicit requirement, a
  *    preference, not specified at all, or a tool it merely mentions. This is the
@@ -9,6 +9,9 @@
  * 2. `fit` — could this person do this job credibly, given what they can deliver
  *    and the gaps they declared they accept? The answer is a distribution, so the
  *    runner keeps P(yes) + P(yes_with_gap) and compares it to the user's threshold.
+ * 3. `gap` — which requirement, if any, the candidate misses; shown, never hidden.
+ * 4. `quality` — a genuine opening, a scheme (crypto returns, referral income, paying
+ *    to start) or vague bait. P(scam) + P(vague) at or above SUSPICION_LIMIT drops it.
  *
  * Contract (docs.typesafe.ai, read 2026-11-08): `POST /v1/systemone`, `Authorization:
  * Bearer <key>`, body `{model, state, questions}`, response `{model, answers, usage}`.
