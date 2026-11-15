@@ -19,6 +19,10 @@ export type SourceOverride = {
   automation?: Automation;
   pace_ms?: number;
   max_pages?: number;
+  /** false switches the source off for this user; absent means on. */
+  enabled?: boolean;
+  /** Employer ids the user added to a board source, after the verified registry entries. */
+  tenants?: string[];
 };
 
 export type AgentConfig = {
@@ -94,6 +98,8 @@ const URL_CREDENTIAL = /([?&](api[_-]?key|token|secret|password|key)=)|(\/\/[^/@
 
 /** A source id is a plain name, so it can be shown in an error without carrying a secret. */
 const SOURCE_ID = /^[a-z0-9_-]{1,40}$/i;
+/** Same shape as the board tenant ids in src/sources/boards.ts: a plain slug, never a URL or a path. */
+const TENANT_ID = /^[a-z0-9][a-z0-9-]{0,62}$/i;
 /** The prefixes API keys and tokens start with: an id that carries one is refused as a key, not a name. */
 const KEY_PREFIX = /(^|[-_])(sk|pk|ghp|xox[bp])[-_]/i;
 
@@ -111,6 +117,17 @@ const sourceOverride = (id: string) =>
       automation: z.enum(AUTOMATIONS, {
         error: `sources.${id}.automation must be one of ${AUTOMATIONS.join(', ')}`,
       }),
+      enabled: z.boolean({ error: `sources.${id}.enabled must be true or false` }),
+      // A tenant is a plain employer slug. The message names the field only: the value is never echoed.
+      tenants: z
+        .array(
+          z
+            .string({ error: `sources.${id}.tenants must be a list of employer ids` })
+            .refine((value) => TENANT_ID.test(value) && !KEY_PREFIX.test(value) && !CREDENTIAL_KEY.test(value), {
+              error: `sources.${id}.tenants must hold plain employer ids of letters, digits and "-"`,
+            }),
+          { error: `sources.${id}.tenants must be a list of employer ids` },
+        ),
       pace_ms: z
         .number({ error: `sources.${id}.pace_ms must be a positive number` })
         .refine(positiveNumber, { error: `sources.${id}.pace_ms must be a positive number` }),
@@ -147,6 +164,8 @@ const parseSources = (raw: unknown): SourcesResult => {
     if (checked.data.automation !== undefined) parsed.automation = checked.data.automation;
     if (checked.data.pace_ms !== undefined) parsed.pace_ms = checked.data.pace_ms;
     if (checked.data.max_pages !== undefined) parsed.max_pages = checked.data.max_pages;
+    if (checked.data.enabled !== undefined) parsed.enabled = checked.data.enabled;
+    if (checked.data.tenants !== undefined) parsed.tenants = checked.data.tenants;
     sources[id] = parsed;
   }
   return { ok: true, sources };

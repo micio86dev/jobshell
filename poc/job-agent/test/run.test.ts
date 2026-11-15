@@ -337,3 +337,45 @@ test('with the default page ceiling, one run reaches every verified Greenhouse b
   assert.equal(urls.length, tenantsFor('greenhouse').length, 'every verified board is fetched in one run');
   assert.ok(urls.length >= 16, 'the registry holds at least the 16 boards probed on 2026-11-14');
 });
+
+test('a source the user switched off is never fetched and says why', async () => {
+  let fetched = 0;
+  const route: Route = (url) => {
+    if (url.startsWith('https://remoteok.com')) fetched += 1;
+    return { status: 200, text: FEED };
+  };
+  const config = { ...defaultConfig(), sources: { remoteok: { enabled: false } } };
+  const evidence = await runOnce(deps(route, { config, sources: ['remoteok'] }));
+
+  assert.equal(fetched, 0, 'the switch is checked before the network');
+  assert.equal(evidence.sources[0]?.skipped, 'disabled by the user');
+  assert.equal(evidence.sources[0]?.postings, 0);
+});
+
+test('user tenants come after the verified ones, and a tenant already verified is not fetched twice', async () => {
+  const urls: string[] = [];
+  const route: Route = (url) => {
+    if (url.includes('boards-api.greenhouse.io')) {
+      urls.push(url);
+      return { status: 200, text: JSON.stringify({ jobs: [] }) };
+    }
+    return { status: 200, text: JUDGEMENT(0.95, 0, 'not_specified') };
+  };
+  const config = {
+    ...defaultConfig(),
+    sources: { greenhouse: { tenants: ['beta', 'gamma'] } },
+  };
+  await runOnce(
+    deps(route, {
+      config,
+      sources: ['greenhouse'],
+      boards: { greenhouse: [{ tenant: 'acme', verified: '2026-11-14' }, { tenant: 'beta', verified: '2026-11-14' }] },
+    }),
+  );
+
+  assert.deepEqual(urls, [
+    'https://boards-api.greenhouse.io/v1/boards/acme/jobs?content=true',
+    'https://boards-api.greenhouse.io/v1/boards/beta/jobs?content=true',
+    'https://boards-api.greenhouse.io/v1/boards/gamma/jobs?content=true',
+  ]);
+});

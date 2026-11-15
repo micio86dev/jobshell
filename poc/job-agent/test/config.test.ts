@@ -188,3 +188,31 @@ test('a qwen configuration without a model gets the qwen model, not the Anthropi
   assert.equal(config.provider, 'qwen');
   assert.equal(config.model, DEFAULT_MODEL.qwen, 'the default model belongs to the provider the file chose');
 });
+
+test('a source can be switched off with enabled: false, and an absent flag means enabled', () => {
+  const off = parseConfig({ ...defaultConfig(), sources: { remoteok: { enabled: false } } });
+  assert.equal(off.ok, true);
+  if (off.ok) assert.deepEqual(off.config.sources['remoteok'], { enabled: false });
+
+  const absent = parseConfig({ ...defaultConfig(), sources: { remoteok: { pace_ms: 9000 } } });
+  assert.equal(absent.ok, true);
+  if (absent.ok) assert.equal(absent.config.sources['remoteok']?.enabled, undefined, 'absent stays absent');
+});
+
+test('enabled must be a boolean, named in the error', () => {
+  const result = parseConfig({ ...defaultConfig(), sources: { remoteok: { enabled: 'yes' } } });
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.match(result.error, /enabled/);
+});
+
+test('user tenants are plain slugs, kept in order, and a tenant is never an address or a key', () => {
+  const ok = parseConfig({ ...defaultConfig(), sources: { greenhouse: { tenants: ['acme', 'beta-co'] } } });
+  assert.equal(ok.ok, true);
+  if (ok.ok) assert.deepEqual(ok.config.sources['greenhouse']?.tenants, ['acme', 'beta-co']);
+
+  for (const bad of ['https://evil.example/x', 'sk-live-abcdef123456', 'a b', '../etc']) {
+    const result = parseConfig({ ...defaultConfig(), sources: { greenhouse: { tenants: [bad] } } });
+    assert.equal(result.ok, false, `${bad} must be refused`);
+    if (!result.ok) assert.doesNotMatch(result.error, /sk-live|evil\.example/, 'the refused value is never echoed');
+  }
+});

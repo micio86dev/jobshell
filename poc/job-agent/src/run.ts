@@ -151,6 +151,12 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
       skipped: null,
     };
 
+    // The user's switch comes before the network and before the policy, so a switched-off source costs nothing.
+    if (deps.config.sources[sourceId]?.enabled === false) {
+      reports.push({ ...report, skipped: 'disabled by the user', ms: Date.now() - started });
+      continue;
+    }
+
     if (adapter === null) {
       reports.push({ ...report, skipped: 'no adapter for this source', ms: Date.now() - started });
       continue;
@@ -184,13 +190,14 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
     const urls: string[] = [];
     // The options each URL was built from, so the extraction knows the employer behind a feed.
     const requestOptions = new Map<string, SearchOptions>();
-    const boards = deps.boards === undefined ? tenantsFor(sourceId) : (deps.boards[sourceId] ?? []);
+    // Verified employers first, in registry order, then the ones the user added. A tenant listed twice is fetched once.
+    const verified = deps.boards === undefined ? tenantsFor(sourceId) : (deps.boards[sourceId] ?? []);
+    const boards = [...new Set([...verified.map((entry) => entry.tenant), ...(deps.config.sources[sourceId]?.tenants ?? [])])];
     if (boards.length > 0) {
-      // A board source is one request per verified employer, in registry order. The page
-      // ceiling caps the boards as it caps every other request.
-      for (const board of boards.slice(0, policy.maxPages)) {
+      // A board source is one request per employer. The page ceiling caps the boards as it caps every other request.
+      for (const tenant of boards.slice(0, policy.maxPages)) {
         try {
-          const options: SearchOptions = { tenant: board.tenant };
+          const options: SearchOptions = { tenant };
           const url = adapter.buildSearchUrl('', options);
           if (!urls.includes(url)) {
             urls.push(url);
