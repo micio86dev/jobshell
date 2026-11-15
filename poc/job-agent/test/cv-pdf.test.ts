@@ -43,3 +43,24 @@ test('a character outside the Latin-1 range is replaced, not written as broken b
   const text = await pdfText(new Uint8Array(pdf));
   assert.match(text, /Rust/);
 });
+
+test('the name is set large, sections are capitals with a rule under them', async () => {
+  const markdown = '# Mario Rossi\nmario@example.test | Roma\n\n## Esperienza\n- Sviluppo Rust';
+  const pdf = markdownToPdf(markdown);
+  const raw = pdf.toString('latin1');
+  const text = await pdfText(new Uint8Array(pdf));
+  assert.match(text, /ESPERIENZA/, 'section titles are capitals');
+  assert.match(raw, /\/F2 22 Tf/, 'the name is in bold, 22 points');
+  assert.match(raw, / m \S+ \S+ l S/, 'a rule is drawn under each section title');
+});
+
+test('bullets hang: the bullet sits left of its text, and the text colour is set', () => {
+  const raw = markdownToPdf('## Competenze\n- Rust e Tauri').toString('latin1');
+  assert.match(raw, /\(\x95\) Tj/, 'the bullet glyph is drawn on its own');
+  assert.match(raw, /0\.13 0\.13 0\.13 rg/, 'body text is set in a dark ink, not pure black');
+});
+
+test('contact lines right under the name are muted', () => {
+  const raw = markdownToPdf('# Mario\nmario@example.test').toString('latin1');
+  assert.match(raw, /0\.42 0\.42 0\.42 rg/);
+});
