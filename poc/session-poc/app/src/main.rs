@@ -288,6 +288,35 @@ fn agent_stop_sources(sources: State<'_, Arc<Mutex<Sources>>>) -> Result<(), Str
     Ok(())
 }
 
+/// The sources and their switches, as the agent's source command prints them (JSON).
+#[tauri::command]
+async fn sources_list() -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(|| agent::source_settings(&["list", "--json"]))
+        .await
+        .map_err(|error| error.to_string())?
+        .map_err(|error| error.to_string())
+}
+
+/// Switch a source on or off.
+#[tauri::command]
+async fn source_switch(id: String, enabled: bool) -> Result<String, String> {
+    let action = if enabled { "enable" } else { "disable" };
+    tauri::async_runtime::spawn_blocking(move || agent::source_settings(&[action, id.as_str()]))
+        .await
+        .map_err(|error| error.to_string())?
+        .map_err(|error| error.to_string())
+}
+
+/// Add or remove an employer on a board source.
+#[tauri::command]
+async fn source_employer(id: String, employer: String, add: bool) -> Result<String, String> {
+    let action = if add { "add-tenant" } else { "remove-tenant" };
+    tauri::async_runtime::spawn_blocking(move || agent::source_settings(&[action, id.as_str(), employer.as_str()]))
+        .await
+        .map_err(|error| error.to_string())?
+        .map_err(|error| error.to_string())
+}
+
 /// Which accounts have a key, without returning any of them.
 #[tauri::command]
 fn agent_key_status() -> Result<std::collections::BTreeMap<String, bool>, String> {
@@ -405,6 +434,9 @@ fn main() {
             agent_last_run,
             agent_save_key,
             agent_key_status,
+            sources_list,
+            source_switch,
+            source_employer,
             agent_verify_key,
             agent_get_settings,
             agent_save_settings,
