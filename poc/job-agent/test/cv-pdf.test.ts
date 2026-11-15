@@ -60,6 +60,46 @@ test('bullets hang: the bullet sits left of its text, and the text colour is set
   assert.match(raw, /0\.13 0\.13 0\.13 rg/, 'body text is set in a dark ink, not pure black');
 });
 
+test('a job title is bold and the date line under it is muted, so the entry reads at a glance', () => {
+  const raw = markdownToPdf('### Sviluppatore Full Stack, Azienda\n2021 - oggi').toString('latin1');
+  assert.match(raw, /\/F2 10\.5 Tf [\d.]+ [\d.]+ Td \(Sviluppatore Full Stack, Azienda\)/, 'the title is bold');
+  assert.match(raw, /0\.42 0\.42 0\.42 rg\nBT \/F1 9\.5 Tf [\d.]+ [\d.]+ Td \(2021 - oggi\)/, 'the date is muted');
+});
+
+test('a sentence that fits the measure stays on one row instead of wrapping early', () => {
+  const sentence = 'Sviluppo applicazioni web moderne con Rust e Vue, attenzione a performance e sicurezza.';
+  const raw = markdownToPdf(sentence).toString('latin1');
+  assert.equal((raw.match(/\) Tj/g) ?? []).length, 1, 'one row of text, not two');
+});
+
+test('an en dash in a date range and curly quotes print as the dash and quotes, not question marks', async () => {
+  const pdf = markdownToPdf('Dal 2019 – 2021, ruolo “senior”');
+  const text = await pdfText(new Uint8Array(pdf));
+  assert.doesNotMatch(text, /\?/, 'no replacement marks');
+  assert.match(text, /2019 – 2021/);
+  assert.match(text, /“senior”/);
+});
+
+test('a decomposed accent prints as one accented letter', async () => {
+  const pdf = markdownToPdf('Perchè no'); // "Perche" + combining grave accent
+  const text = await pdfText(new Uint8Array(pdf));
+  assert.match(text, /Perchè no/);
+});
+
+test('em dashes are measured at their full width, so a run of them wraps before the margin', () => {
+  // Forty em dashes with spaces at 10 pt: about 508 pt, over the 483 pt measure. The "## Nota" heading
+  // leaves the contact block, so the dashes are body text; the heading is one Tj, the body two rows.
+  const dashes = Array.from({ length: 40 }, () => '—').join(' ');
+  const raw = markdownToPdf(`## Nota\n${dashes}`).toString('latin1');
+  assert.equal((raw.match(/\) Tj/g) ?? []).length, 3);
+});
+
+test('wide capitals wrap before the right margin instead of running past it', () => {
+  // Thirty "WW" words at 10 pt are about 650 pt of Helvetica, wider than the 483 pt measure: two rows.
+  const raw = markdownToPdf('WW '.repeat(30).trim()).toString('latin1');
+  assert.equal((raw.match(/\) Tj/g) ?? []).length, 2);
+});
+
 test('contact lines right under the name are muted', () => {
   const raw = markdownToPdf('# Mario\nmario@example.test').toString('latin1');
   assert.match(raw, /0\.42 0\.42 0\.42 rg/);

@@ -39,19 +39,55 @@ type Placed = { line: Line; baseline: number };
 const cleanMarkers = (text: string): string =>
   text.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1').replace(/`([^`]*)`/g, '$1');
 
-/** Characters that fit in a width at a size, with a margin for Helvetica's wider letters. */
-const columnsFor = (width: number, size: number): number => Math.max(12, Math.floor(width / (size * 0.55)));
+/**
+ * Helvetica advance widths for printable ASCII (32 to 126), in thousandths of an em, from the
+ * standard AFM metrics. Accented Latin letters reuse their base letter's width.
+ */
+const HELVETICA_WIDTHS = [
+  278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278, 278,
+  556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278, 278, 584, 584, 584, 556,
+  1015, 667, 667, 722, 722, 667, 611, 778, 722, 278, 500, 667, 556, 833, 722, 778,
+  667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 278, 278, 278, 469, 556,
+  333, 556, 556, 500, 556, 556, 278, 556, 556, 222, 222, 500, 222, 833, 556, 556,
+  556, 556, 333, 500, 278, 556, 500, 722, 500, 500, 500, 334, 260, 334, 584,
+];
+/** Bold Helvetica runs a little wider than the regular face; the measure keeps that margin. */
+const BOLD_FACTOR = 1.08;
+const FALLBACK_WIDTH = 556;
+
+/** Em dash and ellipsis are a full em wide; the fallback is narrower, so they are listed. */
+const WIDE_EXTRAS: ReadonlyMap<number, number> = new Map([
+  [0x2014, 1000],
+  [0x2026, 1000],
+]);
+
+const glyphWidth = (character: string): number => {
+  const base = character.normalize('NFD').charAt(0);
+  const code = base.codePointAt(0) ?? 0;
+  const wide = WIDE_EXTRAS.get(code);
+  if (wide !== undefined) return wide;
+  return code >= 32 && code <= 126 ? (HELVETICA_WIDTHS[code - 32] ?? FALLBACK_WIDTH) : FALLBACK_WIDTH;
+};
+
+/** The width of a text in points, as the standard Helvetica face draws it at a size. */
+const textWidth = (text: string, size: number, bold: boolean): number => {
+  const units = Array.from(text, glyphWidth).reduce((sum, width) => sum + width, 0);
+  return (units / 1000) * size * (bold ? BOLD_FACTOR : 1);
+};
+
+/** A date range under a job title, such as "2021 - oggi" or "2019 - 2021": a detail, not body text. */
+const DATE_LINE = /^\d{4}\s*[-–]\s*(?:\d{4}|oggi|presente|attuale|present|current)\b/iu;
 
 type Style = Pick<Line, 'size' | 'bold' | 'color' | 'x' | 'before' | 'rule'>;
 
 /** Split a paragraph into rows that fit the width. Only the first row keeps the space before. */
 const wrap = (text: string, style: Style, bullet: boolean): Line[] => {
-  const columns = columnsFor(RIGHT - style.x, style.size);
+  const measure = RIGHT - style.x;
   const rows: string[] = [];
   let current = '';
   for (const word of text.split(/\s+/).filter((part) => part.length > 0)) {
     const next = current.length === 0 ? word : `${current} ${word}`;
-    if (next.length > columns && current.length > 0) {
+    if (textWidth(next, style.size, style.bold) > measure && current.length > 0) {
       rows.push(current);
       current = word;
     } else {
@@ -102,25 +138,37 @@ const toLines = (markdown: string): Line[] => {
     }
 
     const text = cleanMarkers(line);
-    lines.push(
-      ...wrap(
-        text,
-        inHeader
-          ? { size: CONTACT_SIZE, bold: false, color: MUTED, x: MARGIN, before: 3, rule: false }
-          : { size: BODY_SIZE, bold: false, color: INK, x: MARGIN, before: 4, rule: false },
-        false,
-      ),
-    );
+    const style: Style = inHeader
+      ? { size: CONTACT_SIZE, bold: false, color: MUTED, x: MARGIN, before: 3, rule: false }
+      : DATE_LINE.test(text)
+        ? { size: CONTACT_SIZE, bold: false, color: MUTED, x: MARGIN, before: 1, rule: false }
+        : { size: BODY_SIZE, bold: false, color: INK, x: MARGIN, before: 4, rule: false };
+    lines.push(...wrap(text, style, false));
   }
   return lines;
 };
+
+/** Typographic characters that WinAnsi, the encoding the standard fonts use, holds above Latin-1. */
+const WINANSI_EXTRAS: ReadonlyMap<number, string> = new Map([
+  [0x20ac, '\x80'], // euro sign
+  [0x201a, '\x82'], // single low quotation mark
+  [0x201e, '\x84'], // double low quotation mark
+  [0x2026, '\x85'], // ellipsis
+  [0x2018, '\x91'], // left single quotation mark
+  [0x2019, '\x92'], // right single quotation mark
+  [0x201c, '\x93'], // left double quotation mark
+  [0x201d, '\x94'], // right double quotation mark
+  [0x2022, '\x95'], // bullet, used for list items
+  [0x2013, '\x96'], // en dash, used in date ranges
+  [0x2014, '\x97'], // em dash
+]);
 
 /** One character as a PDF string byte: printable ASCII and Latin-1 pass, the rest becomes "?". */
 const encodeChar = (character: string): string => {
   const code = character.codePointAt(0) ?? 0;
   if (character === '(' || character === ')' || character === '\\') return `\\${character}`;
-  // WinAnsi has a bullet at 0x95; the bullet used for list items is written there.
-  if (code === 0x2022) return '\x95';
+  const extra = WINANSI_EXTRAS.get(code);
+  if (extra !== undefined) return extra;
   if ((code >= 0x20 && code <= 0x7e) || (code >= 0xa0 && code <= 0xff)) return character;
   return '?';
 };
@@ -168,7 +216,8 @@ const contentFor = (page: Placed[]): string => {
 
 /** Build the whole PDF file. Offsets are byte positions, so every string is Latin-1 (one byte each). */
 export const markdownToPdf = (markdown: string): Buffer => {
-  const pages = paginate(toLines(markdown));
+  // Composed letters, so an accent written as a separate mark is measured and drawn as one glyph.
+  const pages = paginate(toLines(markdown.normalize('NFC')));
   const pageCount = pages.length;
   // Object numbers: 1 catalog, 2 page tree, 3 regular font, 4 bold font, then a page and its content per page.
   const pageId = (index: number): number => 5 + index * 2;
