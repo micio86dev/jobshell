@@ -59,3 +59,10 @@ L9. Third batch, 2026-11-15: Breezy, Rippling, Pinpoint.
 - Excluded for no postings or 404: breezy isolutions (0), rippling job-hunt and inspectorio (404), wallbox-style empty boards.
 - Discarded by provider: Comeet (its public API needs a company token, so it is a credential source), Jobvite (needs an opaque company id that the search did not give), Factorial (no public JSON board in the career-ops provider), BambooHR, Homerun, Polymer and ApplicantPro (no Italian or Spanish tenant in the search).
 - Known: the tenant list is a search result, not an official directory, so coverage of Italy and Spain depends on what the search finds.
+
+L10. More Italian and Spanish tenants, 2026-11-15. Candidates came from web searches restricted to each platform's domain; each was probed (robots.txt first, one read-only GET, 1.2 s apart) before it entered the registry.
+- Added: Workable, Italy alispa, allnet-dot-italia-spa, webranking, moneyfarm; Spain teleperformance-spain. Teamtailor, Italy letuelezioni, agilelab, alfadocs, baconsultingsrl-1749809296, strategicmanagementpartners; Spain knowmadmood, nextlane, kapres, multiversecomputing. Breezy, Italy alphabet-racing-italia-srl, mainstreaming-spa; Spain critical-software, fx-digital, cvedia. Pinpoint, Spain ebiquity. HireHive, Italy kia-italy, the-level-group, patagonia; Spain vanguard; Europe-wide kia-in-europe.
+- Left out, no postings: eurostampa-ita, giunti-al-punto-1, velasca, riluxa, newcocoms, prozis, terminalfour. Left out, 404: selefor, unleash, foodoso, barcelona-sae, b-reel.
+- Left out, market unclear from the evidence: cxg, goliathgroup, convotisiberia, carto, rippling-only pages with no Italian or Spanish posting.
+- Full probe: Workable 17 targets, 1885 postings; Teamtailor 27 targets, 903 postings; Breezy 13 targets, 338 postings; Pinpoint 3 targets, 86 postings; HireHive 6 targets, 107 postings; Rippling 4 targets, 44 postings (evidence/source-probe/2026-11-15.json).
+- Known limit: several tenants are multinational (for example the Europe-wide HireHive board and dentons-europe), so the market order does not filter them by country.

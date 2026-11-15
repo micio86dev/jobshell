@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-15T15:29:05.782Z",
+  "generated_at": "2026-11-15T15:57:17.760Z",
   "method": "read-only GET, self-identifying user agent, one request every 1200 ms, robots.txt read first per origin; a URL refused by robots.txt is not requested; no credential, no cookie, no browser",
   "user_agent": "jobshell-job-agent/0.1 (read-only source probe)",
   "per_source": [
@@ -14,8 +14,8 @@
     },
     {
       "source": "breezy",
-      "targets": 8,
-      "postings": 301,
+      "targets": 13,
+      "postings": 338,
       "verdicts": [
         "ok"
       ],
@@ -59,8 +59,8 @@
     },
     {
       "source": "hirehive",
-      "targets": 1,
-      "postings": 30,
+      "targets": 6,
+      "postings": 107,
       "verdicts": [
         "ok"
       ],
@@ -113,8 +113,8 @@
     },
     {
       "source": "pinpoint",
-      "targets": 2,
-      "postings": 76,
+      "targets": 3,
+      "postings": 86,
       "verdicts": [
         "ok"
       ],
@@ -158,8 +158,8 @@
     },
     {
       "source": "teamtailor",
-      "targets": 18,
-      "postings": 554,
+      "targets": 27,
+      "postings": 903,
       "verdicts": [
         "ok"
       ],
@@ -176,8 +176,8 @@
     },
     {
       "source": "workable",
-      "targets": 12,
-      "postings": 1646,
+      "targets": 17,
+      "postings": 1885,
       "verdicts": [
         "ok"
       ],
@@ -276,9 +276,9 @@
       "url": "https://end.breezy.hr/json",
       "robots_status": 200,
       "status": 200,
-      "bytes": 12772,
+      "bytes": 12018,
       "challenge": "none",
-      "postings": 17,
+      "postings": 16,
       "sample_titles": [
         "Collaborations Graphic Designer",
         "Department Manager",
@@ -319,6 +319,42 @@
         "\"Traveling\" Business Development Manager",
         "AI Engineer",
         "Analytics Engineer - Databricks"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "alphabet-racing-italia-srl",
+      "url": "https://alphabet-racing-italia-srl.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 9299,
+      "challenge": "none",
+      "postings": 13,
+      "sample_titles": [
+        "Category Lead Race Engineer",
+        "Data/performance Junior Engineer",
+        "FIA F2 Performance Engineer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "mainstreaming-spa",
+      "url": "https://mainstreaming-spa.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 12602,
+      "challenge": "none",
+      "postings": 6,
+      "sample_titles": [
+        "Customer Support & Operations Engineer",
+        "Senior Backend Engineer/Data Engineer",
+        "Senior Network Engineer"
       ],
       "error": null,
       "robots_allowed": true,
@@ -373,6 +409,60 @@
         "Account Director",
         "Account Director",
         "Account Manager _Hybrid"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "critical-software",
+      "url": "https://critical-software.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 15513,
+      "challenge": "none",
+      "postings": 11,
+      "sample_titles": [
+        "Business Development Manager – Medical Devices Software",
+        "Business Development Manager – Railway (Iberia)",
+        "CTD - Technology Director (Energy)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "fx-digital",
+      "url": "https://fx-digital.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 6079,
+      "challenge": "none",
+      "postings": 5,
+      "sample_titles": [
+        "Client Partner",
+        "Mid-weight Quality Engineer Analyst",
+        "Senior Product Designer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "cvedia",
+      "url": "https://cvedia.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 2821,
+      "challenge": "none",
+      "postings": 3,
+      "sample_titles": [
+        "Agentic AI Engineer (Computer Vision) - Remote",
+        "Business Development Manager, USA/Canada - Remote",
+        "Hardware Product Manager, Global - Remote"
       ],
       "error": null,
       "robots_allowed": true,
@@ -722,6 +812,94 @@
     },
     {
       "source": "hirehive",
+      "tenant": "kia-italy",
+      "url": "https://kia-italy.hirehive.com/api/v2/jobs",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 74974,
+      "challenge": "none",
+      "postings": 7,
+      "sample_titles": [
+        "Freelance Support: Brand Experience Project Manager (All genders welcome)",
+        "Product Intern (All Genders Welcome)",
+        "PBV (Platfom Beyond Vehicle) Intern (All Genders Welcome)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "hirehive",
+      "tenant": "the-level-group",
+      "url": "https://the-level-group.hirehive.com/api/v2/jobs",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 207223,
+      "challenge": "none",
+      "postings": 25,
+      "sample_titles": [
+        "Digital Operations Project Management Intern",
+        "Client Advisor - Seasonal",
+        "Homeware Product Developer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "hirehive",
+      "tenant": "patagonia",
+      "url": "https://patagonia.hirehive.com/api/v2/jobs",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 246297,
+      "challenge": "none",
+      "postings": 14,
+      "sample_titles": [
+        "Customer Service Representative, Italian Speaking (f/m/d) - 6 months contract",
+        "Customer Service Representative,  German Speaking (f/m/d) - 3 months contract",
+        "Sales Associate (f/m/d) -  32 working hours"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "hirehive",
+      "tenant": "vanguard",
+      "url": "https://vanguard.hirehive.com/api/v2/jobs",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 2249,
+      "challenge": "none",
+      "postings": 1,
+      "sample_titles": [
+        "Java-developer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "hirehive",
+      "tenant": "kia-in-europe",
+      "url": "https://kia-in-europe.hirehive.com/api/v2/jobs",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 532022,
+      "challenge": "none",
+      "postings": 30,
+      "sample_titles": [
+        "Technical Specialist (Southern)",
+        "Freelance Support: Brand Experience Project Manager (All genders welcome)",
+        "Product Intern (All Genders Welcome)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "hirehive",
       "tenant": "amcsgroup",
       "url": "https://amcsgroup.hirehive.com/api/v2/jobs",
       "robots_status": 200,
@@ -780,13 +958,13 @@
       "url": "https://jobicy.com/api/v2/remote-jobs?count=50",
       "robots_status": 200,
       "status": 200,
-      "bytes": 516089,
+      "bytes": 505414,
       "challenge": "none",
       "postings": 50,
       "sample_titles": [
-        "Senior Marketing Manager",
-        "Junior Performance Marketer (Remote - Greece)",
-        "Staff Data Scientist, Pricing"
+        "Partner Operations Specialist (Remote Eligible - Costa Rica)",
+        "Software Engineering Manager, Mobile Products",
+        "Enterprise Account Executive"
       ],
       "error": null,
       "robots_allowed": true,
@@ -900,12 +1078,30 @@
       "verdict": "ok"
     },
     {
+      "source": "pinpoint",
+      "tenant": "ebiquity",
+      "url": "https://ebiquity.pinpointhq.com/postings.json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 71462,
+      "challenge": "none",
+      "postings": 10,
+      "sample_titles": [
+        "Senior Consultant",
+        "Senior Consultant",
+        "Data Scientist"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
       "source": "platsbanken",
       "tenant": null,
       "url": "https://jobsearch.api.jobtechdev.se/search?q=utvecklare&limit=100",
       "robots_status": 404,
       "status": 200,
-      "bytes": 1209055,
+      "bytes": 1209057,
       "challenge": "none",
       "postings": 100,
       "sample_titles": [
@@ -1205,6 +1401,96 @@
     },
     {
       "source": "teamtailor",
+      "tenant": "letuelezioni",
+      "url": "https://letuelezioni.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 460770,
+      "challenge": "none",
+      "postings": 100,
+      "sample_titles": [
+        "Life Coach Online per Studenti – Part-time",
+        "Insegnante di Italiano per Stranieri - Part Time",
+        "Cerchiamo Insegnante Online di Italiano"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "agilelab",
+      "url": "https://agilelab.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 113924,
+      "challenge": "none",
+      "postings": 10,
+      "sample_titles": [
+        "Data Engineer IV (Remote)",
+        "Senior Technical Success Manager",
+        "Spontaneous Application – Protected Categories (L. 68/99)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "alfadocs",
+      "url": "https://alfadocs.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 72198,
+      "challenge": "none",
+      "postings": 8,
+      "sample_titles": [
+        "Senior Data Engineer (Freelance - all genders)",
+        "Office Manager and PA (m/w/d/all genders)",
+        "Sales Team Lead"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "baconsultingsrl-1749809296",
+      "url": "https://baconsultingsrl-1749809296.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 98926,
+      "challenge": "none",
+      "postings": 13,
+      "sample_titles": [
+        "Project Manager - Testing Governance",
+        "Senior Backend Developer Java",
+        "Full Stack Developer C#/.NET & React"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "strategicmanagementpartners",
+      "url": "https://strategicmanagementpartners.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 33168,
+      "challenge": "none",
+      "postings": 5,
+      "sample_titles": [
+        "Responsabile Ufficio Gare",
+        "IT APPLICATION SPECIALIST",
+        "Junior Analyst- Veneto"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
       "tenant": "winid",
       "url": "https://winid.teamtailor.com/jobs.rss",
       "robots_status": 200,
@@ -1324,6 +1610,78 @@
         "Botones 30h",
         "Mozo/a de Economato (20h semanales)",
         "Ayudante Camarero/a 25h"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "knowmadmood",
+      "url": "https://knowmadmood.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 665095,
+      "challenge": "none",
+      "postings": 100,
+      "sample_titles": [
+        "Atlassian Developer",
+        "Atlassian Consultant",
+        "Atlassian Business Senior Consultant"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "nextlane",
+      "url": "https://nextlane.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 272266,
+      "challenge": "none",
+      "postings": 22,
+      "sample_titles": [
+        "Inside Sales Representative (French Speaker)",
+        "Application Support Consultant (Dutch Speaker) Relocation to Porto, Portugal",
+        "Database Support Consultant (french speaker - Oracle, SQL, Linux, Windows)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "kapres",
+      "url": "https://kapres.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 305507,
+      "challenge": "none",
+      "postings": 82,
+      "sample_titles": [
+        "Ingeniero Senior de Comunicaciones con experiencia en AWS y Azure",
+        "Consultor / Arquitecto senior experto en Palo Alto (Freelance)",
+        "QA Test Engineer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "multiversecomputing",
+      "url": "https://multiversecomputing.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 94304,
+      "challenge": "none",
+      "postings": 9,
+      "sample_titles": [
+        "Senior DevOps Engineer",
+        "Strategic Account Executive – Public Sector",
+        "Senior Software Engineer - AI Agents"
       ],
       "error": null,
       "robots_allowed": true,
@@ -1455,6 +1813,78 @@
     },
     {
       "source": "workable",
+      "tenant": "alispa",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/alispa?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 259320,
+      "challenge": "none",
+      "postings": 55,
+      "sample_titles": [
+        "Business Developer",
+        "Candidatura Spontanea - Alias Executive Search & Consulting",
+        "Candidatura Spontanea Ali Professional"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "allnet-dot-italia-spa",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/allnet-dot-italia-spa?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 16484,
+      "challenge": "none",
+      "postings": 4,
+      "sample_titles": [
+        "Brand Specialist Data Center",
+        "Brand Specialist ICT - Stage",
+        "Inside Sales Account - Stage"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "webranking",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/webranking?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 148810,
+      "challenge": "none",
+      "postings": 27,
+      "sample_titles": [
+        "Cloud & Data Engineer",
+        "Cloud & Data Engineer",
+        "Cloud & Data Engineer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "moneyfarm",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/moneyfarm?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 116330,
+      "challenge": "none",
+      "postings": 18,
+      "sample_titles": [
+        "Customer Relationship Manager, Moneyfarm",
+        "Investment Consultant",
+        "Investment Consultant/Junior Institutional Sales"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
       "tenant": "ukio",
       "url": "https://apply.workable.com/api/v1/widget/accounts/ukio?details=true",
       "robots_status": 200,
@@ -1520,6 +1950,24 @@
         "1st Level Technical Support with German and English",
         "Account Executive - ES10",
         "Action service coordinator - Romanian+Bulgarian+German"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "teleperformance-spain",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/teleperformance-spain?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 779169,
+      "challenge": "none",
+      "postings": 135,
+      "sample_titles": [
+        "Abogado/a Corporativo/a",
+        "Account Manager B2B - Operación Aerolínea",
+        "Agente Comercial Telefónico - Seguros Auto - Servicio Estable"
       ],
       "error": null,
       "robots_allowed": true,
