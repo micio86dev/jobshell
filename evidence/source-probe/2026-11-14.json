@@ -1,0 +1,660 @@
+{
+  "generated_at": "2026-11-14T23:57:02.548Z",
+  "method": "read-only GET, self-identifying user agent, one request every 1200 ms, robots.txt read first per origin; a URL refused by robots.txt is not requested; no credential, no cookie, no browser",
+  "user_agent": "jobshell-job-agent/0.1 (read-only source probe)",
+  "per_source": [
+    {
+      "source": "arbeitnow",
+      "targets": 1,
+      "postings": 300,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "greenhouse",
+      "targets": 16,
+      "postings": 3826,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "himalayas",
+      "targets": 1,
+      "postings": 20,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "hn",
+      "targets": 1,
+      "postings": 20,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "iprogrammatori",
+      "targets": 1,
+      "postings": 418,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "jobicy",
+      "targets": 1,
+      "postings": 50,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "lever",
+      "targets": 3,
+      "postings": 421,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "personio",
+      "targets": 1,
+      "postings": 2,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "recruitee",
+      "targets": 1,
+      "postings": 11,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "remoteok",
+      "targets": 1,
+      "postings": 97,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "weworkremotely",
+      "targets": 1,
+      "postings": 25,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "workingnomads",
+      "targets": 1,
+      "postings": 34,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    }
+  ],
+  "skipped": [
+    {
+      "source": "ashby",
+      "reason": "policy: prohibited"
+    },
+    {
+      "source": "indeed",
+      "reason": "policy: measurement_only"
+    },
+    {
+      "source": "jobspresso",
+      "reason": "policy: prohibited"
+    },
+    {
+      "source": "linkedin",
+      "reason": "policy: measurement_only"
+    },
+    {
+      "source": "remotive",
+      "reason": "policy: prohibited"
+    }
+  ],
+  "records": [
+    {
+      "source": "arbeitnow",
+      "tenant": null,
+      "url": "https://www.arbeitnow.com/api/job-board-api",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 2633582,
+      "challenge": "none",
+      "postings": 300,
+      "sample_titles": [
+        "Projektmanager Instandhaltung und Sanierung (m/w/d)",
+        "Solutions Engineer UAS / Aviation",
+        "Senior Product Manager, AI Products & Agentic Hospitality (f/m/d)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "cabify",
+      "url": "https://boards-api.greenhouse.io/v1/boards/cabify/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 367804,
+      "challenge": "none",
+      "postings": 48,
+      "sample_titles": [
+        "Accounting Analyst",
+        "Agente de Contact Center en condición de discapacidad",
+        "Analista contable"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "wallapop",
+      "url": "https://boards-api.greenhouse.io/v1/boards/wallapop/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 73195,
+      "challenge": "none",
+      "postings": 4,
+      "sample_titles": [
+        "Principal Growth Product Manager",
+        "Principal Product Manager",
+        "Senior Product Manager"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "typeform",
+      "url": "https://boards-api.greenhouse.io/v1/boards/typeform/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 64617,
+      "challenge": "none",
+      "postings": 6,
+      "sample_titles": [
+        "AI Product Operations Lead",
+        "Senior Account Executive ",
+        "Senior Account Executive "
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "n26",
+      "url": "https://boards-api.greenhouse.io/v1/boards/n26/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 338348,
+      "challenge": "none",
+      "postings": 34,
+      "sample_titles": [
+        "AFC Associate - SAR Delegate (Italian speaker)",
+        "AFC Associate - SAR Writer (Italian speaker)",
+        "AFC Operations Team Lead (Italian Speaker)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "celonis",
+      "url": "https://boards-api.greenhouse.io/v1/boards/celonis/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 4805512,
+      "challenge": "none",
+      "postings": 265,
+      "sample_titles": [
+        "Account Executive - Energy",
+        "Account Executive - Federal",
+        "Account Executive - Public Sector Germany - Defense (Bundeswehr)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "adyen",
+      "url": "https://boards-api.greenhouse.io/v1/boards/adyen/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 2348791,
+      "challenge": "none",
+      "postings": 247,
+      "sample_titles": [
+        " Account Manager",
+        "Account Manager",
+        "Account Manager"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "sumup",
+      "url": "https://boards-api.greenhouse.io/v1/boards/sumup/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 3457869,
+      "challenge": "none",
+      "postings": 328,
+      "sample_titles": [
+        "Account Manager (HVM) - German",
+        "Account Sales Executive ",
+        "Account Sales Executive - Manchester"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "contentful",
+      "url": "https://boards-api.greenhouse.io/v1/boards/contentful/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 559544,
+      "challenge": "none",
+      "postings": 46,
+      "sample_titles": [
+        "Customer Success Manager ",
+        "Customer Success Manager ",
+        "Customer Success Manager "
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "wise",
+      "url": "https://boards-api.greenhouse.io/v1/boards/wise/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 94084,
+      "challenge": "none",
+      "postings": 19,
+      "sample_titles": [
+        "Area Sales Leader  - Memphis, TN",
+        "Supplemental Sales Agent - Cleveland, Ohio",
+        "Supplemental Sales Agent - Dallas - Fort Worth, TX"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "elastic",
+      "url": "https://boards-api.greenhouse.io/v1/boards/elastic/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 7829584,
+      "challenge": "none",
+      "postings": 400,
+      "sample_titles": [
+        "ABM Manager, Global Public Sector",
+        "ABM Regional Manager, AMER",
+        "ABM Regional Manager, EMEA"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "datadog",
+      "url": "https://boards-api.greenhouse.io/v1/boards/datadog/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 4741304,
+      "challenge": "none",
+      "postings": 384,
+      "sample_titles": [
+        "Accounts Payable Analyst",
+        "AI Research Engineer - Datadog AI Research (DAIR)",
+        "AI Research Scientist - Datadog AI Research (DAIR)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "mongodb",
+      "url": "https://boards-api.greenhouse.io/v1/boards/mongodb/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 4521616,
+      "challenge": "none",
+      "postings": 390,
+      "sample_titles": [
+        "2027 - Software Engineering Intern, AMER",
+        "2027 - Software Engineer Intern, Dublin - 6 Month Internship",
+        "2027 - Summer Software Engineer Intern, Dublin"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "gitlab",
+      "url": "https://boards-api.greenhouse.io/v1/boards/gitlab/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 3901364,
+      "challenge": "none",
+      "postings": 251,
+      "sample_titles": [
+        "AI Transformation Owner, CRO",
+        "Associate Renewals Manager, SMB",
+        "Backend Engineer, GitLab Orbit"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "cloudflare",
+      "url": "https://boards-api.greenhouse.io/v1/boards/cloudflare/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 8503637,
+      "challenge": "none",
+      "postings": 479,
+      "sample_titles": [
+        "Account Executive, FedCiv",
+        "AI Security Research & Red Team Engineer",
+        "Associate, Strategic Finance & Investor Relations"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "stripe",
+      "url": "https://boards-api.greenhouse.io/v1/boards/stripe/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 6141767,
+      "challenge": "none",
+      "postings": 786,
+      "sample_titles": [
+        "Abuse Investigator",
+        "Abuse Investigator",
+        "Abuse Investigator"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "figma",
+      "url": "https://boards-api.greenhouse.io/v1/boards/figma/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 1615706,
+      "challenge": "none",
+      "postings": 139,
+      "sample_titles": [
+        "Account Executive, Enterprise",
+        "Account Executive, Enterprise (Bengaluru, India)",
+        "Account Executive, Enterprise (Berlin, Germany)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "himalayas",
+      "tenant": null,
+      "url": "https://himalayas.app/jobs/api?limit=100",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 169377,
+      "challenge": "none",
+      "postings": 20,
+      "sample_titles": [
+        "Pediatric Nurse Advisor",
+        "Charge Master Analyst - Revenue Integrity  - FT Days",
+        "Global Account Manager"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "hn",
+      "tenant": null,
+      "url": "https://hn.algolia.com/api/v1/search?query=who%20is%20hiring&tags=comment",
+      "robots_status": 404,
+      "status": 200,
+      "bytes": 43073,
+      "challenge": "none",
+      "postings": 20,
+      "sample_titles": [
+        "Scribd (YC &#x27;06, \"Netflix for eBooks\", top 100 website, 50 people) is hiring talented devs in a variety of flavors t",
+        "Agree! Usually there are a couple of Swedish (mostly Stockholm) companies each month I check.",
+        "I&#x27;m about to start looking for work on tomorrow&#x27;s whoishiring threads -- either freelance or full time, we&#x2"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "iprogrammatori",
+      "tenant": null,
+      "url": "https://www.iprogrammatori.it/rss/offerte-di-lavoro.xml",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 826541,
+      "challenge": "none",
+      "postings": 418,
+      "sample_titles": [
+        "Designer Senior UX UI con inglese fluente",
+        "Project Manager Robotica e Meccatronica",
+        "Heroku Developer Middle-Senior"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "jobicy",
+      "tenant": null,
+      "url": "https://jobicy.com/api/v2/remote-jobs?count=50",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 427327,
+      "challenge": "none",
+      "postings": 50,
+      "sample_titles": [
+        "Navy Account Executive - Public Sector",
+        "Director, Strategic Engagements (Northeast)",
+        "City Manager, New York"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "lever",
+      "tenant": "jobandtalent",
+      "url": "https://api.lever.co/v0/postings/jobandtalent?mode=json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 591711,
+      "challenge": "none",
+      "postings": 32,
+      "sample_titles": [
+        "Co -  on Site Account Coordinator",
+        "Co - On Site Recruitment Coordinator",
+        "CO - Remote Legalization Coordinator"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "lever",
+      "tenant": "spotify",
+      "url": "https://api.lever.co/v0/postings/spotify?mode=json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 810586,
+      "challenge": "none",
+      "postings": 87,
+      "sample_titles": [
+        "Account Executive - Commercial, Spotify Technology",
+        "Account Executive - Commercial, Spotify Technology",
+        "Account Executive - Commercial, Spotify Technology"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "lever",
+      "tenant": "palantir",
+      "url": "https://api.lever.co/v0/postings/palantir?mode=json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 5812776,
+      "challenge": "none",
+      "postings": 302,
+      "sample_titles": [
+        "Administrative Business Partner",
+        "Administrative Business Partner",
+        "American Tech Fellowship"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "personio",
+      "tenant": "personio",
+      "url": "https://personio.jobs.personio.de/xml",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 1049,
+      "challenge": "none",
+      "postings": 2,
+      "sample_titles": [
+        "Business Development Representative (d/f/m)",
+        "Test Job"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "recruitee",
+      "tenant": "channable",
+      "url": "https://channable.recruitee.com/api/offers/",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 271259,
+      "challenge": "none",
+      "postings": 11,
+      "sample_titles": [
+        "Technical Writer, Customer Education",
+        "Senior Engineering Manager - Core",
+        "Technical Customer Support - French Speaking"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "remoteok",
+      "tenant": null,
+      "url": "https://remoteok.com/api",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 651476,
+      "challenge": "none",
+      "postings": 97,
+      "sample_titles": [
+        "Global Partnerships BD Lead",
+        "Scaled Account Manager EMEA",
+        "Software Engineer AI Tooling"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "weworkremotely",
+      "tenant": null,
+      "url": "https://weworkremotely.com/categories/remote-programming-jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 227719,
+      "challenge": "none",
+      "postings": 25,
+      "sample_titles": [
+        "Distribution Engineer",
+        "Client Value Partner (CVP) - Utilities & Energy Industry",
+        "Client Value Partner (CVP) - Oil & Gas Industry"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workingnomads",
+      "tenant": null,
+      "url": "https://www.workingnomads.com/api/exposed_jobs/",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 170029,
+      "challenge": "none",
+      "postings": 34,
+      "sample_titles": [
+        "QA Testers Wanted to Jump on an AI Assistant project",
+        "Senior React Full-stack Developer",
+        "Senior UI & UX Designer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    }
+  ]
+}

@@ -2,6 +2,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { onMounted, ref } from 'vue';
 import OnboardingWizard from './onboarding/OnboardingWizard.vue';
+import SourcesPanel from './sources/SourcesPanel.vue';
 import { setPrimaryLanguage, t } from './i18n/store';
 import { primaryOf } from './onboarding/schema';
 import { describeKeyCheck, parseKeyCheckReport, type KeyCheckView } from './settings/key-check';
@@ -545,6 +546,8 @@ onMounted(() => {
         </p>
       </template>
       <p class="status">{{ keyMessage }}</p>
+
+      <SourcesPanel />
 
       <h2>ZipRecruiter</h2>
       <p class="meta">

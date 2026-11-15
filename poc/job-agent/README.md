@@ -28,7 +28,7 @@ security add-generic-password -a qwen -s dev.openjob.desktop -w         # or thi
 `-w` with no value prompts, so the secret never enters argv or shell history.
 
 Configuration is non-secret and optional; a missing file means the documented defaults
-(`~/.config/openjob/agent.json`):
+(`~/.config/jobshell/agent.json`):
 
 ```json
 {
@@ -36,7 +36,7 @@ Configuration is non-secret and optional; a missing file means the documented de
   "model": "claude-sonnet-4-5",
   "threshold": 0.9,
   "pace_ms_floor": 8000,
-  "max_pages_per_run": 5,
+  "max_pages_per_run": 20,
   "sources": { "linkedin": { "pace_ms": 20000 } }
 }
 ```
@@ -131,9 +131,11 @@ its connectors find postings while this server judges them.
 
 | Mode | Sources | Behaviour |
 | --- | --- | --- |
-| `allowed` | Greenhouse, Lever, Ashby, Recruitee, RemoteOK, Remotive, Arbeitnow, Jobicy, We Work Remotely, Working Nomads, IProgrammatori, Hacker News | fetched with a human pace floor |
+| `allowed` | Greenhouse (16 verified boards), Lever (3), Recruitee (1), Personio (1), RemoteOK, Arbeitnow, Jobicy, We Work Remotely, Working Nomads, IProgrammatori, Himalayas, Hacker News | fetched with a human pace floor; a board source is one request per verified tenant |
 | `measurement_only` | LinkedIn, Indeed, StepStone, Tecnoempleo, Subito, Facebook | **never fetched by the runner**: a command-line flag cannot prove a human is present. Reachable only through the browser extension, where the human clicked |
-| `prohibited` | anything else | never fetched |
+| `prohibited` | Ashby, Remotive, Jobspresso, and anything else | never fetched. Ashby: its API robots.txt answers 401, so its policy cannot be read. Remotive: robots.txt disallows `/api/*`. Jobspresso: zero items on the probe day |
+
+The `allowed` list is the result of the live probe in `evidence/source-probe/` (run with `node src/source-probe-cli.ts`): one read-only GET per verified tenant, robots.txt read first, one request every 1.2 s. A source enters the list only when its probe returns postings.
 
 A challenge (`authwall`, `captcha`, `rate_limited`) stops that source and is recorded.
 It is never solved, never retried, never routed around.

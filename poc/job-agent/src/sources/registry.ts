@@ -7,13 +7,16 @@
 import {
   arbeitnow,
   hn,
+  himalayas,
   iprogrammatori,
   jobicy,
+  jobspresso,
   remoteok,
   remotive,
   weworkremotely,
   workingnomads,
 } from './feeds.ts';
+import { ashby, lever, personio, recruitee } from './boards.ts';
 import { greenhouse } from './greenhouse.ts';
 import { indeed } from './indeed.ts';
 import { linkedin } from './linkedin.ts';
@@ -21,12 +24,18 @@ import type { SourceAdapter } from './types.ts';
 
 export const adapters: Record<string, SourceAdapter> = {
   arbeitnow,
+  ashby,
   greenhouse,
+  himalayas,
   hn,
   indeed,
   iprogrammatori,
   jobicy,
+  jobspresso,
+  lever,
   linkedin,
+  personio,
+  recruitee,
   remoteok,
   remotive,
   weworkremotely,

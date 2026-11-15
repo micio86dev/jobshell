@@ -59,7 +59,7 @@ pub fn evidence_dir() -> PathBuf {
         return PathBuf::from(dir);
     }
     let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
-    PathBuf::from(home).join(".local/share/openjob/evidence")
+    PathBuf::from(home).join(".local/share/jobshell/evidence")
 }
 
 /// The newest `run-*.json` in a directory. Timestamps are ISO-8601, so the names sort.
@@ -273,6 +273,71 @@ pub fn run_with_profile(profile: &Path, dry_run: bool) -> Result<String> {
         anyhow::bail!("{}", if stderr.trim().is_empty() { stdout } else { stderr });
     }
     Ok(stdout)
+}
+
+/// A source id as the agent names it: a short plain name. Anything else never reaches the process.
+pub fn is_source_id(value: &str) -> bool {
+    !value.is_empty()
+        && value.len() <= 40
+        && value.chars().all(|ch| ch.is_ascii_alphanumeric() || ch == '-' || ch == '_')
+}
+
+/// An employer id of a board source: a plain slug, never a URL, a path or a key.
+pub fn is_employer_id(value: &str) -> bool {
+    let mut chars = value.chars();
+    match chars.next() {
+        Some(first) if first.is_ascii_alphanumeric() => {}
+        _ => return false,
+    }
+    value.len() <= 63 && chars.all(|ch| ch.is_ascii_alphanumeric() || ch == '-')
+}
+
+/// The source choices command of the agent: list, switch, add or remove an employer. The arguments
+/// are checked here first, so only plain names reach the process.
+pub fn source_settings(args: &[&str]) -> Result<String> {
+    match args {
+        ["list", "--json"] => {}
+        ["enable" | "disable", source] if is_source_id(source) => {}
+        ["add-tenant" | "remove-tenant", source, employer] if is_source_id(source) && is_employer_id(employer) => {}
+        _ => anyhow::bail!("unknown source choice"),
+    }
+    let output = Command::new(node_binary())
+        .arg("src/source-settings-cli.ts")
+        .args(args)
+        .current_dir(agent_dir())
+        .output()
+        .context("starting the source settings command")?;
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    if !output.status.success() {
+        anyhow::bail!("{}", if stderr.trim().is_empty() { stdout } else { stderr });
+    }
+    Ok(stdout)
+}
+
+#[cfg(test)]
+mod source_choice_tests {
+    use super::{is_employer_id, is_source_id};
+
+    #[test]
+    fn a_source_id_is_a_short_plain_name() {
+        assert!(is_source_id("greenhouse"));
+        assert!(is_source_id("iprogrammatori"));
+        assert!(!is_source_id(""));
+        assert!(!is_source_id("../etc"));
+        assert!(!is_source_id("a b"));
+        assert!(!is_source_id("a/b"));
+    }
+
+    #[test]
+    fn an_employer_id_is_a_slug_never_a_url_or_a_path() {
+        assert!(is_employer_id("acme"));
+        assert!(is_employer_id("beta-co"));
+        assert!(!is_employer_id("-leading"));
+        assert!(!is_employer_id("https://evil.example"));
+        assert!(!is_employer_id("a/b"));
+        assert!(!is_employer_id("a_b"));
+    }
 }
 
 /// The CV extractor entry, relative to the agent package, with the document kind. The text
