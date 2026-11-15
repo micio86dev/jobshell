@@ -251,13 +251,6 @@ export const scoreFit = async (
   return { probability, verdict, probabilities, usage: response.usage };
 };
 
-/**
- * Both judgments in **one** request.
- *
- * System One answers several named questions about the same state, so asking the
- * stack stance and the fit together halves both the latency and the billed input
- * tokens compared with two round trips. This is the call the daily runner makes.
- */
 export type GapKind = 'none' | 'stack' | 'seniority' | 'domain' | 'language';
 
 const GAPS: readonly GapKind[] = ['none', 'stack', 'seniority', 'domain', 'language'];
@@ -288,6 +281,13 @@ const asQuality = (value: string): QualityVerdict => {
   return 'unknown';
 };
 
+/**
+ * Both judgments in **one** request, with the quality question.
+ *
+ * System One answers several named questions about the same state, so asking the
+ * stack stance, the fit and the quality together halves both the latency and the billed
+ * input tokens compared with separate round trips. This is the call the daily runner makes.
+ */
 export const judgePosting = async (
   posting: Posting,
   promptContext: string,
