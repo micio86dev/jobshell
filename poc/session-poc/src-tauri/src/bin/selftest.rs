@@ -32,7 +32,7 @@ fn arg(name: &str) -> Option<String> {
 fn data_dir() -> PathBuf {
     arg("data-dir")
         .map(PathBuf::from)
-        .unwrap_or_else(|| default_data_dir("openjob-phase0"))
+        .unwrap_or_else(|| default_data_dir("jobshell"))
 }
 
 #[tokio::main]

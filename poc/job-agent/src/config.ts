@@ -47,14 +47,14 @@ export const DEFAULT_MODEL: Record<Provider, string> = {
   qwen: 'qwen3-coder-plus',
 };
 
-export const defaultConfigPath = (): string => join(homedir(), '.config', 'openjob', 'agent.json');
+export const defaultConfigPath = (): string => join(homedir(), '.config', 'jobshell', 'agent.json');
 
 export const defaultConfig = (): AgentConfig => ({
   provider: 'anthropic',
   model: DEFAULT_MODEL.anthropic,
   threshold: 0.9,
-  profile_dir: join(homedir(), 'Library', 'Application Support', 'openjob-phase0', 'agent-profile'),
-  evidence_dir: join(homedir(), '.local', 'share', 'openjob', 'evidence'),
+  profile_dir: join(homedir(), 'Library', 'Application Support', 'jobshell', 'agent-profile'),
+  evidence_dir: join(homedir(), '.local', 'share', 'jobshell', 'evidence'),
   pace_ms_floor: 8000,
   // Board sources take one request per verified tenant, so the ceiling must cover the registry (16 Greenhouse boards).
   max_pages_per_run: 20,

@@ -301,7 +301,7 @@ fn agent_key_status() -> Result<std::collections::BTreeMap<String, bool>, String
 
 /// Where the provider choice is saved. Names and an address only: keys stay in the keychain.
 pub(crate) fn settings_path() -> std::path::PathBuf {
-    default_data_dir("openjob-phase0").join("provider-settings.json")
+    default_data_dir("jobshell").join("provider-settings.json")
 }
 
 /// The provider and model the user chose in Settings.
@@ -381,7 +381,7 @@ fn tracing_hint(data_dir: &std::path::Path) {
 }
 
 fn main() {
-    let data_dir = default_data_dir("openjob-phase0");
+    let data_dir = default_data_dir("jobshell");
     let pool = tauri::async_runtime::block_on(async { open_database(&data_dir.join("spike.sqlite")).await })
         .expect("open sqlite database");
 

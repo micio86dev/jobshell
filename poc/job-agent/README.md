@@ -28,7 +28,7 @@ security add-generic-password -a qwen -s dev.openjob.desktop -w         # or thi
 `-w` with no value prompts, so the secret never enters argv or shell history.
 
 Configuration is non-secret and optional; a missing file means the documented defaults
-(`~/.config/openjob/agent.json`):
+(`~/.config/jobshell/agent.json`):
 
 ```json
 {

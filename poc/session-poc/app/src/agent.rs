@@ -59,7 +59,7 @@ pub fn evidence_dir() -> PathBuf {
         return PathBuf::from(dir);
     }
     let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
-    PathBuf::from(home).join(".local/share/openjob/evidence")
+    PathBuf::from(home).join(".local/share/jobshell/evidence")
 }
 
 /// The newest `run-*.json` in a directory. Timestamps are ISO-8601, so the names sort.

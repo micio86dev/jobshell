@@ -2,6 +2,19 @@
 
 All notable changes to the app are listed here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- Local data folders now use the name Jobshell: `~/.config/jobshell/agent.json`, `~/Library/Application Support/jobshell/` (agent profile, desktop data) and `~/.local/share/jobshell/evidence`. Data in the old `openjob` folders is no longer read: move it once.
+- The keychain service `dev.openjob.desktop` and the bundle identifier `dev.openjob.phase0` keep their names, so saved keys and updates still work.
+
+### Added
+- Board sources: Greenhouse (16 verified boards), Lever, Recruitee and Personio, plus the public feed Himalayas. Each one is probed live before it is allowed.
+
+### Fixed
+- Greenhouse boards were never fetched: the runner did not pass the employer to the board adapter.
+- Remotive is no longer fetched: its robots.txt disallows the API path the agent reads.
+
 ## [0.2.1] - 2026-11-14
 
 ### Added
