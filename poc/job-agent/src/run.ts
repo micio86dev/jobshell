@@ -7,9 +7,9 @@
  * do and what did it cost" — every number here is measured, not estimated.
  */
 import type { AgentConfig } from './config.ts';
-import { applyHardFilters, postingKey, rankAndCap, softBonus, type DropReason, type Scored } from './funnel.ts';
+import { applyHardFilters, liftedProbability, postingKey, rankAndCap, softBonus, type DropReason, type Scored } from './funnel.ts';
 import { MAX_DESCRIPTION_CHARS } from './report.ts';
-import { judgePosting, type FetchLike, type HttpResponse, type JeDeps, type StackStance } from './jev.ts';
+import { isSuspicious, judgePosting, type FetchLike, type HttpResponse, type JeDeps, type StackStance } from './jev.ts';
 import { assertAutomationAllowed, Pacer, resolvePolicy } from './policy.ts';
 import type { Spec } from './profile.ts';
 import { adapterFor } from './sources/registry.ts';
@@ -59,6 +59,8 @@ export type RunEvidence = {
     budget: number;
     above_threshold: number;
     below_threshold: number;
+    /** Judged as a scheme or vague bait, so dropped before ranking. */
+    suspicious_dropped: number;
     input_tokens: number;
     ms: number;
   };
@@ -282,18 +284,24 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
   const scoringStarted = Date.now();
   let inputTokens = 0;
   const scored: Scored[] = [];
+  let suspiciousDropped = 0;
   const verdicts = new Map<string, { verdict: string; stance: StackStance; gap: string }>();
 
   for (const posting of survivors) {
     const judged = await judgePosting(posting, deps.spec.prompt_context, deps.jev);
     inputTokens += judged.usage.input_tokens;
+    // A scheme or vague bait is dropped before it is shown, and counted so the run can say so.
+    if (isSuspicious(judged.quality.suspicion)) {
+      suspiciousDropped += 1;
+      continue;
+    }
     verdicts.set(postingKey(posting), {
       verdict: judged.fit.verdict,
       stance: judged.stack_stance.stance,
       gap: judged.gap,
     });
-    // Soft preferences lift the ranking; they never drop, and the bonus is capped.
-    const lifted = Math.min(1, judged.fit.probability + softBonus(posting, deps.spec.soft));
+    // Soft preferences lift only a posting already at the threshold, and the bonus is capped.
+    const lifted = liftedProbability(judged.fit.probability, softBonus(posting, deps.spec.soft), deps.spec.threshold);
     scored.push({ posting, probability: lifted });
     deps.onProgress?.(`scoring ${scored.length}/${survivors.length}`);
   }
@@ -323,6 +331,7 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
       budget,
       above_threshold: ranked.selected.length + ranked.overflow.length,
       below_threshold: ranked.below_threshold,
+      suspicious_dropped: suspiciousDropped,
       input_tokens: inputTokens,
       ms: scoringMs,
     },

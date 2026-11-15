@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { asGap, askSystemOne, scoreFit, stackStance, type FetchLike } from '../src/jev.ts';
+import { asGap, askSystemOne, isSuspicious, judgePosting, scoreFit, stackStance, type FetchLike } from '../src/jev.ts';
 import { planQueries, extractQueries } from '../src/planner.ts';
 import type { Posting } from '../src/sources/types.ts';
 import { DEFAULT_STRENGTHS } from '../src/profile.ts';
@@ -228,4 +228,39 @@ test('the gap parser accepts only the known kinds', () => {
   assert.equal(asGap('seniority'), 'seniority');
   assert.equal(asGap('something else'), 'none');
   assert.equal(asGap(''), 'none');
+});
+
+const ANSWERS = (quality: { choice: string; probabilities: Record<string, number> }) =>
+  JSON.stringify({
+    model: 'jev-latest',
+    answers: {
+      stack_stance: { type: 'choice', choice: 'not_specified', confidence: 0.9, probabilities: { not_specified: 1 } },
+      fit: { type: 'choice', choice: 'yes', confidence: 0.9, probabilities: { yes: 0.9, no: 0.1 } },
+      gap: { type: 'choice', choice: 'none', confidence: 0.9, probabilities: { none: 1 } },
+      quality: { type: 'choice', choice: quality.choice, confidence: 0.9, probabilities: quality.probabilities },
+    },
+    usage: { input_tokens: 200, output_tokens: 20 },
+  });
+
+test('a "earn fast with crypto" posting reads as a scam, with high suspicion', async () => {
+  const { fetchImpl } = capture(
+    200,
+    ANSWERS({ choice: 'scam', probabilities: { genuine: 0.03, scam: 0.9, vague: 0.07 } }),
+  );
+  const judged = await judgePosting(posting, 'candidate context', { apiKey: 'k', fetchImpl });
+  assert.equal(judged.quality.verdict, 'scam');
+  assert.ok(Math.abs(judged.quality.suspicion - 0.97) < 1e-9, 'scam plus vague is the suspicion');
+  assert.equal(isSuspicious(judged.quality.suspicion), true);
+});
+
+test('a concrete posting from a real employer carries low suspicion', async () => {
+  const { fetchImpl } = capture(200, ANSWERS({ choice: 'genuine', probabilities: { genuine: 0.95, scam: 0.02, vague: 0.03 } }));
+  const judged = await judgePosting(posting, 'candidate context', { apiKey: 'k', fetchImpl });
+  assert.equal(judged.quality.verdict, 'genuine');
+  assert.equal(isSuspicious(judged.quality.suspicion), false);
+});
+
+test('suspicion is judged at 0.6: below it a posting is kept, at it the posting is dropped', () => {
+  assert.equal(isSuspicious(0.59), false);
+  assert.equal(isSuspicious(0.6), true);
 });

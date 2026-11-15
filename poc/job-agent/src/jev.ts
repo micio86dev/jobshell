@@ -271,7 +271,21 @@ export type JudgedPosting = {
   stack_stance: { stance: StackStance; probabilities: Record<string, number> };
   /** Which requirement is missing, so the match can disclose it instead of hiding it. */
   gap: GapKind;
+  /** Whether the posting is a scheme or bait, so the run can drop it before it is shown. */
+  quality: { verdict: QualityVerdict; suspicion: number; probabilities: Record<string, number> };
   usage: Usage;
+};
+
+export type QualityVerdict = 'genuine' | 'scam' | 'vague' | 'unknown';
+
+/** Suspicion at or above this drops a posting. Below it the posting is kept, never shown as verified. */
+export const SUSPICION_LIMIT = 0.6;
+
+export const isSuspicious = (suspicion: number): boolean => suspicion >= SUSPICION_LIMIT;
+
+const asQuality = (value: string): QualityVerdict => {
+  if (value === 'genuine' || value === 'scam' || value === 'vague') return value;
+  return 'unknown';
 };
 
 export const judgePosting = async (
@@ -307,6 +321,19 @@ export const judgePosting = async (
             language: 'A spoken language the posting asks for is outside the profile.',
           },
         },
+        quality: {
+          type: 'choice',
+          instructions:
+            'Judging only the posting text: is this a genuine job opening worth a candidate time, or a scheme or vague bait? Answer from what the text says, not from the title alone.',
+          criteria: {
+            genuine:
+              'A real job from an identifiable employer or client, with the work, the team or the requirements stated concretely.',
+            scam:
+              'A scheme, not a job: crypto, trading or investment returns, referral or multi-level income, paying to start, "earn fast" promises, or a recruiter asking for money or identity documents early.',
+            vague:
+              'Too generic to be a real opening: slogans, or a template text that could fit any employer, with no concrete work described.',
+          },
+        },
       },
     },
     deps,
@@ -316,8 +343,15 @@ export const judgePosting = async (
   const gapAnswer = response.answers['gap'];
   const fitProbabilities = fitAnswer?.type === 'choice' ? fitAnswer.probabilities : {};
   const stanceAnswer = response.answers['stack_stance'];
+  const qualityAnswer = response.answers['quality'];
+  const qualityProbabilities = qualityAnswer?.type === 'choice' ? qualityAnswer.probabilities : {};
 
   return {
+    quality: {
+      verdict: asQuality(qualityAnswer?.type === 'choice' ? qualityAnswer.choice : ''),
+      suspicion: Math.min(1, number(qualityProbabilities['scam']) + number(qualityProbabilities['vague'])),
+      probabilities: qualityProbabilities,
+    },
     fit: {
       probability: Math.min(1, number(fitProbabilities['yes']) + number(fitProbabilities['yes_with_gap'])),
       verdict: asVerdict(fitAnswer?.type === 'choice' ? fitAnswer.choice : ''),
