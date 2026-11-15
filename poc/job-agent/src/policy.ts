@@ -41,6 +41,10 @@ const ALLOWED: readonly string[] = [
   'iprogrammatori',
   'himalayas',
   'hn',
+  // Catalogue sources from the career-ops list: public GET, no credential, robots allows the path.
+  'cryptocurrencyjobs',
+  'getonbrd',
+  'platsbanken',
   // Fetched by the desktop app through ZipRecruiter's MCP server, with the user's OAuth;
   // the agent only reads the file it leaves behind.
   'ziprecruiter',
