@@ -53,3 +53,9 @@ L8. Italian and Spanish tenants, 2026-11-15. Slugs came from web search results 
 - Left out: pharmaprime (404), wallbox and easyfairsspain (no postings), yousign and valsoft-corp (no clear Italian or Spanish market in the search results).
 - Full probe: Workable 12 targets, 1646 postings; Teamtailor 18 targets, 554 postings; HireHive unchanged, 30 (evidence/source-probe/2026-11-15.json).
 - Known limit: some tenants are multinational (dentons-europe, crossborder, catalonia hotels), so a market preference does not filter their postings.
+
+L9. Third batch, 2026-11-15: Breezy, Rippling, Pinpoint.
+- Added (live probe ok): `breezy` (`<tenant>.breezy.hr/json`, 8 tenants, 301 postings: Italy information-resources-italy, aspria, end, marex, vald; Spain alphanumeric-systems, clearly, incubeta-global), `rippling` (`ats.rippling.com/api/v2/board/<slug>/jobs`, 4 tenants, 44 postings: Italy camlin-careers; Spain zynap, copado, capacity), `pinpoint` (`<tenant>.pinpointhq.com/postings.json`, 2 tenants, 76 postings: Italy field, Spain anthesisgroup).
+- Excluded for no postings or 404: breezy isolutions (0), rippling job-hunt and inspectorio (404), wallbox-style empty boards.
+- Discarded by provider: Comeet (its public API needs a company token, so it is a credential source), Jobvite (needs an opaque company id that the search did not give), Factorial (no public JSON board in the career-ops provider), BambooHR, Homerun, Polymer and ApplicantPro (no Italian or Spanish tenant in the search).
+- Known: the tenant list is a search result, not an official directory, so coverage of Italy and Spain depends on what the search finds.
