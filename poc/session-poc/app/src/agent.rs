@@ -841,7 +841,7 @@ mod validate_profile_tests {
 
 /// The report request for one selected posting: its own fields from the run's evidence, plus the
 /// CV from the profile. Refused with a fixed message when the posting is not in the run.
-pub fn report_request_for(evidence_raw: &str, key: &str, cv: &str) -> Result<String> {
+pub fn report_request_for(evidence_raw: &str, key: &str, cv: &str, candidate: &Value) -> Result<String> {
     let parsed: Value = serde_json::from_str(evidence_raw).context("the evidence file is not valid JSON")?;
     let selected = parsed
         .get("selected")
@@ -867,6 +867,7 @@ pub fn report_request_for(evidence_raw: &str, key: &str, cv: &str) -> Result<Str
         "cv": cv,
         "verdict": text(posting.get("verdict")).unwrap_or_else(|| "unknown".to_string()),
         "gaps": gaps,
+        "candidate": candidate,
     });
     Ok(request.to_string())
 }
@@ -900,7 +901,7 @@ mod report_request_tests {
 
     #[test]
     fn a_selected_posting_becomes_a_report_request_with_its_cv() {
-        let raw = report_request_for(EVIDENCE, "remoteok:1", "Twelve years with Rust.").unwrap();
+        let raw = report_request_for(EVIDENCE, "remoteok:1", "Twelve years with Rust.", &Value::Null).unwrap();
         let value: Value = serde_json::from_str(&raw).unwrap();
         assert_eq!(value["posting"]["title"], "Senior Rust Engineer");
         assert_eq!(value["posting"]["description"], "We build apps.");
@@ -911,14 +912,14 @@ mod report_request_tests {
 
     #[test]
     fn a_posting_missing_from_the_run_is_refused_with_a_fixed_message() {
-        let error = report_request_for(EVIDENCE, "remoteok:9", "cv").unwrap_err();
+        let error = report_request_for(EVIDENCE, "remoteok:9", "cv", &Value::Null).unwrap_err();
         assert_eq!(error.to_string(), "that posting is not in the latest run");
     }
 
     #[test]
     fn an_absent_description_is_null_not_an_empty_string() {
         let raw = r#"{"selected":[{"key":"k:1","title":"T","url":"u","verdict":"yes"}]}"#;
-        let value: Value = serde_json::from_str(&report_request_for(raw, "k:1", "cv").unwrap()).unwrap();
+        let value: Value = serde_json::from_str(&report_request_for(raw, "k:1", "cv", &Value::Null).unwrap()).unwrap();
         assert!(value["posting"]["description"].is_null());
     }
 }
@@ -939,6 +940,66 @@ fn safe_file_stem(key: &str) -> String {
 /// Where the user's copy of one tailored CV goes: the Downloads folder, named after the posting.
 pub fn download_path(key: &str, downloads: &Path) -> PathBuf {
     downloads.join(format!("cv-su-misura-{}.pdf", safe_file_stem(key)))
+}
+
+/// A link the window may open in the browser: http or https, with no spaces or control characters.
+pub fn is_web_address(url: &str) -> bool {
+    (url.starts_with("https://") || url.starts_with("http://"))
+        && url.len() > "https://".len()
+        && url.chars().all(|character| !character.is_whitespace() && !character.is_control())
+}
+
+/// Open a web address in the system's browser. The address is passed as one argument, never
+/// through a shell, and only after `is_web_address` accepts it.
+pub fn open_in_browser(url: &str) -> Result<()> {
+    anyhow::ensure!(is_web_address(url), "only http and https addresses can be opened");
+    let status = if cfg!(target_os = "macos") {
+        Command::new("open").arg(url).status()
+    } else if cfg!(target_os = "windows") {
+        Command::new("rundll32").args(["url.dll,FileProtocolHandler", url]).status()
+    } else {
+        Command::new("xdg-open").arg(url).status()
+    }
+    .context("starting the browser")?;
+    anyhow::ensure!(status.success(), "the browser did not open the address");
+    Ok(())
+}
+
+/// Copy a tailored CV PDF into Downloads. An earlier copy is never overwritten: the new one gets
+/// a number after its name, so every version the user downloaded stays where it is.
+pub fn copy_cv_to_downloads(source: &Path, downloads: &Path, key: &str) -> Result<PathBuf> {
+    std::fs::create_dir_all(downloads).context("creating the Downloads folder")?;
+    let first = download_path(key, downloads);
+    let stem = first.file_stem().map(|name| name.to_string_lossy().to_string()).unwrap_or_default();
+    let mut target = first.clone();
+    let mut number = 2;
+    while target.exists() {
+        target = downloads.join(format!("{stem}-{number}.pdf"));
+        number += 1;
+    }
+    std::fs::copy(source, &target).context("copying the tailored CV")?;
+    Ok(target)
+}
+
+/// The wizard's facts about the candidate, read from the saved profile. A missing fact stays
+/// missing (null or an empty list): nothing is made up, and the CV text is not repeated here.
+pub fn candidate_from_profile(profile: &Value) -> Value {
+    let text_of = |name: &str| profile.get(name).and_then(Value::as_str).map(str::to_string);
+    let list_of = |name: &str| -> Vec<String> {
+        profile
+            .get(name)
+            .and_then(Value::as_array)
+            .map(|items| items.iter().filter_map(|item| item.as_str().map(str::to_string)).collect())
+            .unwrap_or_default()
+    };
+    serde_json::json!({
+        "headline": text_of("headline"),
+        "capabilities": list_of("capabilities"),
+        "seniority": text_of("seniority"),
+        "years_experience": profile.get("years_experience").and_then(Value::as_u64),
+        "languages": list_of("languages"),
+        "portfolio": text_of("portfolio"),
+    })
 }
 
 /// Run the tailored-CV CLI on one request, writing the PDF to `pdf`. Exit 0 and 1 return the JSON
@@ -1001,5 +1062,79 @@ mod download_tests {
             download_path("k:1", Path::new("/Users/someone/Downloads")),
             PathBuf::from("/Users/someone/Downloads/cv-su-misura-k_1.pdf")
         );
+    }
+}
+
+#[cfg(test)]
+mod candidate_tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn the_candidate_facts_come_from_the_profile_and_nothing_else() {
+        let profile = json!({
+            "headline": "Backend developer",
+            "capabilities": ["Rust", "Tauri"],
+            "seniority": "senior",
+            "years_experience": 12,
+            "languages": ["it", "en"],
+            "portfolio": "https://portfolio.example.test/mario",
+            "cv": "the CV text stays in its own field"
+        });
+        let candidate = candidate_from_profile(&profile);
+        assert_eq!(candidate["headline"], "Backend developer");
+        assert_eq!(candidate["years_experience"], 12);
+        assert_eq!(candidate["capabilities"], json!(["Rust", "Tauri"]));
+        assert_eq!(candidate["portfolio"], "https://portfolio.example.test/mario");
+        assert!(candidate.get("cv").is_none());
+    }
+
+    #[test]
+    fn a_missing_fact_is_null_or_empty_never_made_up() {
+        let candidate = candidate_from_profile(&json!({}));
+        assert!(candidate["headline"].is_null());
+        assert_eq!(candidate["capabilities"], json!([]));
+        assert!(candidate["years_experience"].is_null());
+    }
+}
+
+#[cfg(test)]
+mod copy_tests {
+    use super::*;
+
+    #[test]
+    fn a_copy_lands_in_downloads_and_never_overwrites_an_earlier_one() {
+        let base = std::env::temp_dir().join(format!("jobshell-copy-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        let source = base.join("source.pdf");
+        std::fs::create_dir_all(&base).unwrap();
+        std::fs::write(&source, b"%PDF-1.4 first").unwrap();
+        let downloads = base.join("Downloads");
+
+        let first = copy_cv_to_downloads(&source, &downloads, "k:1").unwrap();
+        assert_eq!(first, downloads.join("cv-su-misura-k_1.pdf"));
+        std::fs::write(&source, b"%PDF-1.4 second").unwrap();
+        let second = copy_cv_to_downloads(&source, &downloads, "k:1").unwrap();
+        assert_eq!(second, downloads.join("cv-su-misura-k_1-2.pdf"));
+
+        assert_eq!(std::fs::read(&first).unwrap(), b"%PDF-1.4 first");
+        assert_eq!(std::fs::read(&second).unwrap(), b"%PDF-1.4 second");
+        let _ = std::fs::remove_dir_all(&base);
+    }
+}
+
+#[cfg(test)]
+mod open_tests {
+    use super::*;
+
+    #[test]
+    fn only_plain_web_addresses_are_opened() {
+        assert!(is_web_address("https://example.test/jobs/1"));
+        assert!(is_web_address("http://example.test/a?b=c"));
+        assert!(!is_web_address("file:///etc/passwd"));
+        assert!(!is_web_address("javascript:alert(1)"));
+        assert!(!is_web_address("https://example.test/a b"));
+        assert!(!is_web_address("https://example.test/\n"));
+        assert!(!is_web_address(""));
     }
 }

@@ -161,6 +161,15 @@ const runAgent = async (dryRun: boolean): Promise<void> => {
   }
 };
 
+// The title opens the real posting in the browser; the window itself never navigates away.
+const openPosting = async (url: string): Promise<void> => {
+  try {
+    await invoke('agent_open_posting', { url });
+  } catch (error) {
+    status.value = `Apertura non riuscita: ${String(error)}`;
+  }
+};
+
 const sourcesMessage = ref('');
 
 const openSources = async (): Promise<void> => {
@@ -523,7 +532,7 @@ onMounted(() => {
               {{ percent(item.probability) }}%
             </span>
             <div class="body">
-              <a :href="item.url" target="_blank" rel="noreferrer">{{ item.title }}</a>
+              <a href="#" @click.prevent="openPosting(item.url)">{{ item.title }}</a>
               <p class="sub">
                 {{ item.company ?? 'azienda non indicata' }} · {{ item.source }} ·
                 {{ verdictLabel(item.verdict) }} · {{ stackLabel(item.stack_stance) }}

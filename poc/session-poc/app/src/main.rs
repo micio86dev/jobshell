@@ -432,15 +432,22 @@ async fn agent_tailored_cv(key: String) -> Result<String, String> {
     .map_err(|error| error.to_string())
 }
 
+/// Open a posting's real page in the system browser, from the title in the window.
+#[tauri::command]
+async fn agent_open_posting(url: String) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || agent::open_in_browser(&url))
+        .await
+        .map_err(|error| error.to_string())?
+        .map_err(|error| error.to_string())
+}
+
 /// Copy one tailored CV PDF into the user's Downloads folder and return where it landed.
 #[tauri::command]
 async fn agent_download_cv(key: String) -> Result<String, String> {
     tauri::async_runtime::spawn_blocking(move || -> anyhow::Result<String> {
         let home = std::env::var_os("HOME").context("the home folder is not set")?;
         let downloads = std::path::PathBuf::from(home).join("Downloads");
-        std::fs::create_dir_all(&downloads).context("creating the Downloads folder")?;
-        let target = agent::download_path(&key, &downloads);
-        std::fs::copy(agent::cv_pdf_path(&key), &target).context("copying the tailored CV")?;
+        let target = agent::copy_cv_to_downloads(&agent::cv_pdf_path(&key), &downloads, &key)?;
         Ok(target.display().to_string())
     })
     .await
@@ -458,7 +465,8 @@ fn selected_request(key: &str) -> anyhow::Result<String> {
     )
     .context("the profile is not valid JSON")?;
     let cv = profile.get("cv").and_then(serde_json::Value::as_str).unwrap_or_default();
-    agent::report_request_for(&evidence, key, cv)
+    let candidate = agent::candidate_from_profile(&profile);
+    agent::report_request_for(&evidence, key, cv, &candidate)
 }
 
 #[tauri::command]
@@ -513,6 +521,7 @@ fn main() {
             agent_report,
             agent_tailored_cv,
             agent_download_cv,
+            agent_open_posting,
             agent_save_key,
             agent_key_status,
             sources_list,
