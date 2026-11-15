@@ -97,6 +97,35 @@ const reportReason = (key: string): string | null => {
   return view?.ok === false ? view.reason : null;
 };
 
+// The tailored CV of one posting: its rewritten text and the PDF written beside the evidence.
+const tailored = ref<Record<string, ReportState>>({});
+
+const openTailored = async (key: string): Promise<void> => {
+  tailored.value = { ...tailored.value, [key]: { busy: true, view: null } };
+  let view: ReportView;
+  try {
+    view = parseReportResult(await invoke<string>('agent_tailored_cv', { key }));
+  } catch (error) {
+    view = { ok: false, reason: String(error) };
+  }
+  tailored.value = { ...tailored.value, [key]: { busy: false, view } };
+};
+
+const tailoredMarkdown = (key: string): string | null => {
+  const view = tailored.value[key]?.view;
+  return view?.ok === true ? view.markdown : null;
+};
+
+const tailoredPdf = (key: string): string | null => {
+  const view = tailored.value[key]?.view;
+  return view?.ok === true ? view.pdf : null;
+};
+
+const tailoredReason = (key: string): string | null => {
+  const view = tailored.value[key]?.view;
+  return view?.ok === false ? view.reason : null;
+};
+
 const runAgent = async (dryRun: boolean): Promise<void> => {
   running.value = dryRun ? 'dry' : 'real';
   status.value = dryRun ? 'Dry run in progress…' : 'Run in progress… this can take a minute';
@@ -490,6 +519,18 @@ onMounted(() => {
                 Report non disponibile: {{ reportReason(item.key) }}
               </p>
               <pre v-if="reportMarkdown(item.key) !== null" class="report">{{ reportMarkdown(item.key) }}</pre>
+              <button
+                type="button"
+                :disabled="tailored[item.key]?.busy === true"
+                @click="openTailored(item.key)"
+              >
+                {{ tailored[item.key]?.busy ? 'CV in preparazione…' : 'CV su misura' }}
+              </button>
+              <p v-if="tailoredReason(item.key) !== null" class="gap">
+                CV non disponibile: {{ tailoredReason(item.key) }}
+              </p>
+              <p v-if="tailoredPdf(item.key) !== null" class="sub">PDF salvato in: {{ tailoredPdf(item.key) }}</p>
+              <pre v-if="tailoredMarkdown(item.key) !== null" class="report">{{ tailoredMarkdown(item.key) }}</pre>
             </div>
           </li>
         </ul>

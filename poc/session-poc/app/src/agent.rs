@@ -887,3 +887,47 @@ mod report_request_tests {
         assert!(value["posting"]["description"].is_null());
     }
 }
+
+/// Where the tailored CV PDF of one posting is written: inside the evidence folder, with a file
+/// name made only of letters, digits, dash and underscore, so no key can name another path.
+pub fn cv_pdf_path(key: &str) -> PathBuf {
+    let name: String = key
+        .chars()
+        .map(|character| if character.is_ascii_alphanumeric() || character == '-' || character == '_' { character } else { '_' })
+        .collect();
+    evidence_dir().join("cv").join(format!("{name}.pdf"))
+}
+
+/// Run the tailored-CV CLI on one request, writing the PDF to `pdf`. Exit 0 and 1 return the JSON
+/// line; exit 2 is a refusal whose reason the CLI printed.
+pub fn run_tailor(request_json: &str, pdf: &Path, env: &[(String, String)]) -> Result<String> {
+    let script = vec!["src/tailor-cli.ts".to_string(), "--pdf".to_string(), pdf.display().to_string()];
+    let (code, stdout, stderr) = pipe_to_agent_script(&script, request_json, env)?;
+    match code {
+        Some(0) | Some(1) => Ok(stdout),
+        Some(2) => {
+            let reason = stderr.trim();
+            anyhow::bail!("{}", if reason.is_empty() { "the tailored CV could not be written" } else { reason })
+        }
+        _ => anyhow::bail!("the tailored CV did not finish"),
+    }
+}
+
+#[cfg(test)]
+mod tailor_path_tests {
+    use super::cv_pdf_path;
+
+    #[test]
+    fn a_key_becomes_a_pdf_name_inside_the_evidence_folder() {
+        let path = cv_pdf_path("remoteok:1");
+        assert!(path.ends_with("cv/remoteok_1.pdf"), "got {}", path.display());
+    }
+
+    #[test]
+    fn a_key_with_path_parts_cannot_leave_the_folder() {
+        let path = cv_pdf_path("../../etc/passwd");
+        let name = path.file_name().unwrap().to_string_lossy().to_string();
+        assert!(!name.contains('/') && !name.contains(".."), "got {name}");
+        assert!(path.parent().unwrap().ends_with("cv"));
+    }
+}

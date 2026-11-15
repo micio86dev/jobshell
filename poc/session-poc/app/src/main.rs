@@ -391,20 +391,45 @@ async fn agent_report(key: String) -> Result<String, String> {
         .map_err(|error| error.to_string())?
         .agent_env();
     tauri::async_runtime::spawn_blocking(move || {
-        let dir = agent::evidence_dir();
-        let run = agent::latest_run(&dir)?.context("no run yet: run a search first")?;
-        let evidence = std::fs::read_to_string(&run).context("reading the latest run")?;
-        let profile: serde_json::Value = serde_json::from_str(
-            &std::fs::read_to_string(agent::profile_path()).context("reading the profile")?,
-        )
-        .context("the profile is not valid JSON")?;
-        let cv = profile.get("cv").and_then(serde_json::Value::as_str).unwrap_or_default();
-        let request = agent::report_request_for(&evidence, &key, cv)?;
+        let request = selected_request(&key)?;
         agent::run_report(&request, &env)
     })
     .await
     .map_err(|error| error.to_string())?
     .map_err(|error| error.to_string())
+}
+
+/// The tailored CV for one selected posting, with its PDF written in the evidence folder. The
+/// CV is rewritten from the profile's CV and the posting; nothing is added that the CV lacks.
+#[tauri::command]
+async fn agent_tailored_cv(key: String) -> Result<String, String> {
+    let env = settings::load(&settings_path())
+        .map_err(|error| error.to_string())?
+        .agent_env();
+    tauri::async_runtime::spawn_blocking(move || {
+        let request = selected_request(&key)?;
+        let pdf = agent::cv_pdf_path(&key);
+        if let Some(folder) = pdf.parent() {
+            std::fs::create_dir_all(folder).context("creating the CV folder")?;
+        }
+        agent::run_tailor(&request, &pdf, &env)
+    })
+    .await
+    .map_err(|error| error.to_string())?
+    .map_err(|error| error.to_string())
+}
+
+/// The request for one selected posting of the latest run, with the CV from the profile.
+fn selected_request(key: &str) -> anyhow::Result<String> {
+    let dir = agent::evidence_dir();
+    let run = agent::latest_run(&dir)?.context("no run yet: run a search first")?;
+    let evidence = std::fs::read_to_string(&run).context("reading the latest run")?;
+    let profile: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(agent::profile_path()).context("reading the profile")?,
+    )
+    .context("the profile is not valid JSON")?;
+    let cv = profile.get("cv").and_then(serde_json::Value::as_str).unwrap_or_default();
+    agent::report_request_for(&evidence, key, cv)
 }
 
 #[tauri::command]
@@ -457,6 +482,7 @@ fn main() {
             task_detail,
             agent_last_run,
             agent_report,
+            agent_tailored_cv,
             agent_save_key,
             agent_key_status,
             sources_list,
