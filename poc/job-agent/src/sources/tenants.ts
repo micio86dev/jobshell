@@ -43,10 +43,28 @@ export const TENANTS: Readonly<Record<string, readonly Tenant[]>> = {
   ],
   recruitee: [...tenantsOf(PROBE_2026_11_06, ['channable'])],
   personio: [...tenantsOf(PROBE_2026_11_14, ['personio'])],
-  // Verified 2026-11-15 by the live probe of the career-ops catalogue. Workable accounts answer
-  // the public widget; these are worldwide employers, the Italian and Spanish ones are still to find.
-  workable: [...tenantsOf('2026-11-15', ['huggingface', 'semios', 'platzi'])],
-  teamtailor: [...tenantsOf('2026-11-15', ['templafy'])],
+  // Verified 2026-11-15 by the live probe. Order: Italy, then Spain, then the rest of the world.
+  // Each slug came from a search result and then answered with postings; a 404 or an empty board
+  // was left out (pharmaprime, wallbox, easyfairsspain).
+  workable: [
+    // Italy.
+    ...tenantsOf('2026-11-15', ['impactastrategy', 'aliprofessional', 'dentons-europe', 'erg-media', 'dmates']),
+    // Spain.
+    ...tenantsOf('2026-11-15', ['ukio', 'fernandez', 'oppizi', 'crossbordertalents']),
+    // World.
+    ...tenantsOf('2026-11-15', ['huggingface', 'semios', 'platzi']),
+  ],
+  teamtailor: [
+    // Italy.
+    ...tenantsOf('2026-11-15', [
+      'wspitaly', 'coldculture', 'unobravointernational', 'roccofortehotelsitaly', 'swanio',
+      'grailtalent-1730296269', 'tailorfox', 'huaweitechnologiesitalia', 'tsgitalia', 'kosmos',
+    ]),
+    // Spain.
+    ...tenantsOf('2026-11-15', ['winid', 'hiire', 'inhaus', 'qida', 'adsmurai', 'changegroupspain', 'cataloniahotels']),
+    // World.
+    ...tenantsOf('2026-11-15', ['templafy']),
+  ],
   hirehive: [...tenantsOf('2026-11-15', ['amcsgroup'])],
 };
 
