@@ -21,7 +21,7 @@ test('a missing file yields the documented defaults', () => {
   assert.equal(config.provider, 'anthropic');
   assert.equal(config.threshold, 0.9);
   assert.equal(config.pace_ms_floor, 8000);
-  assert.equal(config.max_pages_per_run, 5);
+  assert.equal(config.max_pages_per_run, 20, 'covers the 16 verified Greenhouse boards in one run');
 });
 
 test('a valid file overrides only the fields it sets', () => {

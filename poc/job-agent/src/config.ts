@@ -56,7 +56,8 @@ export const defaultConfig = (): AgentConfig => ({
   profile_dir: join(homedir(), 'Library', 'Application Support', 'openjob-phase0', 'agent-profile'),
   evidence_dir: join(homedir(), '.local', 'share', 'openjob', 'evidence'),
   pace_ms_floor: 8000,
-  max_pages_per_run: 5,
+  // Board sources take one request per verified tenant, so the ceiling must cover the registry (16 Greenhouse boards).
+  max_pages_per_run: 20,
   sources: {},
 });
 

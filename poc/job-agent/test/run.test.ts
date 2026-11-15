@@ -8,6 +8,7 @@ import { defaultConfig } from '../src/config.ts';
 import type { FetchLike } from '../src/jev.ts';
 import { compileProfile, parseProfile } from '../src/profile.ts';
 import { runOnce, type RunDeps } from '../src/run.ts';
+import { tenantsFor } from '../src/sources/tenants.ts';
 
 const NOW = new Date('2026-11-08T12:00:00Z');
 
@@ -319,4 +320,20 @@ test('the same posting arriving from a second fetch is judged once', async () =>
 
   assert.equal(evidence.funnel.fetched, 2, 'two distinct postings in the feed');
   assert.equal(judged, 2, 'each distinct posting is judged once');
+});
+
+test('with the default page ceiling, one run reaches every verified Greenhouse board', async () => {
+  const urls: string[] = [];
+  const route: Route = (url) => {
+    if (url.includes('boards-api.greenhouse.io')) {
+      urls.push(url);
+      return { status: 200, text: JSON.stringify({ jobs: [] }) };
+    }
+    return { status: 200, text: JUDGEMENT(0.95, 0, 'not_specified') };
+  };
+  // No `boards` override: the verified registry is what the run reads.
+  await runOnce(deps(route, { config: defaultConfig(), sources: ['greenhouse'] }));
+
+  assert.equal(urls.length, tenantsFor('greenhouse').length, 'every verified board is fetched in one run');
+  assert.ok(urls.length >= 16, 'the registry holds at least the 16 boards probed on 2026-11-14');
 });

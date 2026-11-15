@@ -18,7 +18,7 @@ test('LinkedIn and Indeed default to measurement_only', () => {
     const policy = resolvePolicy(source, config());
     assert.equal(policy.automation, 'measurement_only', source);
     assert.equal(policy.paceMs, MEASUREMENT_PACE_MS, source);
-    assert.equal(policy.maxPages, 5, source);
+    assert.equal(policy.maxPages, 20, source);
   }
 });
 
@@ -67,7 +67,7 @@ test('a source override can raise the pace above the floor', () => {
 
 test('a source override can never raise the page ceiling', () => {
   const policy = resolvePolicy('greenhouse', config({ sources: { greenhouse: { max_pages: 50 } } }));
-  assert.equal(policy.maxPages, 5);
+  assert.equal(policy.maxPages, 20);
 });
 
 test('a source override can lower the page ceiling', () => {

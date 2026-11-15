@@ -36,7 +36,7 @@ Configuration is non-secret and optional; a missing file means the documented de
   "model": "claude-sonnet-4-5",
   "threshold": 0.9,
   "pace_ms_floor": 8000,
-  "max_pages_per_run": 5,
+  "max_pages_per_run": 20,
   "sources": { "linkedin": { "pace_ms": 20000 } }
 }
 ```
