@@ -33,9 +33,15 @@ const safeJson = (body: string): unknown => {
   }
 };
 
-/** A body that is a bot wall, not data. Real answers are never classified as challenges. */
-const wallOf = (body: string): 'none' | 'captcha' =>
-  /just a moment|cf-chl|captcha/i.test(body.slice(0, 4000)) ? 'captcha' : 'none';
+/**
+ * A bot wall, not data. Only the markers of a challenge page count, and only in an HTML body: a
+ * JSON or XML feed can mention "captcha" in a job text and is still data.
+ */
+const wallOf = (body: string): 'none' | 'captcha' => {
+  const head = body.trimStart().slice(0, 4000);
+  if (/^[{[]|^<\?xml|^<rss|^<feed/i.test(head)) return 'none';
+  return /<title>\s*(just a moment|attention required)|cf-chl-|captcha-delivery\.com/i.test(head) ? 'captcha' : 'none';
+};
 
 const jsonSource = (
   id: string,

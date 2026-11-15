@@ -97,3 +97,11 @@ test('a bot wall is reported as a captcha challenge, never parsed as jobs', () =
   assert.equal(platsbanken.detectChallenge('<title>Just a moment...</title>'), 'captcha');
   assert.equal(platsbanken.detectChallenge('{"hits":[]}'), 'none');
 });
+
+test('a job post that mentions a captcha is data, not a challenge', () => {
+  const posting = JSON.stringify({ hits: [{ headline: 'QA engineer, we design captcha tests', description: { text: 'captcha and bot detection' } }] });
+  assert.equal(platsbanken.detectChallenge(posting), 'none');
+  const feed = '<?xml version="1.0"?><rss><channel><item><title>Captcha vendor hiring</title><link>https://example.test/j</link></item></channel></rss>';
+  assert.equal(cryptocurrencyjobs.detectChallenge(feed), 'none');
+  assert.equal(cryptocurrencyjobs.detectChallenge('<html><title>Attention Required</title>cf-chl-bypass</html>'), 'captcha');
+});
