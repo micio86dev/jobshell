@@ -264,7 +264,12 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
   // twice and the daily cap could show it twice.
   const unique = [...new Map(fetched.map((posting) => [postingKey(posting), posting])).values()];
   const filtered = applyHardFilters(unique, deps.spec, deps.seen, deps.now);
-  const survivors = filtered.kept.slice(0, budget);
+  // The budget judges the most promising survivors, not the first ones fetched. Array sort
+  // is stable, so equal soft fits keep the fetch order.
+  const bySoftFit = [...filtered.kept].sort(
+    (a, b) => softBonus(b, deps.spec.soft) - softBonus(a, deps.spec.soft),
+  );
+  const survivors = bySoftFit.slice(0, budget);
 
   const scoringStarted = Date.now();
   let inputTokens = 0;

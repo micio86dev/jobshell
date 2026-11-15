@@ -241,6 +241,26 @@ test('the budget in the profile decides how many survivors are judged', async ()
   assert.equal(evidence.scoring.budget, 1);
 });
 
+test('under a budget, the survivors with the best soft fit are judged first, not the first fetched', async () => {
+  // The junior posting is fetched first. With room for one judgment, the senior posting
+  // matches the soft seniority preference and must be the one that is paid for.
+  const [legal, senior, junior] = JSON.parse(FEED) as unknown[];
+  const juniorFirst = JSON.stringify([legal, junior, senior]);
+  const route: Route = (url) =>
+    url.startsWith('https://remoteok.com')
+      ? { status: 200, text: juniorFirst }
+      : { status: 200, text: JUDGEMENT(0.95, 0, 'not_specified') };
+  const base = compileProfile(profile);
+  const { scoringBudget: _ignored, ...withoutOverride } = deps(route);
+  const evidence = await runOnce({
+    ...withoutOverride,
+    spec: { ...base, scoring_budget: 1, soft: { ...base.soft, seniority: 'senior' } },
+  });
+  assert.equal(evidence.scoring.judged, 1);
+  assert.equal(evidence.selected.length, 1);
+  assert.equal(evidence.selected[0]?.title, 'Senior Rust Engineer');
+});
+
 test('the scoring budget caps how many survivors are judged', async () => {
   const route: Route = (url) =>
     url.startsWith('https://remoteok.com')
