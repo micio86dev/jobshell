@@ -282,7 +282,7 @@ const asQuality = (value: string): QualityVerdict => {
 };
 
 /**
- * Both judgments in **one** request, with the quality question.
+ * The four named questions (stack stance, fit, gap, quality) in **one** request.
  *
  * System One answers several named questions about the same state, so asking the
  * stack stance, the fit and the quality together halves both the latency and the billed
@@ -324,7 +324,7 @@ export const judgePosting = async (
         quality: {
           type: 'choice',
           instructions:
-            'Judging only the posting text: is this a genuine job opening worth a candidate time, or a scheme or vague bait? Answer from what the text says, not from the title alone.',
+            'Judging only the posting text: is this a genuine job opening worth the time of a candidate, or a scheme or vague bait? Answer from what the text says, not from the title alone.',
           criteria: {
             genuine:
               'A real job from an identifiable employer or client, with the work, the team or the requirements stated concretely.',
