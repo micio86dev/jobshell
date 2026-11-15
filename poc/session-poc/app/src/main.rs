@@ -136,10 +136,18 @@ fn agent_save_key(account: String, value: String) -> Result<(), String> {
     secrets::store_secret(&account, trimmed).map_err(|error| error.to_string())
 }
 
+/// Tell the window one step of a run has happened. A failed emit only loses a progress line.
+fn emit_agent_progress(app: &tauri::AppHandle, message: &str) {
+    use tauri::Emitter;
+    let _ = app.emit("agent-progress", message);
+}
+
 /// Run the agent from the window. `dry_run` fetches and filters without buying a judgment.
 #[tauri::command]
-async fn agent_run(dry_run: bool) -> Result<String, String> {
-    tauri::async_runtime::spawn_blocking(move || agent::run_once(dry_run))
+async fn agent_run(app: tauri::AppHandle, dry_run: bool) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        agent::run_once(dry_run, &|message| emit_agent_progress(&app, message))
+    })
         .await
         .map_err(|error| error.to_string())?
         .map_err(|error| error.to_string())
@@ -148,12 +156,17 @@ async fn agent_run(dry_run: bool) -> Result<String, String> {
 /// Run the agent on one saved search. Only an active search runs: a paused or deleted one
 /// is refused before anything is written or launched.
 #[tauri::command]
-async fn agent_run_search(state: State<'_, Arc<AppState>>, id: String, dry_run: bool) -> Result<String, String> {
+async fn agent_run_search(
+    app: tauri::AppHandle,
+    state: State<'_, Arc<AppState>>,
+    id: String,
+    dry_run: bool,
+) -> Result<String, String> {
     let listed = profile::search_list_active(&state.pool, &id).await?;
     let payload = listed.ok_or_else(|| "this search is paused or deleted, so it does not run".to_string())?;
     tauri::async_runtime::spawn_blocking(move || -> anyhow::Result<String> {
         let path = agent::write_search_profile(&id, &payload)?;
-        agent::run_with_profile(&path, dry_run)
+        agent::run_with_profile(&path, dry_run, &|message| emit_agent_progress(&app, message))
     })
     .await
     .map_err(|error| error.to_string())?

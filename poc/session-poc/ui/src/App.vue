@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { onMounted, ref } from 'vue';
 import OnboardingWizard from './onboarding/OnboardingWizard.vue';
 import SourcesPanel from './sources/SourcesPanel.vue';
@@ -128,7 +129,12 @@ const tailoredReason = (key: string): string | null => {
 
 const runAgent = async (dryRun: boolean): Promise<void> => {
   running.value = dryRun ? 'dry' : 'real';
-  status.value = dryRun ? 'Dry run in progress…' : 'Run in progress… this can take a minute';
+  const label = dryRun ? 'Dry run in progress…' : 'Run in progress…';
+  status.value = label;
+  // The agent reports each step while it works; the last one stays on screen until the run ends.
+  const unlisten = await listen<string>('agent-progress', (event) => {
+    status.value = `${label} ${event.payload}`;
+  });
   try {
     await invoke<string>('agent_run', { dryRun });
     status.value = dryRun ? 'Dry run complete' : 'Run complete';
@@ -136,6 +142,7 @@ const runAgent = async (dryRun: boolean): Promise<void> => {
   } catch (error) {
     status.value = `Run failed: ${String(error)}`;
   } finally {
+    unlisten();
     running.value = '';
   }
 };

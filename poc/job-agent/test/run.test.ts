@@ -399,3 +399,17 @@ test('user tenants come after the verified ones, and a tenant already verified i
     'https://boards-api.greenhouse.io/v1/boards/gamma/jobs?content=true',
   ]);
 });
+
+test('a run reports each step as it happens, so a long search shows progress', async () => {
+  const route: Route = (url) => {
+    if (url.startsWith('https://remoteok.com')) return { status: 200, text: FEED };
+    return { status: 200, text: JUDGEMENT(0.95, 0.0, 'not_specified') };
+  };
+  const messages: string[] = [];
+  const evidence = await runOnce(deps(route, { onProgress: (message) => messages.push(message) }));
+
+  assert.ok(messages.some((message) => message.startsWith('fetching remoteok')), messages.join(' | '));
+  const total = evidence.scoring.judged;
+  assert.ok(total > 0, 'the fixture must reach the judgment step');
+  assert.equal(messages.at(-1), `scoring ${total}/${total}`);
+});

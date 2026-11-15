@@ -223,14 +223,20 @@ pub fn run_args(profile: &Path, dry_run: bool) -> Vec<String> {
     args
 }
 
-/// One run of the agent, as the app launches it.
-///
-/// The output is returned rather than streamed: a dry run takes seconds, and a judged run
-/// a minute, so the window shows a running state and then reloads the evidence.
-pub fn run_once(dry_run: bool) -> Result<String> {
+/// The prefix of the stderr lines that carry run progress. The agent writes it; nothing else does.
+const PROGRESS_PREFIX: &str = "jobshell-progress: ";
+
+/// The message of one progress line, or `None` for any other stderr line.
+pub fn progress_message(line: &str) -> Option<String> {
+    line.strip_prefix(PROGRESS_PREFIX).map(|message| message.trim_end().to_string())
+}
+
+/// One run of the agent, as the app launches it. `on_progress` hears each step while the run
+/// goes on; the evidence is returned at the end, and the window reloads it then.
+pub fn run_once(dry_run: bool, on_progress: &dyn Fn(&str)) -> Result<String> {
     let profile = profile_path();
     ensure_profile(&profile)?;
-    run_with_profile(&profile, dry_run)
+    run_with_profile(&profile, dry_run, on_progress)
 }
 
 /// The file a search runs from: one per search id, inside the evidence folder. The id is
@@ -253,22 +259,51 @@ pub fn write_search_profile(id: &str, payload: &str) -> Result<PathBuf> {
     Ok(path)
 }
 
-/// One run of the agent from an explicit profile file.
-pub fn run_with_profile(profile: &Path, dry_run: bool) -> Result<String> {
+/// One run of the agent from an explicit profile file. Progress lines reach `on_progress` as
+/// they are written; the other stderr output and the stdout are collected for the result.
+pub fn run_with_profile(profile: &Path, dry_run: bool, on_progress: &dyn Fn(&str)) -> Result<String> {
+    use std::io::{BufRead, BufReader, Read};
+    use std::process::Stdio;
+
     let dir = agent_dir();
     // The provider and judgment service the user chose in Settings, as names only.
     let env = crate::settings::load(&crate::settings_path())?.agent_env();
 
-    let output = Command::new(node_binary())
+    let mut child = Command::new(node_binary())
         .args(run_args(profile, dry_run))
         .envs(env.iter().map(|(name, value)| (name.as_str(), value.as_str())))
         .current_dir(&dir)
-        .output()
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
         .with_context(|| format!("starting the agent in {}", dir.display()))?;
+    let mut stdout_pipe = child.stdout.take().context("reading the agent output")?;
+    let stderr_pipe = child.stderr.take().context("reading the agent progress")?;
 
-    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-    if !output.status.success() {
+    // stdout is drained on its own thread so a full pipe never stalls the progress reader.
+    let (stdout, stderr) = std::thread::scope(|scope| {
+        let stdout_reader = scope.spawn(move || {
+            let mut text = String::new();
+            let _ = stdout_pipe.read_to_string(&mut text);
+            text
+        });
+        let mut stderr_text = String::new();
+        for line in BufReader::new(stderr_pipe).lines() {
+            let Ok(line) = line else { break };
+            match progress_message(&line) {
+                Some(message) => on_progress(&message),
+                None => {
+                    stderr_text.push_str(&line);
+                    stderr_text.push('\n');
+                }
+            }
+        }
+        (stdout_reader.join().unwrap_or_default(), stderr_text)
+    });
+
+    let status = child.wait().context("waiting for the agent")?;
+    if !status.success() {
         // The agent already prints a readable reason; surface it instead of a bare code.
         anyhow::bail!("{}", if stderr.trim().is_empty() { stdout } else { stderr });
     }
@@ -929,5 +964,21 @@ mod tailor_path_tests {
         let name = path.file_name().unwrap().to_string_lossy().to_string();
         assert!(!name.contains('/') && !name.contains(".."), "got {name}");
         assert!(path.parent().unwrap().ends_with("cv"));
+    }
+}
+
+#[cfg(test)]
+mod progress_tests {
+    use super::*;
+
+    #[test]
+    fn a_progress_line_yields_its_message() {
+        assert_eq!(progress_message("jobshell-progress: scoring 1/2"), Some("scoring 1/2".to_string()));
+    }
+
+    #[test]
+    fn other_stderr_lines_are_not_progress() {
+        assert_eq!(progress_message("jobshell: the match threshold is invalid"), None);
+        assert_eq!(progress_message("  jobshell-progress: indented"), None);
     }
 }
