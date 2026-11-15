@@ -26,6 +26,8 @@ export type ReportInput = {
   /** The fit verdict and gaps the run already produced, so the report starts from them. */
   verdict: string;
   gaps: string[];
+  /** The wizard's facts, when the request carries them. */
+  candidate?: Candidate;
 };
 
 export type ReportDeps = {
@@ -35,6 +37,16 @@ export type ReportDeps = {
   maxTokens?: number;
   baseUrl?: string | undefined;
   fetchImpl: FetchLike;
+};
+
+/** The wizard's facts about the candidate. Each one is optional; a fact that is absent is never invented. */
+export type Candidate = {
+  headline: string | null;
+  capabilities: string[];
+  seniority: string | null;
+  years_experience: number | null;
+  languages: string[];
+  portfolio: string | null;
 };
 
 export type ReportResult = { source: 'model'; markdown: string } | { source: 'fallback'; reason: string };
@@ -125,6 +137,8 @@ export const parseReportRequest = (raw: string): ReportRequestParse => {
   if (!Array.isArray(gaps) || !gaps.every((gap) => typeof gap === 'string')) {
     return { ok: false, reason: 'gaps must be a list of strings' };
   }
+  const candidate = parseCandidate(parsed['candidate']);
+  if (!candidate.ok) return { ok: false, reason: candidate.reason };
   return {
     ok: true,
     input: {
@@ -137,6 +151,39 @@ export const parseReportRequest = (raw: string): ReportRequestParse => {
       cv: parsed['cv'],
       verdict: parsed['verdict'],
       gaps,
+      ...(candidate.value === undefined ? {} : { candidate: candidate.value }),
+    },
+  };
+};
+
+const optionalText = (value: unknown): value is string | null | undefined => value === undefined || value === null || typeof value === 'string';
+const textList = (value: unknown): value is string[] | undefined =>
+  value === undefined || (Array.isArray(value) && value.every((item) => typeof item === 'string'));
+
+/** The candidate block is optional; a field with the wrong type refuses the request, never guesses. */
+const parseCandidate = (
+  raw: unknown,
+): { ok: true; value: Candidate | undefined } | { ok: false; reason: string } => {
+  if (raw === undefined || raw === null) return { ok: true, value: undefined };
+  if (!isRecord(raw)) return { ok: false, reason: 'candidate must be an object' };
+  if (!optionalText(raw['headline'])) return { ok: false, reason: 'candidate.headline must be text or null' };
+  if (!optionalText(raw['seniority'])) return { ok: false, reason: 'candidate.seniority must be text or null' };
+  if (!optionalText(raw['portfolio'])) return { ok: false, reason: 'candidate.portfolio must be text or null' };
+  const years = raw['years_experience'];
+  if (years !== undefined && years !== null && typeof years !== 'number') {
+    return { ok: false, reason: 'candidate.years_experience must be a number or null' };
+  }
+  if (!textList(raw['capabilities'])) return { ok: false, reason: 'candidate.capabilities must be a list of text' };
+  if (!textList(raw['languages'])) return { ok: false, reason: 'candidate.languages must be a list of text' };
+  return {
+    ok: true,
+    value: {
+      headline: raw['headline'] ?? null,
+      capabilities: raw['capabilities'] ?? [],
+      seniority: raw['seniority'] ?? null,
+      years_experience: years ?? null,
+      languages: raw['languages'] ?? [],
+      portfolio: raw['portfolio'] ?? null,
     },
   };
 };
