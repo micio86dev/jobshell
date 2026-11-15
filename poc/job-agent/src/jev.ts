@@ -1,7 +1,7 @@
 /**
  * TypeSafe System One client: the judgment layer.
  *
- * Two questions are asked per posting, and neither is a keyword test:
+ * Four questions are asked per posting, and none is a keyword test:
  *
  * 1. `stack_stance` — how the posting treats stack: an explicit requirement, a
  *    preference, not specified at all, or a tool it merely mentions. This is the
@@ -9,6 +9,9 @@
  * 2. `fit` — could this person do this job credibly, given what they can deliver
  *    and the gaps they declared they accept? The answer is a distribution, so the
  *    runner keeps P(yes) + P(yes_with_gap) and compares it to the user's threshold.
+ * 3. `gap` — which requirement, if any, the candidate misses; shown, never hidden.
+ * 4. `quality` — a genuine opening, a scheme (crypto returns, referral income, paying
+ *    to start) or vague bait. P(scam) + P(vague) at or above SUSPICION_LIMIT drops it.
  *
  * Contract (docs.typesafe.ai, read 2026-11-08): `POST /v1/systemone`, `Authorization:
  * Bearer <key>`, body `{model, state, questions}`, response `{model, answers, usage}`.
@@ -251,13 +254,6 @@ export const scoreFit = async (
   return { probability, verdict, probabilities, usage: response.usage };
 };
 
-/**
- * Both judgments in **one** request.
- *
- * System One answers several named questions about the same state, so asking the
- * stack stance and the fit together halves both the latency and the billed input
- * tokens compared with two round trips. This is the call the daily runner makes.
- */
 export type GapKind = 'none' | 'stack' | 'seniority' | 'domain' | 'language';
 
 const GAPS: readonly GapKind[] = ['none', 'stack', 'seniority', 'domain', 'language'];
@@ -271,9 +267,30 @@ export type JudgedPosting = {
   stack_stance: { stance: StackStance; probabilities: Record<string, number> };
   /** Which requirement is missing, so the match can disclose it instead of hiding it. */
   gap: GapKind;
+  /** Whether the posting is a scheme or bait, so the run can drop it before it is shown. */
+  quality: { verdict: QualityVerdict; suspicion: number; probabilities: Record<string, number> };
   usage: Usage;
 };
 
+export type QualityVerdict = 'genuine' | 'scam' | 'vague' | 'unknown';
+
+/** Suspicion at or above this drops a posting. Below it the posting is kept, never shown as verified. */
+export const SUSPICION_LIMIT = 0.6;
+
+export const isSuspicious = (suspicion: number): boolean => suspicion >= SUSPICION_LIMIT;
+
+const asQuality = (value: string): QualityVerdict => {
+  if (value === 'genuine' || value === 'scam' || value === 'vague') return value;
+  return 'unknown';
+};
+
+/**
+ * The four named questions (stack stance, fit, gap, quality) in **one** request.
+ *
+ * System One answers several named questions about the same state, so asking the
+ * stack stance, the fit and the quality together halves both the latency and the billed
+ * input tokens compared with separate round trips. This is the call the daily runner makes.
+ */
 export const judgePosting = async (
   posting: Posting,
   promptContext: string,
@@ -307,6 +324,19 @@ export const judgePosting = async (
             language: 'A spoken language the posting asks for is outside the profile.',
           },
         },
+        quality: {
+          type: 'choice',
+          instructions:
+            'Judging only the posting text: is this a genuine job opening worth the time of a candidate, or a scheme or vague bait? Answer from what the text says, not from the title alone.',
+          criteria: {
+            genuine:
+              'A real job from an identifiable employer or client, with the work, the team or the requirements stated concretely.',
+            scam:
+              'A scheme, not a job: crypto, trading or investment returns, referral or multi-level income, paying to start, "earn fast" promises, or a recruiter asking for money or identity documents early.',
+            vague:
+              'Too generic to be a real opening: slogans, or a template text that could fit any employer, with no concrete work described.',
+          },
+        },
       },
     },
     deps,
@@ -316,8 +346,15 @@ export const judgePosting = async (
   const gapAnswer = response.answers['gap'];
   const fitProbabilities = fitAnswer?.type === 'choice' ? fitAnswer.probabilities : {};
   const stanceAnswer = response.answers['stack_stance'];
+  const qualityAnswer = response.answers['quality'];
+  const qualityProbabilities = qualityAnswer?.type === 'choice' ? qualityAnswer.probabilities : {};
 
   return {
+    quality: {
+      verdict: asQuality(qualityAnswer?.type === 'choice' ? qualityAnswer.choice : ''),
+      suspicion: Math.min(1, number(qualityProbabilities['scam']) + number(qualityProbabilities['vague'])),
+      probabilities: qualityProbabilities,
+    },
     fit: {
       probability: Math.min(1, number(fitProbabilities['yes']) + number(fitProbabilities['yes_with_gap'])),
       verdict: asVerdict(fitAnswer?.type === 'choice' ? fitAnswer.choice : ''),

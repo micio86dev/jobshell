@@ -15,7 +15,7 @@
 import { parsePostings } from './posting-input.ts';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 
-import { judgePosting, type JeDeps } from './jev.ts';
+import { isSuspicious, judgePosting, type JeDeps } from './jev.ts';
 import { readKey, type KeyringReader } from './keys.ts';
 import type { Posting } from './sources/types.ts';
 
@@ -27,6 +27,8 @@ export type ScoreResult = {
   probability: number;
   verdict: string;
   stack_stance: string;
+  /** Judged a scheme or vague bait: never a match, whatever the fit says. */
+  suspicious: boolean;
 };
 export type ScoreError = { key: string; message: string };
 export type ScoreResponse = {
@@ -132,6 +134,7 @@ export const handleScore = async (raw: unknown, deps: BridgeDeps): Promise<Score
       probability: judged.fit.probability,
       verdict: judged.fit.verdict,
       stack_stance: judged.stack_stance.stance,
+      suspicious: isSuspicious(judged.quality.suspicion),
     });
   }
 

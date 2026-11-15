@@ -15,7 +15,7 @@ import {
   startBridge,
 } from '../src/bridge.ts';
 import type { FetchLike } from '../src/jev.ts';
-import { JUDGEMENT, capture, posting } from './support.ts';
+import { JUDGEMENT, SCAM_JUDGEMENT, capture, posting } from './support.ts';
 
 import { EXTENSION_ORIGIN } from '../src/bridge.ts';
 
@@ -256,4 +256,13 @@ test('bridge: a malformed body is a 400, and a server-side failure is a 500 that
   } finally {
     await server.close();
   }
+});
+
+test('bridge: a scheme comes back flagged, so the extension never presents it as a match', async () => {
+  const fetchImpl: FetchLike = async () => ({ status: 200, text: SCAM_JUDGEMENT });
+  const response = await handleScore(
+    { postings: [posting] },
+    { jev: { apiKey: 'k', fetchImpl }, promptContext: 'c', threshold: 0.9, resolveKey: () => 'k' },
+  );
+  assert.equal(response.results[0]?.suspicious, true);
 });

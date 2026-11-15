@@ -5,6 +5,7 @@ import { test } from 'node:test';
 
 import {
   applyHardFilters,
+  liftedProbability,
   detectContract,
   detectCountry,
   detectLanguage,
@@ -113,7 +114,7 @@ test('a language the profile does not work in is dropped', () => {
 });
 
 test('an empty language list disables the language filter entirely', () => {
-  const result = applyHardFilters([make({ id: '3', description: null, title: 'x' })], spec({ languages: [] }), new Set(), NOW);
+  const result = applyHardFilters([make({ id: '3', description: 'We build apps. The team works in English.', title: 'x' })], spec({ languages: [] }), new Set(), NOW);
   assert.equal(result.kept.length, 1);
 });
 
@@ -552,4 +553,18 @@ test('a mandatory salary floor still drops a posting below it, when the user cho
   const result = applyHardFilters([low], compiled, new Set(), NOW);
   assert.deepEqual(result.kept.map(postingKey), []);
   assert.equal(result.dropped[0]?.reason, 'salary_below_floor');
+});
+
+test('a posting with no description is dropped: there is nothing to judge its quality from', () => {
+  const empty = make({ id: '9', description: null });
+  const blank = make({ id: '10', description: '   ' });
+  const result = applyHardFilters([empty, blank], spec(), new Set(), NOW);
+  assert.deepEqual(result.kept, []);
+  assert.deepEqual(result.dropped.map((item) => item.reason), ['no_description', 'no_description']);
+});
+
+test('the soft bonus lifts only a posting already at the threshold, never one below it', () => {
+  assert.equal(liftedProbability(0.85, 0.1, 0.9), 0.85, 'below the threshold the bonus does not count');
+  assert.ok(Math.abs(liftedProbability(0.91, 0.05, 0.9) - 0.96) < 1e-9, 'above it the bonus ranks it higher');
+  assert.equal(liftedProbability(0.99, 0.1, 0.9), 1, 'capped at certainty');
 });

@@ -12,6 +12,7 @@ import type { Posting } from './sources/types.ts';
 
 export type DropReason =
   | 'already_seen'
+  | 'no_description'
   | 'stale'
   | 'language'
   | 'remote_mode'
@@ -284,6 +285,12 @@ export const applyHardFilters = (
       continue;
     }
 
+    // Without a description the judgment would rest on the title alone: nothing real to match.
+    if (posting.description === null || posting.description.trim().length === 0) {
+      dropped.push({ posting, reason: 'no_description', detail: 'the posting has no description to judge' });
+      continue;
+    }
+
     if (posting.published_at === null) {
       unknownFacts.push('date');
     } else {
@@ -528,6 +535,13 @@ export const softBonus = (posting: Posting, soft: Spec['soft']): number => {
 
   return Math.min(MAX_SOFT_BONUS, points * SOFT_POINT);
 };
+
+/**
+ * The ranking probability: soft preferences add their bonus only to a posting already at the
+ * threshold. A bonus never carries a weak fit over the line; it only orders the ones that pass.
+ */
+export const liftedProbability = (fit: number, bonus: number, threshold: number): number =>
+  fit >= threshold ? Math.min(1, fit + bonus) : fit;
 
 export type Scored = { posting: Posting; probability: number };
 

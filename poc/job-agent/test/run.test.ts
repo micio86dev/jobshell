@@ -282,6 +282,23 @@ test('the threshold is respected: a low fit selects nothing and says how quiet i
   assert.equal(evidence.scoring.above_threshold, 0);
 });
 
+test('a posting judged as a scheme is dropped before it is shown, and the run counts it', async () => {
+  const route: Route = (url) => {
+    if (url.startsWith('https://remoteok.com')) return { status: 200, text: FEED };
+    const body = JSON.parse(JUDGEMENT(0.95, 0, 'not_specified')) as { answers: Record<string, unknown> };
+    body.answers['quality'] = {
+      type: 'choice',
+      choice: 'scam',
+      confidence: 0.9,
+      probabilities: { genuine: 0.05, scam: 0.9, vague: 0.05 },
+    };
+    return { status: 200, text: JSON.stringify(body) };
+  };
+  const evidence = await runOnce(deps(route));
+  assert.equal(evidence.selected.length, 0, 'a high fit does not rescue a scheme');
+  assert.equal(evidence.scoring.suspicious_dropped, 2);
+});
+
 test('postings already shown are dropped before any judgment is paid for', async () => {
   const route: Route = (url) =>
     url.startsWith('https://remoteok.com')

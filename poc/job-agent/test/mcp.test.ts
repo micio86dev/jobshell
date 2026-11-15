@@ -8,7 +8,8 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 
 import { handleMcpRequest, internalErrorResponse, loadSeen, parseMcpRequest, type McpDeps } from '../src/mcp-server.ts';
-import { capture, posting, profile } from './support.ts';
+import { SCAM_JUDGEMENT, capture, posting, profile } from './support.ts';
+import type { FetchLike } from '../src/jev.ts';
 
 const mcpDeps = (): McpDeps => {
   const { fetchImpl } = capture();
@@ -175,4 +176,15 @@ test('mcp: a tool call without a name is invalid params, not an unknown tool', a
     mcpDeps(),
   );
   assert.equal(response.error?.code, -32602, 'JSON-RPC calls a malformed call invalid params');
+});
+
+test('mcp: a scheme is flagged and never clears the threshold, even with a high fit', async () => {
+  const fetchImpl = (async () => ({ status: 200, text: SCAM_JUDGEMENT })) as FetchLike;
+  const response = await handleMcpRequest(
+    { jsonrpc: '2.0', id: 6, method: 'tools/call', params: { name: 'score_posting', arguments: { posting } } },
+    { ...mcpDeps(), jev: { apiKey: 'k', fetchImpl } },
+  );
+  const payload = JSON.parse((response.result as { content: Array<{ text: string }> }).content[0]?.text ?? '{}');
+  assert.equal(payload.suspicious, true);
+  assert.equal(payload.above_threshold, false, 'a scheme is never reported as a match');
 });
