@@ -13,7 +13,7 @@
 import { z } from 'zod';
 import { createInterface } from 'node:readline';
 
-import { judgePosting, type JeDeps } from './jev.ts';
+import { isSuspicious, judgePosting, type JeDeps } from './jev.ts';
 import { parsePosting } from './posting-input.ts';
 import type { UserProfile } from './profile.ts';
 import { loadSeen } from './seen.ts';
@@ -176,6 +176,8 @@ export const handleMcpRequest = async (request: McpRequest, deps: McpDeps): Prom
           return { jsonrpc: '2.0', id, error: { code: -32602, message: 'posting needs source, id, title and url' } };
         }
         const judged = await judgePosting(posting, deps.promptContext, deps.jev);
+        // A scheme or vague bait is never reported as a match, whatever its fit says.
+        const suspicious = isSuspicious(judged.quality.suspicion);
         return {
           jsonrpc: '2.0',
           id,
@@ -184,8 +186,9 @@ export const handleMcpRequest = async (request: McpRequest, deps: McpDeps): Prom
             probability: judged.fit.probability,
             verdict: judged.fit.verdict,
             stack_stance: judged.stack_stance.stance,
+            suspicious,
             threshold: deps.profile.threshold,
-            above_threshold: judged.fit.probability >= deps.profile.threshold,
+            above_threshold: !suspicious && judged.fit.probability >= deps.profile.threshold,
             input_tokens: judged.usage.input_tokens,
           }),
         };

@@ -68,3 +68,15 @@ export const profile: UserProfile = {
   eligibility: { employee: [], contractor: [], residence: null },
   remote_scope: null,
 };
+
+/** A judgment with a high fit that the quality question marks as a scheme. */
+export const SCAM_JUDGEMENT = JSON.stringify({
+  model: 'jev-latest',
+  answers: {
+    fit: { type: 'choice', choice: 'yes', confidence: 0.9, probabilities: { yes: 0.97, no: 0.03 } },
+    stack_stance: { type: 'choice', choice: 'not_specified', confidence: 0.9, probabilities: { not_specified: 1 } },
+    gap: { type: 'choice', choice: 'none', confidence: 0.9, probabilities: { none: 1 } },
+    quality: { type: 'choice', choice: 'scam', confidence: 0.9, probabilities: { genuine: 0.02, scam: 0.95, vague: 0.03 } },
+  },
+  usage: { input_tokens: 10, output_tokens: 1 },
+});

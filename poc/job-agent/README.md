@@ -15,6 +15,14 @@ the survivors. Two postings above 90% is a good day; nothing above 90% is report
 such. It never solves a CAPTCHA, never rotates a proxy, never reads a cookie, and never
 touches a source whose policy forbids automation.
 
+Quality comes before fit. A posting without a description is dropped, because there is
+nothing real to judge. Jev also answers a quality question in the same call: a scheme
+(crypto or investment returns, referral income, paying to start) or a vague template is
+dropped when its suspicion reaches 0.6, and the run counts it as `suspicious_dropped`.
+The MCP tool and the bridge flag such a posting as `suspicious` and never report it as a
+match. Soft preferences only order postings that already reach the threshold; they never
+lift a weak fit over it. A posting whose quality Jev cannot answer is kept, not verified.
+
 ## Setup
 
 Keys live in the macOS keyring, never in a file:
