@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-15T14:26:06.310Z",
+  "generated_at": "2026-11-15T15:03:42.183Z",
   "method": "read-only GET, self-identifying user agent, one request every 1200 ms, robots.txt read first per origin; a URL refused by robots.txt is not requested; no credential, no cookie, no browser",
   "user_agent": "jobshell-job-agent/0.1 (read-only source probe)",
   "per_source": [
@@ -43,6 +43,15 @@
       "source": "himalayas",
       "targets": 1,
       "postings": 20,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "hirehive",
+      "targets": 1,
+      "postings": 30,
       "verdicts": [
         "ok"
       ],
@@ -121,9 +130,27 @@
       "outcome": "added"
     },
     {
+      "source": "teamtailor",
+      "targets": 1,
+      "postings": 4,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
       "source": "weworkremotely",
       "targets": 1,
       "postings": 25,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "workable",
+      "targets": 3,
+      "postings": 58,
       "verdicts": [
         "ok"
       ],
@@ -523,12 +550,30 @@
       "verdict": "ok"
     },
     {
+      "source": "hirehive",
+      "tenant": "amcsgroup",
+      "url": "https://amcsgroup.hirehive.com/api/v2/jobs",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 398987,
+      "challenge": "none",
+      "postings": 30,
+      "sample_titles": [
+        "Software Support Technical Team Lead",
+        "Technical Content Creator",
+        "DevOps Engineer (Azure, AKS)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
       "source": "hn",
       "tenant": null,
       "url": "https://hn.algolia.com/api/v1/search?query=who%20is%20hiring&tags=comment",
       "robots_status": 404,
       "status": 200,
-      "bytes": 43068,
+      "bytes": 43079,
       "challenge": "none",
       "postings": 20,
       "sample_titles": [
@@ -702,6 +747,24 @@
       "verdict": "ok"
     },
     {
+      "source": "teamtailor",
+      "tenant": "templafy",
+      "url": "https://templafy.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 39372,
+      "challenge": "none",
+      "postings": 4,
+      "sample_titles": [
+        "Inside Account Executive",
+        "Executive Sales, EMEA",
+        "Corporate Security Engineer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
       "source": "weworkremotely",
       "tenant": null,
       "url": "https://weworkremotely.com/categories/remote-programming-jobs.rss",
@@ -714,6 +777,60 @@
         "Senior Vue Developer",
         "Core Protocol Engineer",
         "Senior Data Engineer - Capital Markets (R13923)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "huggingface",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/huggingface?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 37462,
+      "challenge": "none",
+      "postings": 6,
+      "sample_titles": [
+        "Open-Source Machine Learning Engineer - EMEA Remote",
+        "Open-Source Machine Learning Engineer - US Remote",
+        "Senior Machine Learning Engineer, Voice Agents - EMEA Remote"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "semios",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/semios?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 256801,
+      "challenge": "none",
+      "postings": 34,
+      "sample_titles": [
+        "Corporate Development & Market Strategy Lead",
+        "Corporate Development & Market Strategy Lead",
+        "Corporate Development & Market Strategy Lead"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "platzi",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/platzi?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 94981,
+      "challenge": "none",
+      "postings": 18,
+      "sample_titles": [
+        "AI Senior Software Engineer",
+        "AI Senior Software Engineer",
+        "B2B Growth Marketer"
       ],
       "error": null,
       "robots_allowed": true,

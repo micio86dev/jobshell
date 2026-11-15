@@ -37,4 +37,12 @@ L3. Shapes read from one live response each: GetOnBrd `{ data: [{ id, attributes
 
 L4. One fixture fix: `text()` in src/sources/types.ts replaces a tag with a space, so "system</b>." becomes "system ." This is existing shared behaviour, and other adapters depend on it, so it is not changed here. The fixture uses words around the tag instead. Recorded as a known limitation.
 
+L6. Second batch, 2026-11-15: ATS tenant boards.
+- Added (live probe ok): `workable` (widget API `apply.workable.com/api/v1/widget/accounts/<tenant>`, tenants huggingface, semios, platzi: 58 postings), `teamtailor` (tenant RSS, templafy: 4), `hirehive` (tenant JSON, amcsgroup: 30).
+- Discarded: `join` (the public sitemap lists URLs, it is not a job feed).
+- Not added, no verified Italian or Spanish tenant: web search for Workable and Teamtailor employers in Italy and Spain found no tenant pages, only aggregators. The three added tenants are worldwide, so S5 places them last; a tenant search for IT and ES is still pending.
+- Not probed in this batch: bamboohr, breezy, homerun, rippling, factorial, polymer, jobvite, applicantpro, comeet, gupy, pinpoint. Each needs a verified tenant first; no tenant was guessed.
+
+L7. Verification of this batch: agent suite 389/389, typecheck clean, live probe `ok` for the three sources (evidence/source-probe/2026-11-15.json). Tests: test/ats-boards.test.ts, 5/5. The first version of the Workable adapter referenced a removed variable; the test caught it, and it was fixed before the commit.
+
 L5. Verification on this branch: agent suite 383/383 (`node --test`), `tsc --noEmit` clean. Live probe: the three added sources return `ok` with postings (evidence/source-probe/2026-11-15.json). The first probe, before this change, showed the other registry sources as `ok` or `prohibited` as listed in that run; the second run was not compared line by line for them.

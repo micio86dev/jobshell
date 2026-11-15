@@ -45,6 +45,10 @@ const ALLOWED: readonly string[] = [
   'cryptocurrencyjobs',
   'getonbrd',
   'platsbanken',
+  // ATS tenant boards from the same catalogue: Workable widget, Teamtailor RSS, HireHive JSON.
+  'workable',
+  'teamtailor',
+  'hirehive',
   // Fetched by the desktop app through ZipRecruiter's MCP server, with the user's OAuth;
   // the agent only reads the file it leaves behind.
   'ziprecruiter',

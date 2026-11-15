@@ -43,6 +43,11 @@ export const TENANTS: Readonly<Record<string, readonly Tenant[]>> = {
   ],
   recruitee: [...tenantsOf(PROBE_2026_11_06, ['channable'])],
   personio: [...tenantsOf(PROBE_2026_11_14, ['personio'])],
+  // Verified 2026-11-15 by the live probe of the career-ops catalogue. Workable accounts answer
+  // the public widget; these are worldwide employers, the Italian and Spanish ones are still to find.
+  workable: [...tenantsOf('2026-11-15', ['huggingface', 'semios', 'platzi'])],
+  teamtailor: [...tenantsOf('2026-11-15', ['templafy'])],
+  hirehive: [...tenantsOf('2026-11-15', ['amcsgroup'])],
 };
 
 /** The verified tenants of a board source, in fetch order. A source without a board has none. */
