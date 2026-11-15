@@ -78,3 +78,8 @@ L5. Live probe, final run, 2026-11-14, evidence/source-probe/2026-11-14.json (me
 L6. Known limitation, not fixed in this pass: the runner's page ceiling (`max_pages_per_run`, default 5) caps board tenants too. Greenhouse has 16 verified boards, so one run reaches only the first 5 unless the ceiling is raised. Raising it is a policy decision for the maintainer.
 L7. Engram mirror of this document is pending: the Engram write returned `ambiguous_project` (available: jobshell, openjob.dev). Not guessed; the maintainer must choose.
 L8. Discarded from the catalogue (reasons in the report): see the final chat report, section "Scartate".
+
+L9. Maintainer decisions, 2026-11-15:
+- Page ceiling raised from 5 to 20 (commit a55ddb3). Resolves L6: one run now reaches all 16 verified Greenhouse boards. Pinned by a test in test/run.test.ts.
+- Engram project chosen: `jobshell`. The mirror is saved (observation 3926). Resolves L7.
+- Maintainer note: the project name `openjob` must no longer appear. Still open: the default paths in src/config.ts (`~/.config/openjob/agent.json`, `openjob-phase0`, `~/.local/share/openjob/evidence`). Changing them moves existing users' config, profile and evidence, so it needs the maintainer's decision. The keyring service `dev.openjob.desktop` stays, as AGENTS.md prescribes.
