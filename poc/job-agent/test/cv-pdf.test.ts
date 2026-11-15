@@ -86,6 +86,14 @@ test('a decomposed accent prints as one accented letter', async () => {
   assert.match(text, /Perchè no/);
 });
 
+test('em dashes are measured at their full width, so a run of them wraps before the margin', () => {
+  // Forty em dashes with spaces at 10 pt: about 508 pt, over the 483 pt measure. The "## Nota" heading
+  // leaves the contact block, so the dashes are body text; the heading is one Tj, the body two rows.
+  const dashes = Array.from({ length: 40 }, () => '—').join(' ');
+  const raw = markdownToPdf(`## Nota\n${dashes}`).toString('latin1');
+  assert.equal((raw.match(/\) Tj/g) ?? []).length, 3);
+});
+
 test('wide capitals wrap before the right margin instead of running past it', () => {
   // Thirty "WW" words at 10 pt are about 650 pt of Helvetica, wider than the 483 pt measure: two rows.
   const raw = markdownToPdf('WW '.repeat(30).trim()).toString('latin1');

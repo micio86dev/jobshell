@@ -55,9 +55,17 @@ const HELVETICA_WIDTHS = [
 const BOLD_FACTOR = 1.08;
 const FALLBACK_WIDTH = 556;
 
+/** Em dash and ellipsis are a full em wide; the fallback is narrower, so they are listed. */
+const WIDE_EXTRAS: ReadonlyMap<number, number> = new Map([
+  [0x2014, 1000],
+  [0x2026, 1000],
+]);
+
 const glyphWidth = (character: string): number => {
   const base = character.normalize('NFD').charAt(0);
   const code = base.codePointAt(0) ?? 0;
+  const wide = WIDE_EXTRAS.get(code);
+  if (wide !== undefined) return wide;
   return code >= 32 && code <= 126 ? (HELVETICA_WIDTHS[code - 32] ?? FALLBACK_WIDTH) : FALLBACK_WIDTH;
 };
 
