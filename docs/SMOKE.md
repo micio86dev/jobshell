@@ -26,6 +26,7 @@ The window opens when the Vite dev server answers on port 1420.
 2. **Dry run:** press **Dry run** in the Results tab. It fetches and filters postings and spends no tokens. Afterwards the summary shows how many postings were fetched, kept, and dropped, and why.
 3. **Search now:** press **Search now** to judge the kept postings with Jev. This needs the judgment key saved in Settings; without it the run fails with a readable message.
 4. **Reading the results:** each selected posting shows its title, company, source, the fit verdict (`fit`, `fit con gap`, `gap non accettato`), the stack stance, and the gaps. Postings above the threshold appear as selected; the rest are counted as below threshold.
+5. **Report:** press **Report** on a selected posting. It writes the blocks A to G in Italian from your CV and the posting, and says "non dichiarato" for anything the CV or the posting does not state. It needs the key of the provider chosen in Settings and makes one model call per press, so it spends tokens. A failure shows its reason under the button.
 
 What to expect on a quiet day: "Nothing above the threshold" is a valid outcome, not an error. The threshold comes from your profile.
 
