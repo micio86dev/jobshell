@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-15T15:22:28.544Z",
+  "generated_at": "2026-11-15T15:29:05.782Z",
   "method": "read-only GET, self-identifying user agent, one request every 1200 ms, robots.txt read first per origin; a URL refused by robots.txt is not requested; no credential, no cookie, no browser",
   "user_agent": "jobshell-job-agent/0.1 (read-only source probe)",
   "per_source": [
@@ -7,6 +7,15 @@
       "source": "arbeitnow",
       "targets": 1,
       "postings": 300,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "breezy",
+      "targets": 8,
+      "postings": 301,
       "verdicts": [
         "ok"
       ],
@@ -103,6 +112,15 @@
       "outcome": "added"
     },
     {
+      "source": "pinpoint",
+      "targets": 2,
+      "postings": 76,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
       "source": "platsbanken",
       "targets": 1,
       "postings": 100,
@@ -124,6 +142,15 @@
       "source": "remoteok",
       "targets": 1,
       "postings": 97,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "rippling",
+      "targets": 4,
+      "postings": 44,
       "verdicts": [
         "ok"
       ],
@@ -195,13 +222,157 @@
       "url": "https://www.arbeitnow.com/api/job-board-api",
       "robots_status": 200,
       "status": 200,
-      "bytes": 2492534,
+      "bytes": 2494490,
       "challenge": "none",
       "postings": 300,
       "sample_titles": [
+        "Customer Success Manager (m/w/d)",
         "Google Ads Media Buyer (m/w/d) | 100 % Remote | Hohes Fixgehalt + Provision",
-        "(Senior) GenAI Engineer",
-        "(Senior) Consultant* - Payments Transformation"
+        "(Senior) GenAI Engineer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "information-resources-italy",
+      "url": "https://information-resources-italy.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 4432,
+      "challenge": "none",
+      "postings": 8,
+      "sample_titles": [
+        "Business Insight Junior",
+        "Category Expert",
+        "Client Experience Account"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "aspria",
+      "url": "https://aspria.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 5536,
+      "challenge": "none",
+      "postings": 6,
+      "sample_titles": [
+        "Ambassador (receptionist)",
+        "Family Supervisor",
+        "Fitness Trainer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "end",
+      "url": "https://end.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 12772,
+      "challenge": "none",
+      "postings": 17,
+      "sample_titles": [
+        "Collaborations Graphic Designer",
+        "Department Manager",
+        "Department Manager"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "marex",
+      "url": "https://marex.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 116328,
+      "challenge": "none",
+      "postings": 96,
+      "sample_titles": [
+        "Accounts Payable / Receivable Analyst",
+        "Agricultural OTC Sales - EMEA - Associate/VP",
+        "Application Support Analyst | Capital Markets"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "vald",
+      "url": "https://vald.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 67973,
+      "challenge": "none",
+      "postings": 74,
+      "sample_titles": [
+        "\"Traveling\" Business Development Manager",
+        "AI Engineer",
+        "Analytics Engineer - Databricks"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "alphanumeric-systems",
+      "url": "https://alphanumeric-systems.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 28345,
+      "challenge": "none",
+      "postings": 24,
+      "sample_titles": [
+        "Associate Medical Director (SERM & Clinical Safety & Pharmacovigilance) - Remote - Based in Brazil",
+        "Associate Scientific Director (SERM & Clinical Safety & Pharmacovigilance) - Remote - Based in Brazil",
+        "Bilingual Customer Service Specialist (English/French) - Remote based in Portugal"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "clearly",
+      "url": "https://clearly.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 5351,
+      "challenge": "none",
+      "postings": 8,
+      "sample_titles": [
+        "Country Representative/Manager",
+        "Freelance Copywriter",
+        "Growth Marketing Manager"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "incubeta-global",
+      "url": "https://incubeta-global.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 84531,
+      "challenge": "none",
+      "postings": 68,
+      "sample_titles": [
+        "Account Director",
+        "Account Director",
+        "Account Manager _Hybrid"
       ],
       "error": null,
       "robots_allowed": true,
@@ -573,7 +744,7 @@
       "url": "https://hn.algolia.com/api/v1/search?query=who%20is%20hiring&tags=comment",
       "robots_status": 404,
       "status": 200,
-      "bytes": 43068,
+      "bytes": 43078,
       "challenge": "none",
       "postings": 20,
       "sample_titles": [
@@ -693,6 +864,42 @@
       "verdict": "ok"
     },
     {
+      "source": "pinpoint",
+      "tenant": "field",
+      "url": "https://field.pinpointhq.com/postings.json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 238179,
+      "challenge": "none",
+      "postings": 16,
+      "sample_titles": [
+        "BESS Engineer",
+        "Talent Acquisition Partner  (12 month Fixed-Term Contract)",
+        "Construction Lead - Italy"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "pinpoint",
+      "tenant": "anthesisgroup",
+      "url": "https://anthesisgroup.pinpointhq.com/postings.json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 545939,
+      "challenge": "none",
+      "postings": 60,
+      "sample_titles": [
+        "Enterprise Architect",
+        "Senior Azure Cloud Engineer",
+        "Principal Consultant – Strategy & Transformation"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
       "source": "platsbanken",
       "tenant": null,
       "url": "https://jobsearch.api.jobtechdev.se/search?q=utvecklare&limit=100",
@@ -741,6 +948,76 @@
         "Global Partnerships BD Lead",
         "Scaled Account Manager EMEA",
         "Software Engineer AI Tooling"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "rippling",
+      "tenant": "camlin-careers",
+      "url": "https://ats.rippling.com/api/v2/board/camlin-careers/jobs",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 8663,
+      "challenge": "none",
+      "postings": 20,
+      "sample_titles": [
+        "Engineering Technician – Applied Engineering",
+        "Senior R&D Scientist",
+        "Data & ML Engineer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "rippling",
+      "tenant": "zynap",
+      "url": "https://ats.rippling.com/api/v2/board/zynap/jobs",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 1366,
+      "challenge": "none",
+      "postings": 3,
+      "sample_titles": [
+        "Senior Full-Stack Engineer",
+        "Customer Success Manager",
+        "Senior Sales Engineer (Pre-sales)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "rippling",
+      "tenant": "copado",
+      "url": "https://ats.rippling.com/api/v2/board/copado/jobs",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 8333,
+      "challenge": "none",
+      "postings": 20,
+      "sample_titles": [
+        "Sr. Full Stack Technical Architect",
+        "Campaign Manager, Commercial (Maternity Cover)",
+        "Campaign Manager, Commercial (Maternity Cover)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "rippling",
+      "tenant": "capacity",
+      "url": "https://ats.rippling.com/api/v2/board/capacity/jobs",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 475,
+      "challenge": "none",
+      "postings": 1,
+      "sample_titles": [
+        "Technical Support Agent (Tier 2)"
       ],
       "error": null,
       "robots_allowed": true,
