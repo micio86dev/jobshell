@@ -34,3 +34,14 @@ L2. Exploration before any source write (read-only):
 - There is no sources page and no way to disable a source. The source list is hard-coded in the policy and the registry.
 - The config file (`~/.config/jobshell/agent.json`) already accepts per-source overrides (`automation`, `pace_ms`, `max_pages`), validated with a strict schema (poc/job-agent/src/config.ts, `sourceOverride`). Unknown fields are refused, so the new fields need to be added to that schema.
 - The runner (poc/job-agent/src/run.ts) builds URLs from the verified registry (src/sources/tenants.ts) and does not read any user tenant.
+
+L3. Done on feat/user-source-control:
+- T1, T2 (b4fe9fd): config accepts `enabled` and `tenants`; the runner skips a switched-off source before any network call and fetches user employers after the verified ones, once each. 342 tests.
+- Source choices command (f5aa966, c4f962f): `source-settings-cli.ts` lists, switches, adds and removes employers. It validates the whole file with the runner's schema before writing, atomically. Tested against a temporary file, the real configuration was not touched. The policy's refusal shows as unreachable, whatever the switch says. 351 tests.
+- Desktop commands (116e036): `sources_list`, `source_switch`, `source_employer`. Arguments are checked in Rust before the process starts. clippy -D warnings passes.
+- Sources page (UI commit): a section in Settings with a switch per source and an employers list per board source. vue-tsc, 89 UI tests and the production build pass.
+
+Still open:
+- T4 guide to free keys: needs the adapter of each free-key source, and a real key to verify it live. Candidates: Adzuna, Jooble, USAJOBS. Not started.
+- T5 keyring accounts for those keys: needs an AGENTS.md update, because the agent reads only typesafe, anthropic and qwen today.
+- T6 automatic search: the maintainer decides between a timer that runs while the app is open, and a macOS launch agent that runs daily even when the app is closed.
