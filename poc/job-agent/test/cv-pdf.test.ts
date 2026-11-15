@@ -72,6 +72,20 @@ test('a sentence that fits the measure stays on one row instead of wrapping earl
   assert.equal((raw.match(/\) Tj/g) ?? []).length, 1, 'one row of text, not two');
 });
 
+test('an en dash in a date range and curly quotes print as the dash and quotes, not question marks', async () => {
+  const pdf = markdownToPdf('Dal 2019 – 2021, ruolo “senior”');
+  const text = await pdfText(new Uint8Array(pdf));
+  assert.doesNotMatch(text, /\?/, 'no replacement marks');
+  assert.match(text, /2019 – 2021/);
+  assert.match(text, /“senior”/);
+});
+
+test('a decomposed accent prints as one accented letter', async () => {
+  const pdf = markdownToPdf('Perchè no'); // "Perche" + combining grave accent
+  const text = await pdfText(new Uint8Array(pdf));
+  assert.match(text, /Perchè no/);
+});
+
 test('wide capitals wrap before the right margin instead of running past it', () => {
   // Thirty "WW" words at 10 pt are about 650 pt of Helvetica, wider than the 483 pt measure: two rows.
   const raw = markdownToPdf('WW '.repeat(30).trim()).toString('latin1');

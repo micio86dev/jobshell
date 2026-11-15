@@ -140,12 +140,27 @@ const toLines = (markdown: string): Line[] => {
   return lines;
 };
 
+/** Typographic characters that WinAnsi, the encoding the standard fonts use, holds above Latin-1. */
+const WINANSI_EXTRAS: ReadonlyMap<number, string> = new Map([
+  [0x20ac, '\x80'], // euro sign
+  [0x201a, '\x82'], // single low quotation mark
+  [0x201e, '\x84'], // double low quotation mark
+  [0x2026, '\x85'], // ellipsis
+  [0x2018, '\x91'], // left single quotation mark
+  [0x2019, '\x92'], // right single quotation mark
+  [0x201c, '\x93'], // left double quotation mark
+  [0x201d, '\x94'], // right double quotation mark
+  [0x2022, '\x95'], // bullet, used for list items
+  [0x2013, '\x96'], // en dash, used in date ranges
+  [0x2014, '\x97'], // em dash
+]);
+
 /** One character as a PDF string byte: printable ASCII and Latin-1 pass, the rest becomes "?". */
 const encodeChar = (character: string): string => {
   const code = character.codePointAt(0) ?? 0;
   if (character === '(' || character === ')' || character === '\\') return `\\${character}`;
-  // WinAnsi has a bullet at 0x95; the bullet used for list items is written there.
-  if (code === 0x2022) return '\x95';
+  const extra = WINANSI_EXTRAS.get(code);
+  if (extra !== undefined) return extra;
   if ((code >= 0x20 && code <= 0x7e) || (code >= 0xa0 && code <= 0xff)) return character;
   return '?';
 };
@@ -193,7 +208,8 @@ const contentFor = (page: Placed[]): string => {
 
 /** Build the whole PDF file. Offsets are byte positions, so every string is Latin-1 (one byte each). */
 export const markdownToPdf = (markdown: string): Buffer => {
-  const pages = paginate(toLines(markdown));
+  // Composed letters, so an accent written as a separate mark is measured and drawn as one glyph.
+  const pages = paginate(toLines(markdown.normalize('NFC')));
   const pageCount = pages.length;
   // Object numbers: 1 catalog, 2 page tree, 3 regular font, 4 bold font, then a page and its content per page.
   const pageId = (index: number): number => 5 + index * 2;
