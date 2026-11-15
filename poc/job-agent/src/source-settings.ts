@@ -5,7 +5,7 @@
  *
  * Verified registry data (tenants.ts) is read, never edited: the user only adds their own tenants.
  */
-import { parseConfig, type AgentConfig, type SourceOverride } from './config.ts';
+import { parseConfig, type AgentConfig, type Automation, type SourceOverride } from './config.ts';
 import { baseAutomation } from './policy.ts';
 import { listSources } from './sources/registry.ts';
 import { tenantsFor } from './sources/tenants.ts';
@@ -46,6 +46,9 @@ export const removeTenant = (config: AgentConfig, id: string, tenant: string): C
   return withOverride(config, id, { tenants: current.filter((value) => value !== tenant) });
 };
 
+/** The policy's mode for a source: the desktop app's ZipRecruiter is allowed, everything else follows the policy list. */
+const modeOf = (id: string): Automation => (id === 'ziprecruiter' ? 'allowed' : baseAutomation(id));
+
 /** What the page shows for one source. Absent `enabled` means on, as the runner reads it. */
 export const sourceStatus = (
   config: AgentConfig,
@@ -59,7 +62,7 @@ export const sourceStatus = (
   verifiedTenants: tenantsFor(id).length,
 });
 
-/** One row per source the page shows: every board source, and every source the user touched. */
+/** One row per source the page shows: every known source, so the user sees and decides on each one. */
 export type SourceRow = {
   id: string;
   isBoard: boolean;
@@ -67,13 +70,16 @@ export type SourceRow = {
   reachable: boolean;
   userTenants: string[];
   verifiedTenants: number;
+  /** The policy's mode for the source: allowed, measurement_only (extension only) or prohibited. */
+  automation: Automation;
 };
 
 export const sourceRows = (config: AgentConfig): SourceRow[] => {
-  const ids = [...new Set([...BOARD_SOURCES, ...Object.keys(config.sources)])].sort();
+  const ids = [...new Set([...knownSources(), ...Object.keys(config.sources)])].sort();
   return ids.map((id) => ({
     id,
     isBoard: BOARD_SOURCES.includes(id),
     ...sourceStatus(config, id),
+    automation: modeOf(id),
   }));
 };

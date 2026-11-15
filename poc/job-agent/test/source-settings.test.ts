@@ -87,3 +87,12 @@ test('sourceRows lists every board source and every source the user touched, wit
   assert.equal(rows.find((row) => row.id === 'greenhouse')?.isBoard, true);
   assert.equal(rows.find((row) => row.id === 'remoteok')?.isBoard, false);
 });
+
+test('each row carries the policy mode, so the page can say why a source is off', () => {
+  const rows = sourceRows(defaultConfig());
+  const mode = (id: string) => rows.find((row) => row.id === id)?.automation;
+  assert.equal(mode('lever'), 'allowed');
+  assert.equal(mode('linkedin'), 'measurement_only');
+  assert.equal(mode('ashby'), 'prohibited');
+  assert.equal(mode('ziprecruiter'), 'allowed');
+});
