@@ -143,3 +143,110 @@ export const hirehive: SourceAdapter = {
     return postings;
   },
 };
+
+/** Breezy: the tenant's public `/json`, a bare array of jobs. */
+export const breezy: SourceAdapter = {
+  id: 'breezy',
+  buildSearchUrl: (_query, options) => `https://${tenantOf(options, 'breezy')}.breezy.hr/json`,
+  detectChallenge: wallOf,
+  extractPostings: (body) => {
+    const payload = parseJson(body);
+    if (!Array.isArray(payload)) return [];
+    const postings: Posting[] = [];
+    for (const job of payload) {
+      if (!isRecord(job)) continue;
+      const title = textOf(job['name']);
+      const url = httpsOnly(textOf(job['url']));
+      if (title === null || url === null) continue;
+      const location = isRecord(job['location']) ? job['location'] : {};
+      const country = isRecord(location['country']) ? textOf(location['country']['name']) : null;
+      const place = [textOf(location['name']), country].filter((part): part is string => part !== null);
+      const company = isRecord(job['company']) ? textOf(job['company']['name']) : null;
+      postings.push({
+        source: 'breezy',
+        id: textOf(job['id']) ?? url,
+        title,
+        company,
+        location: place.length > 0 ? [...new Set(place)].join(', ') : null,
+        url,
+        remote_hint: location['is_remote'] === true,
+        description: null,
+        published_at: textOf(job['published']),
+        salary: null,
+      });
+    }
+    return postings;
+  },
+};
+
+/** Pinpoint: the tenant's public `/postings.json`, `{ data: [...] }`, descriptions as HTML. */
+export const pinpoint: SourceAdapter = {
+  id: 'pinpoint',
+  buildSearchUrl: (_query, options) => `https://${tenantOf(options, 'pinpoint')}.pinpointhq.com/postings.json`,
+  detectChallenge: wallOf,
+  extractPostings: (body) => {
+    const payload = parseJson(body);
+    if (!isRecord(payload) || !Array.isArray(payload['data'])) return [];
+    const postings: Posting[] = [];
+    for (const job of payload['data']) {
+      if (!isRecord(job)) continue;
+      const title = textOf(job['title']);
+      const url = httpsOnly(textOf(job['url']));
+      if (title === null || url === null) continue;
+      const location = isRecord(job['location']) ? job['location'] : {};
+      const description = textOf(job['description']);
+      const workplace = textOf(job['workplace_type_text']);
+      postings.push({
+        source: 'pinpoint',
+        id: textOf(job['id']) ?? url,
+        title,
+        company: null,
+        location: textOf(location['name']),
+        url,
+        remote_hint: mentionsRemote(workplace),
+        description: description === null ? null : text(description),
+        published_at: null,
+        salary: null,
+      });
+    }
+    return postings;
+  },
+};
+
+/** Rippling: the public board `/api/v2/board/<slug>/jobs`, `{ items: [...] }`. */
+export const rippling: SourceAdapter = {
+  id: 'rippling',
+  buildSearchUrl: (_query, options) =>
+    `https://ats.rippling.com/api/v2/board/${encodeURIComponent(tenantOf(options, 'rippling'))}/jobs`,
+  detectChallenge: wallOf,
+  extractPostings: (body) => {
+    const payload = parseJson(body);
+    if (!isRecord(payload) || !Array.isArray(payload['items'])) return [];
+    const postings: Posting[] = [];
+    for (const job of payload['items']) {
+      if (!isRecord(job)) continue;
+      const title = textOf(job['name']);
+      const url = httpsOnly(textOf(job['url']));
+      if (title === null || url === null) continue;
+      const places = Array.isArray(job['locations'])
+        ? job['locations'].flatMap((place) => {
+            const name = typeof place === 'string' ? textOf(place) : isRecord(place) ? textOf(place['name']) : null;
+            return name === null ? [] : [name];
+          })
+        : [];
+      postings.push({
+        source: 'rippling',
+        id: textOf(job['id']) ?? url,
+        title,
+        company: null,
+        location: places.length > 0 ? places.join(', ') : null,
+        url,
+        remote_hint: mentionsRemote(places.join(' ')),
+        description: null,
+        published_at: null,
+        salary: null,
+      });
+    }
+    return postings;
+  },
+};

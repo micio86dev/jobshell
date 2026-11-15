@@ -89,3 +89,70 @@ test('a body that is not the expected shape gives no postings, never a crash', (
   assert.deepEqual(workable.extractPostings('not json', { tenant: 'x' }), []);
   assert.deepEqual(hirehive.extractPostings('{"items":"nope"}', { tenant: 'x' }), []);
 });
+
+import { breezy, pinpoint, rippling } from '../src/sources/ats-boards.ts';
+
+test('breezy reads the tenant /json array, skips removed-looking rows, keeps https links', () => {
+  assert.equal(breezy.buildSearchUrl('', { tenant: 'clearly' }), 'https://clearly.breezy.hr/json');
+  const body = JSON.stringify([
+    {
+      id: 'a7b9',
+      name: 'Growth Marketing Manager',
+      url: 'https://clearly.breezy.hr/p/a7b9-growth-marketing-manager',
+      published: '2026-10-02T14:55:05.458Z',
+      location: { name: 'Madrid', is_remote: false, country: { name: 'Spain' } },
+      company: { name: 'Clearly' },
+    },
+    { id: 'x', name: 'No link' },
+  ]);
+  const postings = breezy.extractPostings(body, { tenant: 'clearly' });
+  assert.equal(postings.length, 1, 'a row without an https link is skipped');
+  assert.equal(postings[0]?.title, 'Growth Marketing Manager');
+  assert.equal(postings[0]?.company, 'Clearly');
+  assert.equal(postings[0]?.location, 'Madrid, Spain');
+  assert.equal(postings[0]?.published_at, '2026-10-02T14:55:05.458Z');
+});
+
+test('pinpoint reads data[] from postings.json, with a text description', () => {
+  assert.equal(pinpoint.buildSearchUrl('', { tenant: 'field' }), 'https://field.pinpointhq.com/postings.json');
+  const body = JSON.stringify({
+    data: [
+      {
+        id: 'ec63',
+        title: 'BESS Engineer',
+        url: 'https://field.pinpointhq.com/en/postings/ec63',
+        location: { city: 'Rome', name: 'IT - Rome' },
+        description: '<p>Battery <b>storage</b> systems.</p>',
+        workplace_type_text: 'Hybrid',
+      },
+    ],
+  });
+  const postings = pinpoint.extractPostings(body, { tenant: 'field' });
+  assert.equal(postings.length, 1);
+  assert.equal(postings[0]?.location, 'IT - Rome');
+  assert.equal(postings[0]?.description, 'Battery storage systems.');
+});
+
+test('rippling reads items[] from the board, with the link and the department', () => {
+  assert.equal(
+    rippling.buildSearchUrl('', { tenant: 'zynap' }),
+    'https://ats.rippling.com/api/v2/board/zynap/jobs',
+  );
+  const body = JSON.stringify({
+    items: [
+      {
+        id: '8afb',
+        name: 'Senior Full-Stack Engineer',
+        url: 'https://ats.rippling.com/zynap/jobs/8afb',
+        department: 'Engineering',
+        locations: ['Barcelona, Spain'],
+      },
+    ],
+    totalItems: 1,
+  });
+  const postings = rippling.extractPostings(body, { tenant: 'zynap' });
+  assert.equal(postings.length, 1);
+  assert.equal(postings[0]?.title, 'Senior Full-Stack Engineer');
+  assert.equal(postings[0]?.location, 'Barcelona, Spain');
+  assert.equal(postings[0]?.url, 'https://ats.rippling.com/zynap/jobs/8afb');
+});

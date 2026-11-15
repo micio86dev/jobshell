@@ -49,6 +49,10 @@ const ALLOWED: readonly string[] = [
   'workable',
   'teamtailor',
   'hirehive',
+  // Breezy, Rippling and Pinpoint: public board documents from the career-ops catalogue.
+  'breezy',
+  'rippling',
+  'pinpoint',
   // Fetched by the desktop app through ZipRecruiter's MCP server, with the user's OAuth;
   // the agent only reads the file it leaves behind.
   'ziprecruiter',

@@ -66,6 +66,24 @@ export const TENANTS: Readonly<Record<string, readonly Tenant[]>> = {
     ...tenantsOf('2026-11-15', ['templafy']),
   ],
   hirehive: [...tenantsOf('2026-11-15', ['amcsgroup'])],
+  breezy: [
+    // Italy.
+    ...tenantsOf('2026-11-15', ['information-resources-italy', 'aspria', 'end', 'marex', 'vald']),
+    // Spain.
+    ...tenantsOf('2026-11-15', ['alphanumeric-systems', 'clearly', 'incubeta-global']),
+  ],
+  rippling: [
+    // Italy.
+    ...tenantsOf('2026-11-15', ['camlin-careers']),
+    // Spain.
+    ...tenantsOf('2026-11-15', ['zynap', 'copado', 'capacity']),
+  ],
+  pinpoint: [
+    // Italy.
+    ...tenantsOf('2026-11-15', ['field']),
+    // Spain.
+    ...tenantsOf('2026-11-15', ['anthesisgroup']),
+  ],
 };
 
 /** The verified tenants of a board source, in fetch order. A source without a board has none. */
