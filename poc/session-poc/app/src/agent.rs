@@ -803,3 +803,87 @@ mod validate_profile_tests {
         assert!(interpret_validation(None, "").is_err());
     }
 }
+
+/// The report request for one selected posting: its own fields from the run's evidence, plus the
+/// CV from the profile. Refused with a fixed message when the posting is not in the run.
+pub fn report_request_for(evidence_raw: &str, key: &str, cv: &str) -> Result<String> {
+    let parsed: Value = serde_json::from_str(evidence_raw).context("the evidence file is not valid JSON")?;
+    let selected = parsed
+        .get("selected")
+        .and_then(Value::as_array)
+        .context("the latest run has no selected postings")?;
+    let posting = selected
+        .iter()
+        .find(|item| item.get("key").and_then(Value::as_str) == Some(key))
+        .context("that posting is not in the latest run")?;
+
+    let gaps: Vec<String> = posting
+        .get("gaps")
+        .and_then(Value::as_array)
+        .map(|items| items.iter().filter_map(|item| item.as_str().map(str::to_string)).collect())
+        .unwrap_or_default();
+    let request = serde_json::json!({
+        "posting": {
+            "title": text(posting.get("title")).unwrap_or_default(),
+            "company": text(posting.get("company")),
+            "url": text(posting.get("url")).unwrap_or_default(),
+            "description": text(posting.get("description")),
+        },
+        "cv": cv,
+        "verdict": text(posting.get("verdict")).unwrap_or_else(|| "unknown".to_string()),
+        "gaps": gaps,
+    });
+    Ok(request.to_string())
+}
+
+/// Run the report CLI on one request. Exit 0 (model) and 1 (fallback) both return the JSON line,
+/// which carries the reason on a fallback; exit 2 is a refusal whose reason the CLI printed.
+pub fn run_report(request_json: &str, env: &[(String, String)]) -> Result<String> {
+    let (code, stdout, stderr) = pipe_to_agent_script(&["src/report-cli.ts".to_string()], request_json, env)?;
+    match code {
+        Some(0) | Some(1) => Ok(stdout),
+        Some(2) => {
+            let reason = stderr.trim();
+            anyhow::bail!("{}", if reason.is_empty() { "the report could not be written" } else { reason })
+        }
+        _ => anyhow::bail!("the report did not finish"),
+    }
+}
+
+#[cfg(test)]
+mod report_request_tests {
+    use super::report_request_for;
+    use serde_json::Value;
+
+    const EVIDENCE: &str = r#"{
+        "selected": [{
+            "key": "remoteok:1", "title": "Senior Rust Engineer", "company": "Acme",
+            "url": "https://example.test/1", "source": "remoteok", "description": "We build apps.",
+            "probability": 0.95, "verdict": "yes", "stack_stance": "preferred", "gaps": ["on-site"]
+        }]
+    }"#;
+
+    #[test]
+    fn a_selected_posting_becomes_a_report_request_with_its_cv() {
+        let raw = report_request_for(EVIDENCE, "remoteok:1", "Twelve years with Rust.").unwrap();
+        let value: Value = serde_json::from_str(&raw).unwrap();
+        assert_eq!(value["posting"]["title"], "Senior Rust Engineer");
+        assert_eq!(value["posting"]["description"], "We build apps.");
+        assert_eq!(value["cv"], "Twelve years with Rust.");
+        assert_eq!(value["verdict"], "yes");
+        assert_eq!(value["gaps"][0], "on-site");
+    }
+
+    #[test]
+    fn a_posting_missing_from_the_run_is_refused_with_a_fixed_message() {
+        let error = report_request_for(EVIDENCE, "remoteok:9", "cv").unwrap_err();
+        assert_eq!(error.to_string(), "that posting is not in the latest run");
+    }
+
+    #[test]
+    fn an_absent_description_is_null_not_an_empty_string() {
+        let raw = r#"{"selected":[{"key":"k:1","title":"T","url":"u","verdict":"yes"}]}"#;
+        let value: Value = serde_json::from_str(&report_request_for(raw, "k:1", "cv").unwrap()).unwrap();
+        assert!(value["posting"]["description"].is_null());
+    }
+}

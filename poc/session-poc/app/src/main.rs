@@ -19,7 +19,7 @@ use profile::{
 use std::process::Child;
 use std::sync::{Arc, Mutex};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use serde::Serialize;
 use session_poc_core::{complete_task, default_data_dir, enqueue_task, get_task, open_database, recover_interrupted, secrets};
 use sqlx::{Pool, Sqlite};
@@ -383,6 +383,30 @@ async fn agent_last_run() -> Result<Option<agent::AgentRunView>, String> {
         .map_err(|error| error.to_string())
 }
 
+/// The A-to-G report for one selected posting of the latest run. The CV comes from the profile;
+/// the model call runs in the agent's report CLI, with the provider the user chose in Settings.
+#[tauri::command]
+async fn agent_report(key: String) -> Result<String, String> {
+    let env = settings::load(&settings_path())
+        .map_err(|error| error.to_string())?
+        .agent_env();
+    tauri::async_runtime::spawn_blocking(move || {
+        let dir = agent::evidence_dir();
+        let run = agent::latest_run(&dir)?.context("no run yet: run a search first")?;
+        let evidence = std::fs::read_to_string(&run).context("reading the latest run")?;
+        let profile: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(agent::profile_path()).context("reading the profile")?,
+        )
+        .context("the profile is not valid JSON")?;
+        let cv = profile.get("cv").and_then(serde_json::Value::as_str).unwrap_or_default();
+        let request = agent::report_request_for(&evidence, &key, cv)?;
+        agent::run_report(&request, &env)
+    })
+    .await
+    .map_err(|error| error.to_string())?
+    .map_err(|error| error.to_string())
+}
+
 #[tauri::command]
 fn keyring_probe(account: String) -> Result<bool, String> {
     secrets::store_secret(&account, "probe-value").map_err(|error| error.to_string())?;
@@ -432,6 +456,7 @@ fn main() {
             keyring_probe,
             task_detail,
             agent_last_run,
+            agent_report,
             agent_save_key,
             agent_key_status,
             sources_list,

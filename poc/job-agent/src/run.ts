@@ -8,6 +8,7 @@
  */
 import type { AgentConfig } from './config.ts';
 import { applyHardFilters, postingKey, rankAndCap, softBonus, type DropReason, type Scored } from './funnel.ts';
+import { MAX_DESCRIPTION_CHARS } from './report.ts';
 import { judgePosting, type FetchLike, type HttpResponse, type JeDeps, type StackStance } from './jev.ts';
 import { assertAutomationAllowed, Pacer, resolvePolicy } from './policy.ts';
 import type { Spec } from './profile.ts';
@@ -15,6 +16,9 @@ import { adapterFor } from './sources/registry.ts';
 import { tenantsFor, type Tenant } from './sources/tenants.ts';
 import { postingsFile, readPostings } from './sources/ziprecruiter.ts';
 import type { Challenge, Posting, SearchOptions } from './sources/types.ts';
+
+const boundedDescription = (text: string | null | undefined): string | null =>
+  typeof text === 'string' ? text.slice(0, MAX_DESCRIPTION_CHARS) : null;
 
 /** Fallback when neither the caller nor the profile sets a budget. */
 export const DEFAULT_SCORING_BUDGET = 120;
@@ -64,6 +68,7 @@ export type RunEvidence = {
     company: string | null;
     url: string;
     source: string;
+    description: string | null;
     probability: number;
     verdict: string;
     stack_stance: StackStance;
@@ -325,6 +330,8 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
         company: item.posting.company,
         url: item.posting.url,
         source: item.posting.source,
+        // Kept for the per-posting report, bounded by the same limit the report uses.
+        description: boundedDescription(item.posting.description),
         probability: item.probability,
         verdict: detail?.verdict ?? 'unknown',
         stack_stance: detail?.stance ?? 'not_specified',
