@@ -1,7 +1,7 @@
 /**
  * Command line for the user's source choices. The desktop page calls this same program.
  *
- *   node src/source-settings-cli.ts list
+ *   node src/source-settings-cli.ts list [--json]
  *   node src/source-settings-cli.ts enable <source>
  *   node src/source-settings-cli.ts disable <source>
  *   node src/source-settings-cli.ts add-tenant <source> <employer-id>
@@ -15,7 +15,7 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from '
 import { dirname } from 'node:path';
 
 import { defaultConfig, defaultConfigPath, loadConfig, parseConfig, type AgentConfig } from './config.ts';
-import { addTenant, BOARD_SOURCES, removeTenant, setEnabled, sourceStatus, type Change } from './source-settings.ts';
+import { addTenant, BOARD_SOURCES, removeTenant, setEnabled, sourceRows, sourceStatus, type Change } from './source-settings.ts';
 
 const usage = `usage:
   list
@@ -50,8 +50,12 @@ const apply = (change: (config: AgentConfig) => Change): void => {
   console.log('saved');
 };
 
-const list = (): void => {
+const list = (asJson: boolean): void => {
   const config = loadConfig({ path: configPath() });
+  if (asJson) {
+    console.log(JSON.stringify(sourceRows(config)));
+    return;
+  }
   const ids = [...new Set([...Object.keys(config.sources), ...BOARD_SOURCES])].sort();
   for (const id of ids) {
     const status = sourceStatus(config, id);
@@ -65,7 +69,7 @@ const [command, source, employer] = process.argv.slice(2);
 
 switch (command) {
   case 'list':
-    list();
+    list(source === '--json');
     break;
   case 'enable':
   case 'disable':

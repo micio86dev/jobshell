@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { defaultConfig } from '../src/config.ts';
-import { addTenant, removeTenant, setEnabled, sourceStatus } from '../src/source-settings.ts';
+import { addTenant, BOARD_SOURCES, removeTenant, setEnabled, sourceRows, sourceStatus } from '../src/source-settings.ts';
 
 test('a known source can be switched off and on again, and the other sources are untouched', () => {
   const base = defaultConfig();
@@ -72,4 +72,18 @@ test('a source the policy will never run is reported as not reachable, even when
   assert.equal(sourceStatus(base, 'lever').reachable, true, 'lever is allowed by policy');
   assert.equal(sourceStatus(base, 'linkedin').reachable, false, 'measurement-only sources run only from the extension');
   assert.equal(sourceStatus(base, 'ziprecruiter').reachable, true, 'fetched by the desktop app with the user account');
+});
+
+test('sourceRows lists every board source and every source the user touched, with what the page needs', () => {
+  const touched = setEnabled(defaultConfig(), 'remoteok', false);
+  if (!touched.ok) throw new Error(touched.error);
+  const rows = sourceRows(touched.config);
+  const ids = rows.map((row) => row.id);
+  for (const board of BOARD_SOURCES) assert.ok(ids.includes(board), `${board} is listed`);
+  assert.ok(ids.includes('remoteok'), 'a source the user switched off is listed');
+  const remoteok = rows.find((row) => row.id === 'remoteok');
+  assert.equal(remoteok?.enabled, false);
+  assert.equal(rows.find((row) => row.id === 'ashby')?.reachable, false);
+  assert.equal(rows.find((row) => row.id === 'greenhouse')?.isBoard, true);
+  assert.equal(rows.find((row) => row.id === 'remoteok')?.isBoard, false);
 });

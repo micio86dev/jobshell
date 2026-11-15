@@ -58,3 +58,22 @@ export const sourceStatus = (
   userTenants: [...(config.sources[id]?.tenants ?? [])],
   verifiedTenants: tenantsFor(id).length,
 });
+
+/** One row per source the page shows: every board source, and every source the user touched. */
+export type SourceRow = {
+  id: string;
+  isBoard: boolean;
+  enabled: boolean;
+  reachable: boolean;
+  userTenants: string[];
+  verifiedTenants: number;
+};
+
+export const sourceRows = (config: AgentConfig): SourceRow[] => {
+  const ids = [...new Set([...BOARD_SOURCES, ...Object.keys(config.sources)])].sort();
+  return ids.map((id) => ({
+    id,
+    isBoard: BOARD_SOURCES.includes(id),
+    ...sourceStatus(config, id),
+  }));
+};
