@@ -26,8 +26,8 @@ T6. Himalayas public JSON feed adapter (S3). Route: inline. Status: done. RED: t
 T7. Jobspresso RSS adapter (S3). Route: inline. Status: done, but the live feed had zero items on 2026-11-14 (see L5).
 T8. Personio XML adapter, per-tenant feed (S3, S6). Route: inline. Status: done. Only one verified tenant (personio).
 T9. Live probe harness: one read-only run over every added source, result written to evidence (S3, S9). Route: inline. Status: harness done (src/source-probe.ts, src/source-probe-cli.ts, test/source-probe.test.ts 10/10); live run in progress.
-T10. Policy allowlist, registry and README source table updated to match what passed T9 (S9). Route: inline. Status: pending.
-T11. Final report to the maintainer: added, discarded, pending credentials (S2). Route: inline. Status: pending.
+T10. Policy allowlist, registry and README source table updated to match what passed T9 (S9). Route: inline. Status: done, commit 2ee5789 (see L10).
+T11. Final report to the maintainer: added, discarded, pending credentials (S2). Route: inline. Status: done, in chat and recorded in the Log (see L10).
 
 ## Log
 
@@ -83,3 +83,9 @@ L9. Maintainer decisions, 2026-11-15:
 - Page ceiling raised from 5 to 20 (commit a55ddb3). Resolves L6: one run now reaches all 16 verified Greenhouse boards. Pinned by a test in test/run.test.ts.
 - Engram project chosen: `jobshell`. The mirror is saved (observation 3926). Resolves L7.
 - Maintainer note: the project name `openjob` must no longer appear. Still open: the default paths in src/config.ts (`~/.config/openjob/agent.json`, `openjob-phase0`, `~/.local/share/openjob/evidence`). Changing them moves existing users' config, profile and evidence, so it needs the maintainer's decision. The keyring service `dev.openjob.desktop` stays, as AGENTS.md prescribes.
+
+L10. Integration, 2026-11-15. `feat/source-expansion` merged with `main` on branch `feat/source-expansion-integration` (no conflicts). Evidence on the merged tree:
+- poc/job-agent: `tsc --noEmit` clean; `node --test` 353 pass, 0 fail.
+- poc/session-poc/ui: `vitest run` 94 pass, 0 fail; `vue-tsc --noEmit` clean.
+- poc/session-poc/app (Rust): `cargo test` 63 pass, 0 fail.
+Stale status in T10/T11 corrected above. No push. Remaining open item unchanged: the `openjob` default paths (L9).
