@@ -926,11 +926,19 @@ mod report_request_tests {
 /// Where the tailored CV PDF of one posting is written: inside the evidence folder, with a file
 /// name made only of letters, digits, dash and underscore, so no key can name another path.
 pub fn cv_pdf_path(key: &str) -> PathBuf {
-    let name: String = key
-        .chars()
+    evidence_dir().join("cv").join(format!("{}.pdf", safe_file_stem(key)))
+}
+
+/// The file name a key becomes: letters, digits, dash and underscore only.
+fn safe_file_stem(key: &str) -> String {
+    key.chars()
         .map(|character| if character.is_ascii_alphanumeric() || character == '-' || character == '_' { character } else { '_' })
-        .collect();
-    evidence_dir().join("cv").join(format!("{name}.pdf"))
+        .collect()
+}
+
+/// Where the user's copy of one tailored CV goes: the Downloads folder, named after the posting.
+pub fn download_path(key: &str, downloads: &Path) -> PathBuf {
+    downloads.join(format!("cv-su-misura-{}.pdf", safe_file_stem(key)))
 }
 
 /// Run the tailored-CV CLI on one request, writing the PDF to `pdf`. Exit 0 and 1 return the JSON
@@ -980,5 +988,18 @@ mod progress_tests {
     fn other_stderr_lines_are_not_progress() {
         assert_eq!(progress_message("jobshell: the match threshold is invalid"), None);
         assert_eq!(progress_message("  jobshell-progress: indented"), None);
+    }
+}
+
+#[cfg(test)]
+mod download_tests {
+    use super::*;
+
+    #[test]
+    fn the_download_is_named_after_the_posting_inside_downloads() {
+        assert_eq!(
+            download_path("k:1", Path::new("/Users/someone/Downloads")),
+            PathBuf::from("/Users/someone/Downloads/cv-su-misura-k_1.pdf")
+        );
     }
 }

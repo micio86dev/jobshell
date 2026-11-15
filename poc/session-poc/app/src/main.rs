@@ -432,6 +432,22 @@ async fn agent_tailored_cv(key: String) -> Result<String, String> {
     .map_err(|error| error.to_string())
 }
 
+/// Copy one tailored CV PDF into the user's Downloads folder and return where it landed.
+#[tauri::command]
+async fn agent_download_cv(key: String) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || -> anyhow::Result<String> {
+        let home = std::env::var_os("HOME").context("the home folder is not set")?;
+        let downloads = std::path::PathBuf::from(home).join("Downloads");
+        std::fs::create_dir_all(&downloads).context("creating the Downloads folder")?;
+        let target = agent::download_path(&key, &downloads);
+        std::fs::copy(agent::cv_pdf_path(&key), &target).context("copying the tailored CV")?;
+        Ok(target.display().to_string())
+    })
+    .await
+    .map_err(|error| error.to_string())?
+    .map_err(|error| error.to_string())
+}
+
 /// The request for one selected posting of the latest run, with the CV from the profile.
 fn selected_request(key: &str) -> anyhow::Result<String> {
     let dir = agent::evidence_dir();
@@ -496,6 +512,7 @@ fn main() {
             agent_last_run,
             agent_report,
             agent_tailored_cv,
+            agent_download_cv,
             agent_save_key,
             agent_key_status,
             sources_list,
