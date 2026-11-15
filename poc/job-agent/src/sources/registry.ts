@@ -18,12 +18,16 @@ import {
 } from './feeds.ts';
 import { ashby, lever, personio, recruitee } from './boards.ts';
 import { greenhouse } from './greenhouse.ts';
+import { cryptocurrencyjobs, getonbrd, platsbanken } from './catalog.ts';
 import { indeed } from './indeed.ts';
 import { linkedin } from './linkedin.ts';
 import type { SourceAdapter } from './types.ts';
 
 export const adapters: Record<string, SourceAdapter> = {
   arbeitnow,
+  cryptocurrencyjobs,
+  getonbrd,
+  platsbanken,
   ashby,
   greenhouse,
   himalayas,
