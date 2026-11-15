@@ -136,10 +136,18 @@ fn agent_save_key(account: String, value: String) -> Result<(), String> {
     secrets::store_secret(&account, trimmed).map_err(|error| error.to_string())
 }
 
+/// Tell the window one step of a run has happened. A failed emit only loses a progress line.
+fn emit_agent_progress(app: &tauri::AppHandle, message: &str) {
+    use tauri::Emitter;
+    let _ = app.emit("agent-progress", message);
+}
+
 /// Run the agent from the window. `dry_run` fetches and filters without buying a judgment.
 #[tauri::command]
-async fn agent_run(dry_run: bool) -> Result<String, String> {
-    tauri::async_runtime::spawn_blocking(move || agent::run_once(dry_run))
+async fn agent_run(app: tauri::AppHandle, dry_run: bool) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        agent::run_once(dry_run, &|message| emit_agent_progress(&app, message))
+    })
         .await
         .map_err(|error| error.to_string())?
         .map_err(|error| error.to_string())
@@ -148,12 +156,17 @@ async fn agent_run(dry_run: bool) -> Result<String, String> {
 /// Run the agent on one saved search. Only an active search runs: a paused or deleted one
 /// is refused before anything is written or launched.
 #[tauri::command]
-async fn agent_run_search(state: State<'_, Arc<AppState>>, id: String, dry_run: bool) -> Result<String, String> {
+async fn agent_run_search(
+    app: tauri::AppHandle,
+    state: State<'_, Arc<AppState>>,
+    id: String,
+    dry_run: bool,
+) -> Result<String, String> {
     let listed = profile::search_list_active(&state.pool, &id).await?;
     let payload = listed.ok_or_else(|| "this search is paused or deleted, so it does not run".to_string())?;
     tauri::async_runtime::spawn_blocking(move || -> anyhow::Result<String> {
         let path = agent::write_search_profile(&id, &payload)?;
-        agent::run_with_profile(&path, dry_run)
+        agent::run_with_profile(&path, dry_run, &|message| emit_agent_progress(&app, message))
     })
     .await
     .map_err(|error| error.to_string())?
@@ -419,6 +432,29 @@ async fn agent_tailored_cv(key: String) -> Result<String, String> {
     .map_err(|error| error.to_string())
 }
 
+/// Open a posting's real page in the system browser, from the title in the window.
+#[tauri::command]
+async fn agent_open_posting(url: String) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || agent::open_in_browser(&url))
+        .await
+        .map_err(|error| error.to_string())?
+        .map_err(|error| error.to_string())
+}
+
+/// Copy one tailored CV PDF into the user's Downloads folder and return where it landed.
+#[tauri::command]
+async fn agent_download_cv(key: String) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || -> anyhow::Result<String> {
+        let home = std::env::var_os("HOME").context("the home folder is not set")?;
+        let downloads = std::path::PathBuf::from(home).join("Downloads");
+        let target = agent::copy_cv_to_downloads(&agent::cv_pdf_path(&key), &downloads, &key)?;
+        Ok(target.display().to_string())
+    })
+    .await
+    .map_err(|error| error.to_string())?
+    .map_err(|error| error.to_string())
+}
+
 /// The request for one selected posting of the latest run, with the CV from the profile.
 fn selected_request(key: &str) -> anyhow::Result<String> {
     let dir = agent::evidence_dir();
@@ -429,7 +465,8 @@ fn selected_request(key: &str) -> anyhow::Result<String> {
     )
     .context("the profile is not valid JSON")?;
     let cv = profile.get("cv").and_then(serde_json::Value::as_str).unwrap_or_default();
-    agent::report_request_for(&evidence, key, cv)
+    let candidate = agent::candidate_from_profile(&profile);
+    agent::report_request_for(&evidence, key, cv, &candidate)
 }
 
 #[tauri::command]
@@ -483,6 +520,8 @@ fn main() {
             agent_last_run,
             agent_report,
             agent_tailored_cv,
+            agent_download_cv,
+            agent_open_posting,
             agent_save_key,
             agent_key_status,
             sources_list,

@@ -37,6 +37,9 @@ const arg = (name: string): string | undefined => {
 
 const flag = (name: string): boolean => process.argv.includes(`--${name}`);
 
+/** Prefix of the stderr lines that carry run progress. The app reads only these lines. */
+const PROGRESS_PREFIX = 'jobshell-progress: ';
+
 const die = (message: string): never => {
   process.stderr.write(`jobshell: ${message}\n`);
   process.exit(2);
@@ -143,6 +146,8 @@ const main = async (): Promise<void> => {
     },
     now: new Date(),
     seen,
+    // Progress goes on stderr with its own prefix, so the app can show it while the run is going.
+    onProgress: (message) => process.stderr.write(`${PROGRESS_PREFIX}${message}\n`),
     ...(dryRun ? { scoringBudget: 0 } : {}),
   });
 

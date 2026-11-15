@@ -71,3 +71,10 @@ test('an empty CV is refused before any request is sent', async () => {
   assert.deepEqual(result, { source: 'fallback', reason: 'the CV is empty' });
   assert.equal(calls.length, 0);
 });
+
+test('the tailored CV keeps the candidate own section headings and order, not a fixed list', () => {
+  const instruction = tailorInstruction(input);
+  assert.match(instruction, /own section headings/);
+  assert.match(instruction, /same order/);
+  assert.doesNotMatch(instruction, /## Competenze/);
+});

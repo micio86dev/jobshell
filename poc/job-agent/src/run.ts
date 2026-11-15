@@ -90,6 +90,8 @@ export type RunDeps = {
   seen: Set<string>;
   scoringBudget?: number;
   sleep?: (ms: number) => Promise<void>;
+  /** One line per step as it happens, so a caller can show a run that is still going. */
+  onProgress?: (message: string) => void;
 };
 
 const countDrops = (reasons: DropReason[]): Record<string, number> => {
@@ -227,7 +229,8 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
     }
     report.pages = urls.length;
 
-    for (const url of urls) {
+    for (const [index, url] of urls.entries()) {
+      deps.onProgress?.(`fetching ${sourceId}, page ${index + 1}/${urls.length}`);
       await pacer.next();
       report.url = url;
       const pageStarted = Date.now();
@@ -292,6 +295,7 @@ export const runOnce = async (deps: RunDeps): Promise<RunEvidence> => {
     // Soft preferences lift the ranking; they never drop, and the bonus is capped.
     const lifted = Math.min(1, judged.fit.probability + softBonus(posting, deps.spec.soft));
     scored.push({ posting, probability: lifted });
+    deps.onProgress?.(`scoring ${scored.length}/${survivors.length}`);
   }
   const scoringMs = Date.now() - scoringStarted;
 

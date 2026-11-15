@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { onMounted, ref } from 'vue';
 import OnboardingWizard from './onboarding/OnboardingWizard.vue';
 import SourcesPanel from './sources/SourcesPanel.vue';
@@ -8,6 +9,7 @@ import { primaryOf } from './onboarding/schema';
 import { describeKeyCheck, parseKeyCheckReport, type KeyCheckView } from './settings/key-check';
 import { modelOptions, validateChoice, type ChoiceProblem, type ProviderChoiceView } from './settings/provider-settings';
 import { parseReportResult, type ReportView } from './report/report-result';
+import { renderMarkdown } from './report/markdown-html';
 
 const CHOICE_COPY: Record<ChoiceProblem, string> = {
   'llm-model-missing': 'scegli un modello per il provider che legge il CV',
@@ -116,6 +118,19 @@ const tailoredMarkdown = (key: string): string | null => {
   return view?.ok === true ? view.markdown : null;
 };
 
+// The PDF copy the user asked for: the Downloads path, or the reason it could not be copied.
+const downloads = ref<Record<string, { busy: boolean; path: string | null; reason: string | null }>>({});
+
+const downloadTailored = async (key: string): Promise<void> => {
+  downloads.value = { ...downloads.value, [key]: { busy: true, path: null, reason: null } };
+  try {
+    const path = await invoke<string>('agent_download_cv', { key });
+    downloads.value = { ...downloads.value, [key]: { busy: false, path, reason: null } };
+  } catch (error) {
+    downloads.value = { ...downloads.value, [key]: { busy: false, path: null, reason: String(error) } };
+  }
+};
+
 const tailoredPdf = (key: string): string | null => {
   const view = tailored.value[key]?.view;
   return view?.ok === true ? view.pdf : null;
@@ -128,7 +143,12 @@ const tailoredReason = (key: string): string | null => {
 
 const runAgent = async (dryRun: boolean): Promise<void> => {
   running.value = dryRun ? 'dry' : 'real';
-  status.value = dryRun ? 'Dry run in progress…' : 'Run in progress… this can take a minute';
+  const label = dryRun ? 'Dry run in progress…' : 'Run in progress…';
+  status.value = label;
+  // The agent reports each step while it works; the last one stays on screen until the run ends.
+  const unlisten = await listen<string>('agent-progress', (event) => {
+    status.value = `${label} ${event.payload}`;
+  });
   try {
     await invoke<string>('agent_run', { dryRun });
     status.value = dryRun ? 'Dry run complete' : 'Run complete';
@@ -136,7 +156,17 @@ const runAgent = async (dryRun: boolean): Promise<void> => {
   } catch (error) {
     status.value = `Run failed: ${String(error)}`;
   } finally {
+    unlisten();
     running.value = '';
+  }
+};
+
+// The title opens the real posting in the browser; the window itself never navigates away.
+const openPosting = async (url: string): Promise<void> => {
+  try {
+    await invoke('agent_open_posting', { url });
+  } catch (error) {
+    status.value = `Apertura non riuscita: ${String(error)}`;
   }
 };
 
@@ -502,7 +532,7 @@ onMounted(() => {
               {{ percent(item.probability) }}%
             </span>
             <div class="body">
-              <a :href="item.url" target="_blank" rel="noreferrer">{{ item.title }}</a>
+              <a href="#" @click.prevent="openPosting(item.url)">{{ item.title }}</a>
               <p class="sub">
                 {{ item.company ?? 'azienda non indicata' }} · {{ item.source }} ·
                 {{ verdictLabel(item.verdict) }} · {{ stackLabel(item.stack_stance) }}
@@ -518,7 +548,7 @@ onMounted(() => {
               <p v-if="reportReason(item.key) !== null" class="gap">
                 Report non disponibile: {{ reportReason(item.key) }}
               </p>
-              <pre v-if="reportMarkdown(item.key) !== null" class="report">{{ reportMarkdown(item.key) }}</pre>
+              <div v-if="reportMarkdown(item.key) !== null" class="report" v-html="renderMarkdown(reportMarkdown(item.key) ?? '')"></div>
               <button
                 type="button"
                 :disabled="tailored[item.key]?.busy === true"
@@ -530,7 +560,17 @@ onMounted(() => {
                 CV non disponibile: {{ tailoredReason(item.key) }}
               </p>
               <p v-if="tailoredPdf(item.key) !== null" class="sub">PDF salvato in: {{ tailoredPdf(item.key) }}</p>
-              <pre v-if="tailoredMarkdown(item.key) !== null" class="report">{{ tailoredMarkdown(item.key) }}</pre>
+              <button
+                v-if="tailoredPdf(item.key) !== null"
+                type="button"
+                :disabled="downloads[item.key]?.busy === true"
+                @click="downloadTailored(item.key)"
+              >
+                {{ downloads[item.key]?.busy ? 'Scaricamento…' : 'Scarica PDF' }}
+              </button>
+              <p v-if="downloads[item.key]?.path" class="sub">Scaricato in: {{ downloads[item.key]?.path }}</p>
+              <p v-if="downloads[item.key]?.reason" class="gap">Download non riuscito: {{ downloads[item.key]?.reason }}</p>
+              <div v-if="tailoredMarkdown(item.key) !== null" class="report" v-html="renderMarkdown(tailoredMarkdown(item.key) ?? '')"></div>
             </div>
           </li>
         </ul>
@@ -787,12 +827,26 @@ nav button.on {
   padding: 0.75rem;
   max-width: 100%;
   overflow-x: auto;
-  white-space: pre-wrap;
   font-size: 0.85rem;
   line-height: 1.5;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
+}
+.report :deep(h1),
+.report :deep(h2),
+.report :deep(h3) {
+  margin: 0.8rem 0 0.3rem;
+  font-size: 0.95rem;
+}
+.report :deep(p),
+.report :deep(ul),
+.report :deep(ol) {
+  margin: 0.3rem 0;
+}
+.report :deep(ul),
+.report :deep(ol) {
+  padding-left: 1.2rem;
 }
 
 .gap {
