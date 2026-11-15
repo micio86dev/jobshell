@@ -48,9 +48,9 @@ export const TENANTS: Readonly<Record<string, readonly Tenant[]>> = {
   // was left out (pharmaprime, wallbox, easyfairsspain).
   workable: [
     // Italy.
-    ...tenantsOf('2026-11-15', ['impactastrategy', 'aliprofessional', 'dentons-europe', 'erg-media', 'dmates']),
+    ...tenantsOf('2026-11-15', ['impactastrategy', 'aliprofessional', 'dentons-europe', 'erg-media', 'dmates', 'alispa', 'allnet-dot-italia-spa', 'webranking', 'moneyfarm']),
     // Spain.
-    ...tenantsOf('2026-11-15', ['ukio', 'fernandez', 'oppizi', 'crossbordertalents']),
+    ...tenantsOf('2026-11-15', ['ukio', 'fernandez', 'oppizi', 'crossbordertalents', 'teleperformance-spain']),
     // World.
     ...tenantsOf('2026-11-15', ['huggingface', 'semios', 'platzi']),
   ],
@@ -59,18 +59,26 @@ export const TENANTS: Readonly<Record<string, readonly Tenant[]>> = {
     ...tenantsOf('2026-11-15', [
       'wspitaly', 'coldculture', 'unobravointernational', 'roccofortehotelsitaly', 'swanio',
       'grailtalent-1730296269', 'tailorfox', 'huaweitechnologiesitalia', 'tsgitalia', 'kosmos',
+      'letuelezioni', 'agilelab', 'alfadocs', 'baconsultingsrl-1749809296', 'strategicmanagementpartners',
     ]),
     // Spain.
-    ...tenantsOf('2026-11-15', ['winid', 'hiire', 'inhaus', 'qida', 'adsmurai', 'changegroupspain', 'cataloniahotels']),
+    ...tenantsOf('2026-11-15', ['winid', 'hiire', 'inhaus', 'qida', 'adsmurai', 'changegroupspain', 'cataloniahotels', 'knowmadmood', 'nextlane', 'kapres', 'multiversecomputing']),
     // World.
     ...tenantsOf('2026-11-15', ['templafy']),
   ],
-  hirehive: [...tenantsOf('2026-11-15', ['amcsgroup'])],
+  hirehive: [
+    // Italy.
+    ...tenantsOf('2026-11-15', ['kia-italy', 'the-level-group', 'patagonia']),
+    // Spain.
+    ...tenantsOf('2026-11-15', ['vanguard']),
+    // World, including Europe-wide boards.
+    ...tenantsOf('2026-11-15', ['kia-in-europe', 'amcsgroup']),
+  ],
   breezy: [
     // Italy.
-    ...tenantsOf('2026-11-15', ['information-resources-italy', 'aspria', 'end', 'marex', 'vald']),
+    ...tenantsOf('2026-11-15', ['information-resources-italy', 'aspria', 'end', 'marex', 'vald', 'alphabet-racing-italia-srl', 'mainstreaming-spa']),
     // Spain.
-    ...tenantsOf('2026-11-15', ['alphanumeric-systems', 'clearly', 'incubeta-global']),
+    ...tenantsOf('2026-11-15', ['alphanumeric-systems', 'clearly', 'incubeta-global', 'critical-software', 'fx-digital', 'cvedia']),
   ],
   rippling: [
     // Italy.
@@ -82,7 +90,7 @@ export const TENANTS: Readonly<Record<string, readonly Tenant[]>> = {
     // Italy.
     ...tenantsOf('2026-11-15', ['field']),
     // Spain.
-    ...tenantsOf('2026-11-15', ['anthesisgroup']),
+    ...tenantsOf('2026-11-15', ['anthesisgroup', 'ebiquity']),
   ],
 };
 
