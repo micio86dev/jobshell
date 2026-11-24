@@ -33,17 +33,23 @@ const hostOf = (url: string): URL | null => {
 };
 
 /** Why a link cannot be read, or null when it can. Only a public https page on a real host is read. */
+/** Names that point at the machine or the local network, or that turn any address into a name. */
+const NOT_PUBLIC_SUFFIXES = ['.local', '.localhost', '.internal', '.localdomain', '.lan', '.home', '.corp', '.intranet', 'nip.io', 'sslip.io', 'xip.io', 'localtest.me'];
+
 export const refuseLink = (url: string): string | null => {
   const parsed = hostOf(url);
   if (parsed === null) return 'only a public https link can be read';
-  const host = parsed.hostname.toLowerCase();
+  // A trailing dot names the same host ("linkedin.com." is linkedin.com): compare the host without it.
+  const host = parsed.hostname.toLowerCase().replace(/\.+$/, '');
   if (LOGIN_WALLED.some((wall) => host === wall || host.endsWith(`.${wall}`))) {
     return `${host} needs a login, which the agent never uses: paste the text of the post instead`;
   }
-  const isAddress = /^[\d.]+$/.test(host) || host.includes(':');
-  if (isAddress || host === 'localhost' || host.endsWith('.local') || host.endsWith('.internal') || !host.includes('.')) {
-    return 'only a public host can be read';
-  }
+  // An address, in any notation, is not a public name: an IPv6 literal has a colon, and a name whose last
+  // label is all digits (or that is only digits and dots) is an IPv4 address in disguise.
+  const lastLabel = host.split('.').pop() ?? '';
+  const isAddress = host.includes(':') || host.includes('[') || /^[\d.]+$/.test(host) || /^\d+$/.test(lastLabel) || /^0x[0-9a-f]+$/i.test(lastLabel);
+  const local = host === 'localhost' || NOT_PUBLIC_SUFFIXES.some((suffix) => (suffix.startsWith('.') ? host.endsWith(suffix) : host === suffix || host.endsWith(`.${suffix}`)));
+  if (isAddress || local || !host.includes('.')) return 'only a public host can be read';
   return null;
 };
 
@@ -56,6 +62,8 @@ export const fetchImportPage = async (
   if (refusal !== null) return { ok: false, reason: refusal };
   const parsed = new URL(url);
   const headers = { 'user-agent': 'jobshell-job-agent/0.1 (manual import)' };
+  // The page is read only for a host that is public by name. A public name that a resolver points at a private
+  // address is not detected here: the link is one the user chose, and a redirect is never followed.
   // A redirect is never followed: its target could be a private address or a login-walled site the checks above never saw.
   const get = { method: 'GET', headers, redirect: 'manual' } as const;
   const redirected = (status: number): boolean => status >= 300 && status < 400;

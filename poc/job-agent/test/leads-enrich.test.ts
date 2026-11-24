@@ -188,3 +188,74 @@ test('the cost meter prices a known model, counts searches, and never prices wha
   unknown.llm({ input_tokens: 10, output_tokens: 10 }, 1);
   assert.equal(unknown.summary().llm_usd, null);
 });
+
+const worldOf = (pages: Array<{ url: string; text: string }>, answer: Record<string, unknown>): FetchLike => async () => ({
+  status: 200,
+  text: JSON.stringify({
+    content: [
+      { type: 'web_search_tool_result', tool_use_id: 's', content: pages.map((page) => ({ type: 'web_search_result', url: page.url, title: 't', encrypted_content: 'x' })) },
+      ...pages.map((page) => ({ type: 'web_fetch_tool_result', tool_use_id: 'f', content: { type: 'web_fetch_result', url: page.url, content: { type: 'document', source: { type: 'text', media_type: 'text/plain', data: page.text } } } })),
+      { type: 'text', text: JSON.stringify(answer) },
+    ],
+    stop_reason: 'end_turn', usage: { input_tokens: 10, output_tokens: 10 },
+  }),
+});
+const shell = { company: 'Acme', country: 'DE', summary: 's', legitimacy: 'real', facts: [] as unknown[], contacts: [] as unknown[] };
+
+test('a news site claimed as the company site does not make its articles "verified"', async () => {
+  const pages = [{ url: 'https://techcrunch.com/2026/acme-raises', text: 'Acme raised a EUR 8 million Series A, the company said on Tuesday.' }];
+  const result = await enrichCompany('Acme', [], null, deps(worldOf(pages, { ...shell, website: 'https://techcrunch.com', facts: [{ field: 'funding', value: 'EUR 8 million Series A', provenance: 'verified', source_url: 'https://techcrunch.com/2026/acme-raises', quote: 'raised a EUR 8 million Series A' }] })));
+  assert.equal(result.status, 'ok');
+  if (result.status !== 'ok') return;
+  assert.equal(result.website, null);
+  assert.equal(result.facts[0]?.provenance, 'reported', 'a news article reports, it does not verify');
+});
+
+test('a site whose address has nothing to do with the company is not its website, even if a page names it', async () => {
+  const pages = [{ url: 'https://random-blog.example/post', text: 'Acme is mentioned here as a customer.' }];
+  const result = await enrichCompany('Acme', [], null, deps(worldOf(pages, { ...shell, website: 'https://random-blog.example' })));
+  assert.equal(result.status === 'ok' ? result.website : 'x', null);
+});
+
+test('an address found in a press article, on another domain, is not the company contact whatever role is claimed', async () => {
+  const pages = [
+    { url: 'https://acme.test/about', text: 'About Acme. We are a SaaS company in Berlin.' },
+    { url: 'https://press.test/story', text: 'Acme raised money. For press questions about Acme write to press@othercorp.test, the agency.' },
+  ];
+  const contact = { role: 'CTO', name: null, channel: 'email', value: 'press@othercorp.test', source_url: 'https://press.test/story', quote: 'write to press@othercorp.test' };
+  const result = await enrichCompany('Acme', [], null, deps(worldOf(pages, { ...shell, website: 'https://acme.test', contacts: [contact] })));
+  assert.equal(result.status, 'ok');
+  if (result.status !== 'ok') return;
+  assert.equal(result.contacts.length, 0);
+  assert.ok(result.dropped.some((drop) => /company site and domain/.test(drop.reason)));
+});
+
+test('an address at the company domain on a page of another site is not a business contact either', async () => {
+  const pages = [
+    { url: 'https://acme.test/about', text: 'About Acme. We are a SaaS company in Berlin.' },
+    { url: 'https://directory.test/acme', text: 'Acme: contact sales@acme.test for details.' },
+  ];
+  const contact = { role: 'Sales', name: null, channel: 'email', value: 'sales@acme.test', source_url: 'https://directory.test/acme', quote: 'contact sales@acme.test' };
+  const result = await enrichCompany('Acme', [], null, deps(worldOf(pages, { ...shell, website: 'https://acme.test', contacts: [contact] })));
+  assert.equal(result.status === 'ok' ? result.contacts.length : -1, 0);
+});
+
+test('a named person needs a role the search is for in the words quoted, and a profile page needs the company in them', async () => {
+  const pages = [
+    { url: 'https://acme.test/team', text: 'Acme team. Jo Doe, Office Manager. Sam Roe, CTO of Acme.' },
+    { url: 'https://profiles.test/sam', text: 'Sam Roe is the CTO of Acme in Berlin.' },
+    { url: 'https://profiles.test/other', text: 'Pat Lee is the CTO of Globex.' },
+  ];
+  const contacts = [
+    { role: 'CTO', name: 'Jo Doe', channel: 'page', value: 'https://acme.test/team', source_url: 'https://acme.test/team', quote: 'Jo Doe, Office Manager' },
+    { role: 'CTO', name: 'Sam Roe', channel: 'profile', value: 'https://profiles.test/sam', source_url: 'https://profiles.test/sam', quote: 'Sam Roe is the CTO of Acme in Berlin' },
+    { role: 'CTO', name: 'Pat Lee', channel: 'profile', value: 'https://profiles.test/other', source_url: 'https://profiles.test/other', quote: 'Pat Lee is the CTO of Globex' },
+    { role: 'CTO', name: 'Sam Roe', channel: 'profile', value: 'https://www.linkedin.com/in/sam', source_url: 'https://acme.test/team', quote: 'Sam Roe, CTO of Acme' },
+  ];
+  const result = await enrichCompany('Acme', [], null, deps(worldOf(pages, { ...shell, website: 'https://acme.test', contacts })));
+  assert.equal(result.status, 'ok');
+  if (result.status !== 'ok') return;
+  assert.deepEqual(result.contacts.map((contact) => contact.name), ['Sam Roe'], 'only the person whose words tie them to Acme in a searched role');
+  const reasons = result.dropped.map((drop) => drop.reason).sort();
+  assert.deepEqual(reasons, ['a profile that is not a public https page', 'the quote does not tie the person to the company', 'the role is not in the quote']);
+});

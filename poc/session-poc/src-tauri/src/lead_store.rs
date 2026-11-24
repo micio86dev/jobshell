@@ -443,12 +443,12 @@ pub async fn delete_company(pool: &Pool<Sqlite>, key: &str) -> Result<u64> {
     Ok(done.rows_affected())
 }
 
-/// Retention: delete the companies not touched for `days` days, except the ones the user contacted or
-/// converted, which are their own records.
+/// Retention: delete the companies not touched for `days` days that the user has not acted on. A lead
+/// the user marked interesting, for later, contacted or converted is theirs and is never purged.
 pub async fn purge_older_than(pool: &Pool<Sqlite>, days: u32) -> Result<u64> {
     let sql = format!(
         "DELETE FROM companies WHERE key IN (SELECT company_key FROM leads \
-         WHERE updated_at < datetime('now', ?) AND {STATUS_SQL} NOT IN ('contacted', 'converted'))"
+         WHERE updated_at < datetime('now', ?) AND {STATUS_SQL} IN ('new', 'not_interesting'))"
     );
     let done = sqlx::query(&sql)
         .bind(format!("-{days} days"))
@@ -652,8 +652,11 @@ mod tests {
             .execute(&pool).await.expect("age");
         let acted = list_leads(&pool, "all").await.expect("all").into_iter().find(|l| l.company_key == "n:acted").expect("acted").id;
         record_event(&pool, acted, "contacted", None).await.expect("event");
+        let later = list_leads(&pool, "all").await.expect("all").into_iter().find(|l| l.company_key == "n:fresh").expect("fresh").id;
+        record_event(&pool, later, "later", None).await.expect("later");
+        sqlx::query("UPDATE leads SET updated_at = datetime('now', '-200 days') WHERE company_key = 'n:fresh'").execute(&pool).await.expect("age");
 
-        assert_eq!(purge_older_than(&pool, 90).await.expect("purge"), 1);
+        assert_eq!(purge_older_than(&pool, 90).await.expect("purge"), 1, "only the untouched one goes");
         let left: Vec<String> = list_leads(&pool, "all").await.expect("all").into_iter().map(|l| l.company_key).collect();
         assert!(left.contains(&"n:acted".to_string()) && left.contains(&"n:fresh".to_string()) && !left.contains(&"n:old".to_string()));
     }

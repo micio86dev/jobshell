@@ -109,3 +109,12 @@ test('a damaged or edited import file is ignored, not trusted and not fatal', ()
   assert.deepEqual(takeImports(dir), []);
   assert.equal(readdirSync(join(dir, 'imports')).length, 2, 'nothing is deleted or marked done');
 });
+
+test('a trailing dot, a local suffix and a name that stands for an address do not get past the host check', () => {
+  for (const url of [
+    'https://linkedin.com./posts/x', 'https://www.facebook.com./groups/1', 'https://localhost./', 'https://app.localhost/',
+    'https://metadata.google.internal./', 'https://169.254.169.254.nip.io/', 'https://10.0.0.1/', 'https://[::1]/', 'https://2130706433/',
+    'https://0x7f.0.0.1/', 'https://192.168.1.1.sslip.io/', 'https://nas.lan/', 'https://x.localtest.me/',
+  ]) assert.notEqual(refuseLink(url), null, url);
+  for (const url of ['https://jobs.example.com/a', 'https://blog.acme.io/post', 'https://example.co.uk/x']) assert.equal(refuseLink(url), null, url);
+});

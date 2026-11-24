@@ -97,9 +97,9 @@ export const checkDraft = (draft: z.infer<typeof draftSchema>, input: DraftInput
     String(input.profile.years_experience),
   ].join(' ');
   const known = new Set(digits(evidence));
-  const stray = digits(`${draft.subject} ${draft.body}`).find((run) => run.length >= 2 && !known.has(run));
+  const stray = digits(`${draft.subject} ${draft.body}`).find((run) => !known.has(run));
   if (stray !== undefined) return `it states a number that is not in the evidence: ${stray}`;
-  if (/https?:\/\/|www\./i.test(draft.body)) return 'it contains a link';
+  if (/https?:\/\/|www\./i.test(`${draft.subject} ${draft.body}`)) return 'it contains a link';
   if (!draft.body.includes('[Your name]')) return 'it does not end with the signature placeholder';
   return null;
 };

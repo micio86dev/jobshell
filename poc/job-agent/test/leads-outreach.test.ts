@@ -72,6 +72,8 @@ test('a draft that rests on evidence and signs with the placeholder stands', () 
 test('a number, a link or a fact that is not in the evidence is refused', () => {
   assert.match(checkDraft({ ...good, body: good.body.replace('8 million', '80 million') }, input) ?? '', /number that is not in the evidence: 80/);
   assert.match(checkDraft({ ...good, body: good.body + ' See https://x.test' }, input) ?? '', /link/);
+  assert.match(checkDraft({ ...good, subject: 'See www.x.test now' }, input) ?? '', /link/, 'the subject is checked too');
+  assert.match(checkDraft({ ...good, body: good.body.replace('Series A', 'Series A and 3 offices') }, input) ?? '', /not in the evidence: 3/, 'a single digit is a number too');
   assert.match(checkDraft({ ...good, facts_used: ['revenue'] }, input) ?? '', /no evidence/);
   assert.match(checkDraft({ ...good, facts_used: ['growth'] }, input) ?? '', /no evidence/, 'an inference is not a fact to cite');
   assert.match(checkDraft({ ...good, body: good.body.replace('[Your name]', 'Alessandro') }, input) ?? '', /signature placeholder/);

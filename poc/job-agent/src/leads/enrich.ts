@@ -14,7 +14,7 @@
  * as a figure) and a contact is dropped. Both are counted in `dropped`, so a run can say why.
  */
 import { z } from 'zod';
-import { registrableDomain } from './company.ts';
+import { isAggregatorHost, normalizeCompanyName, registrableDomain } from './company.ts';
 import { canonicalUrl, research, type Evidence, type ResearchDeps } from './research.ts';
 import type { Contact, Fact, Signal } from './types.ts';
 import { PROVENANCES } from './types.ts';
@@ -134,21 +134,41 @@ const isOfficial = (url: string, website: string | null): boolean => {
   return own !== null && registrableDomain(own) === registrableDomain(host);
 };
 
+const LOGIN_WALLED = ['linkedin.com', 'facebook.com', 'instagram.com', 'x.com', 'twitter.com'];
+const ROLE_WORDS = /\b(cto|chief technology|technical director|technology director|vp\b|vice president|head of engineering|engineering manager|founder|co-founder|ceo|chief executive)/i;
+
+const sameSite = (url: string, site: string | null): boolean => {
+  const host = hostOf(url);
+  const own = site === null ? null : hostOf(site);
+  return host !== null && own !== null && registrableDomain(host) === registrableDomain(own);
+};
+
+/**
+ * The company's own website, or null. The model proposes it; code accepts it only when a page of that site
+ * was read in full and names the company, the domain looks like the company's name, and it is not a news
+ * site or a directory. A news site claimed as "the company site" would otherwise make its articles "verified".
+ */
+const acceptWebsite = (claimed: string | null | undefined, evidence: Evidence, company: string, hint: string | null): string | null => {
+  const host = claimed === null || claimed === undefined ? null : hostOf(claimed);
+  if (host === null || isAggregatorHost(host)) return null;
+  const clean = `https://${host.replace(/^www\./, '')}`;
+  if (hint !== null && sameSite(hint, clean)) return clean;
+  const name = normalizeCompanyName(company).replace(/ /g, '');
+  const label = registrableDomain(host).split('.')[0]?.replace(/[^a-z0-9]/g, '') ?? '';
+  const looksLikeIt = name.length >= 3 && label.length >= 3 && (label.includes(name) || name.includes(label));
+  const named = evidence.documents.some((doc) => sameSite(doc.url, clean) && norm(doc.text).replace(/[^a-z0-9]+/g, ' ').includes(normalizeCompanyName(company)));
+  return looksLikeIt && named ? clean : null;
+};
+
 /** Check the model's answer against the evidence. Pure: the same input always gives the same output. */
 export const guardEnrichment = (
   raw: EnrichmentIn,
   evidence: Evidence,
-  hint: { website: string | null },
+  hint: { website: string | null; company: string },
 ): { website: string | null; facts: Fact[]; contacts: Contact[]; dropped: Dropped[] } => {
   const dropped: Dropped[] = [];
-
-  // The website is accepted only if a page of that site was actually seen.
-  const seenHosts = new Set([...evidence.urls].map((url) => hostOf(url)).filter((host): host is string => host !== null).map(registrableDomain));
-  const claimed = raw.website ?? hint.website;
-  const claimedHost = claimed === null || claimed === undefined ? null : hostOf(claimed);
-  const website = claimed !== null && claimed !== undefined && claimedHost !== null && (seenHosts.has(registrableDomain(claimedHost)) || claimed === hint.website)
-    ? `https://${claimedHost.replace(/^www\./, '')}`
-    : null;
+  const website = acceptWebsite(raw.website ?? hint.website, evidence, hint.company, hint.website);
+  const companyName = normalizeCompanyName(hint.company);
 
   const facts: Fact[] = [];
   for (const fact of raw.facts) {
@@ -192,6 +212,16 @@ export const guardEnrichment = (
       continue;
     }
     const where = textsFor(evidence, contact.source_url);
+    const named = contact.name !== null && contact.name !== undefined && contact.name !== '';
+    // A named person must be named in the words quoted from the page, in a role the search is for.
+    if (named && !norm(contact.quote).includes(norm(contact.name ?? ''))) {
+      drop('the name is not in the quote');
+      continue;
+    }
+    if (named && !ROLE_WORDS.test(contact.quote)) {
+      drop('the role is not in the quote');
+      continue;
+    }
     if (contact.channel === 'email') {
       const address = contact.value.trim().toLowerCase();
       const domain = address.split('@')[1] ?? '';
@@ -207,22 +237,35 @@ export const guardEnrichment = (
         drop('the address is not in the page');
         continue;
       }
+      // A business contact is on the company's own site and at the company's own domain.
+      if (!sameSite(contact.source_url, website) || !sameSite(`https://${domain}`, website)) {
+        drop('the address is not on the company site and domain');
+        continue;
+      }
+    } else if (contact.channel === 'profile') {
+      const host = hostOf(contact.value);
+      if (!/^https:\/\//.test(contact.value) || host === null || LOGIN_WALLED.some((wall) => host === wall || host.endsWith(`.${wall}`))) {
+        drop('a profile that is not a public https page');
+        continue;
+      }
+      // Someone else's page can name a person only if its words tie the person to this company.
+      if (!named || companyName === '' || !norm(contact.quote).replace(/[^a-z0-9]+/g, ' ').includes(companyName)) {
+        drop('the quote does not tie the person to the company');
+        continue;
+      }
     } else if (
       !/^https:\/\//.test(contact.value) ||
+      !sameSite(contact.source_url, website) ||
+      !sameSite(contact.value, website) ||
       // A link counts when the research touched it, or when the page it was read on shows it.
       !(evidence.urls.has(canonicalUrl(contact.value)) || where.some((text) => text.includes(norm(contact.value))))
     ) {
-      drop('the link was not touched by the research');
-      continue;
-    }
-    // A named person must be named in the words quoted from the page.
-    if (contact.name !== null && contact.name !== undefined && contact.name !== '' && !norm(contact.quote).includes(norm(contact.name))) {
-      drop('the name is not in the quote');
+      drop('the link is not a page of the company site shown by the research');
       continue;
     }
     contacts.push({
       role: contact.role,
-      name: contact.name === undefined || contact.name === '' ? null : contact.name,
+      name: named ? (contact.name ?? null) : null,
       channel: contact.channel,
       value: contact.channel === 'email' ? contact.value.trim().toLowerCase() : contact.value,
       source_url: canonicalUrl(contact.source_url),
@@ -308,7 +351,7 @@ export const enrichCompany = async (
   if (!result.ok) return { status: 'unavailable', reason: result.reason };
   const parsed = enrichmentIn.safeParse(objectIn(result.text));
   if (!parsed.success) return { status: 'unavailable', reason: 'the research answer did not match the expected shape' };
-  const guarded = guardEnrichment(parsed.data, result.evidence, { website: hintWebsite });
+  const guarded = guardEnrichment(parsed.data, result.evidence, { website: hintWebsite, company });
   return {
     status: 'ok',
     website: guarded.website,

@@ -87,7 +87,7 @@ export const registrableDomain = (host: string): string => {
   return labels.slice(-2).join('.');
 };
 
-const isAggregator = (host: string): boolean =>
+export const isAggregatorHost = (host: string): boolean =>
   AGGREGATOR_HOSTS.some((aggregator) => host === aggregator || host.endsWith(`.${aggregator}`));
 
 /** The key a company is known by across sources, or null when nothing identifies it. */
@@ -103,7 +103,7 @@ export const companyKeyOf = (input: { company: string | null; url: string; type?
     const tenant = board.match(host, path);
     if (tenant !== null && tenant !== '') return `t:${board.ats}:${tenant.toLowerCase()}`;
   }
-  if (isAggregator(host)) return null;
+  if (isAggregatorHost(host)) return null;
   return `d:${registrableDomain(host)}`;
 };
 

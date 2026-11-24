@@ -33,7 +33,11 @@ const die = (message: string): never => {
   process.exit(2);
 };
 
+/** A search that has not finished by now is stuck: it stops with a plain message so the app is never held. */
+const MAX_RUN_MS = 45 * 60 * 1000;
+
 const main = async (): Promise<void> => {
+  setTimeout(() => die('the search took too long and was stopped'), MAX_RUN_MS).unref();
   const profilePath = arg('profile') ?? die('--profile <path> is required');
   const configPath = arg('config');
   const runtime = loadRuntime({ profilePath, ...(configPath === undefined ? {} : { configPath }) });
