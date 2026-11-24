@@ -16,6 +16,7 @@
 import { z } from 'zod';
 import { isAggregatorHost, normalizeCompanyName, registrableDomain } from './company.ts';
 import { canonicalUrl, research, type Evidence, type ResearchDeps } from './research.ts';
+import { researchViaCli } from './research-cli.ts';
 import type { Contact, Fact, Signal } from './types.ts';
 import { PROVENANCES } from './types.ts';
 
@@ -368,7 +369,10 @@ export const enrichCompany = async (
   hintWebsite: string | null,
   deps: EnrichDeps,
 ): Promise<Enrichment> => {
-  const result = await research(SYSTEM, enrichPrompt(company, signals, hintWebsite), deps);
+  const brief = enrichPrompt(company, signals, hintWebsite);
+  const result = deps.cli === undefined
+    ? await research(SYSTEM, brief, deps)
+    : await researchViaCli(SYSTEM, brief, deps, { provider: deps.cli.provider, model: deps.model, ...(deps.cli.deps === undefined ? {} : { deps: deps.cli.deps }) }, deps.fetchImpl);
   if (!result.ok) return { status: 'unavailable', reason: result.reason };
   const parsed = enrichmentIn.safeParse(objectIn(result.text));
   if (!parsed.success) return { status: 'unavailable', reason: 'the research answer did not match the expected shape' };

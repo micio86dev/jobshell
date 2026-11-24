@@ -11,6 +11,7 @@
  */
 import { z } from 'zod';
 
+import { isCliProvider, runCli, type CliDeps, type CliProvider } from './llm-cli.ts';
 import { llmAnswer, llmRequest, LLM_LABEL, type LlmProvider } from './llm-providers.ts';
 import type { FetchLike } from './jev.ts';
 import { LANGUAGE_LEVELS, type LanguageLevel, type Seniority } from './profile.ts';
@@ -24,10 +25,12 @@ export const DEFAULT_EXTRACT_MAX_TOKENS = 4000;
 export type IntakeDeps = {
   apiKey: string;
   model: string;
-  provider?: LlmProvider;
+  /** An API provider, or a program the user signed in to (a subscription: no key). */
+  provider?: LlmProvider | CliProvider;
   maxTokens?: number | undefined;
   baseUrl?: string;
   fetchImpl: FetchLike;
+  cli?: CliDeps;
 };
 
 /** A language the document states: an ISO 639-1 code, and a level when the text states one. */
@@ -161,9 +164,16 @@ export const extractCandidateFields = async (
   deps: IntakeDeps,
   kind: IntakeKind = 'cv',
 ): Promise<IntakeResult> => {
-  const provider: LlmProvider = deps.provider ?? 'anthropic';
-  const label = LLM_LABEL[provider];
+  const chosen = deps.provider ?? 'anthropic';
   const fallback = (reason: string): IntakeResult => ({ fields: emptyFields(), source: 'fallback', reason });
+  if (isCliProvider(chosen)) {
+    const said = await runCli(chosen, deps.model, instruction(text, kind), deps.cli ?? {});
+    if (!said.ok) return fallback(said.reason);
+    const proposed = extractObject(said.text);
+    return proposed === null ? fallback('provider answer had no JSON object') : { fields: proposedFields(proposed), source: 'model', reason: null };
+  }
+  const provider: LlmProvider = chosen;
+  const label = LLM_LABEL[provider];
 
   let request: ReturnType<typeof llmRequest>;
   try {

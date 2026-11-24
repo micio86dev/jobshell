@@ -3,6 +3,7 @@
  * this module only reads names and numbers. Keys are read elsewhere, from the keychain.
  */
 import { judgmentService, JUDGMENT_SERVICES, type JudgmentService, type JudgmentTarget } from './judgment-services.ts';
+import type { AskDeps } from './llm-call.ts';
 import { CLI_DEFAULT_MODEL, isCliProvider, type CliProvider } from './llm-cli.ts';
 import { LLM_LABEL, LLM_PROVIDERS, type LlmProvider } from './llm-providers.ts';
 
@@ -53,6 +54,19 @@ export const plannerTarget = (choice: ProviderChoice): LlmChoice => ({
   provider: choice.llm.provider,
   model: choice.llm.model,
 });
+
+/** The model that answers the judge's questions when the user chose "the same as the AI service"; null for any other service. */
+export const judgeViaModel = (
+  choice: ProviderChoice,
+  readKey: (account: string) => string | null,
+  fetchImpl: AskDeps['fetchImpl'],
+): AskDeps | null => {
+  if (choice.judgment.service !== 'provider') return null;
+  const chosen = choice.llm.provider;
+  const key = isCliProvider(chosen) ? '' : (readKey(chosen)?.trim() ?? '');
+  if (!isCliProvider(chosen) && key === '') return null;
+  return { apiKey: key, provider: chosen, model: choice.llm.model, maxTokens: 1500, fetchImpl };
+};
 
 /** What the judgment client needs for the chosen service. `null` means its key is missing. */
 export const judgmentDepsFor = (

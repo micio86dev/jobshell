@@ -26,9 +26,8 @@ import { resolvePolicy } from './policy.ts';
 import { runOnce, type RunEvidence } from './run.ts';
 import { loadSeen, saveSeen } from './seen.ts';
 import { isCliProvider } from './llm-cli.ts';
-import type { LlmProvider } from './llm-providers.ts';
 import { readSecret } from './secrets.ts';
-import { judgmentDepsFor, plannerTarget, providerChoiceFromEnv, type ProviderChoice } from './provider-choice.ts';
+import { judgeViaModel, judgmentDepsFor, plannerTarget, providerChoiceFromEnv, type ProviderChoice } from './provider-choice.ts';
 import { thresholdOverride } from './match-threshold.ts';
 import { listSources } from './sources/registry.ts';
 
@@ -103,19 +102,20 @@ const main = async (): Promise<void> => {
   // A dry run buys no judgment: its placeholder key is never sent anywhere. Naming it makes that
   // explicit instead of passing an empty string that looks like a key.
   const judgment = judgmentDepsFor(choice.judgment, readSecret);
-  if (judgment === null && !dryRun) die(missingKeyMessage(choice.judgment.service));
+  const judgeVia = judgeViaModel(choice, readSecret, defaultFetch);
+  if (choice.judgment.service === 'provider' ? judgeVia === null && !dryRun : judgment === null && !dryRun) die(missingKeyMessage(choice.judgment.service === 'provider' ? choice.llm.provider : choice.judgment.service));
   const jevKey = judgment?.apiKey ?? 'dry-run-no-judgment';
 
   // The planner follows the provider and model chosen in Settings, like the report and the CV do.
   const target = plannerTarget(choice);
-  // A program the user signed in to prints text for a person: the queries come from the profile instead.
-  const providerKey = isCliProvider(target.provider) ? null : readSecret(target.provider);
+  // A program the user signed in to needs no key from us.
+  const providerKey = isCliProvider(target.provider) ? '' : readSecret(target.provider);
   // A dry run buys nothing: no judgment and no planner call, so the profile never
   // leaves the machine. That is what the README promises and what this enforces.
   const plannerDeps = providerKey === null || dryRun
     ? null
     : {
-        provider: target.provider as LlmProvider,
+        provider: target.provider,
         apiKey: providerKey,
         model: target.model,
         fetchImpl: defaultFetch,
@@ -149,6 +149,7 @@ const main = async (): Promise<void> => {
       model: choice.judgment.model,
       baseUrl: judgment?.baseUrl ?? choice.judgment.url,
       fetchImpl: defaultFetch,
+      ...(judgeVia === null ? {} : { via: judgeVia }),
     },
     now: new Date(),
     seen,

@@ -124,8 +124,10 @@ test('a report and the lead wiring work with a subscription program and no key a
   const wired = wireLead({ env: { JOBSHELL_LLM_PROVIDER: 'cli-claude' }, readKey: () => null, dryRun: false });
   assert.equal(wired.llm?.provider, 'cli-claude');
   assert.equal(wired.llm?.model, 'default');
-  assert.equal(wired.research, null);
-  assert.match(wired.researchUnavailable ?? '', /web research needs an Anthropic API key: Claude Code prints only its final text/);
+  // A program of the user's own does the research too: it names the pages and our code reads them.
+  assert.equal(wired.researchUnavailable, null);
+  assert.equal(wired.research?.cli?.provider, 'cli-claude');
+  assert.equal(wired.research?.apiKey, '');
 });
 
 test('the choice accepts a program without a model, and an unknown program is still refused', () => {
