@@ -96,3 +96,16 @@ test('each row carries the policy mode, so the page can say why a source is off'
   assert.equal(mode('ashby'), 'prohibited');
   assert.equal(mode('ziprecruiter'), 'allowed');
 });
+
+test('the signal sources of the client search are listed, allowed, and can be switched off like any other', () => {
+  const config = defaultConfig();
+  const rows = sourceRows(config);
+  for (const id of ['hn-hiring', 'hn-jobs', 'yc-hiring', 'sifted', 'techcrunch-startups']) {
+    const row = rows.find((entry) => entry.id === id);
+    assert.equal(row?.automation, 'allowed', id);
+    assert.equal(row?.enabled, true, id);
+  }
+  const off = setEnabled(config, 'yc-hiring', false);
+  assert.ok(off.ok);
+  if (off.ok) assert.equal(sourceRows(off.config).find((entry) => entry.id === 'yc-hiring')?.enabled, false);
+});

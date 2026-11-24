@@ -25,6 +25,8 @@ import { planQueries } from './planner.ts';
 import { resolvePolicy } from './policy.ts';
 import { runOnce, type RunEvidence } from './run.ts';
 import { loadSeen, saveSeen } from './seen.ts';
+import { isCliProvider } from './llm-cli.ts';
+import type { LlmProvider } from './llm-providers.ts';
 import { readSecret } from './secrets.ts';
 import { judgmentDepsFor, plannerTarget, providerChoiceFromEnv, type ProviderChoice } from './provider-choice.ts';
 import { thresholdOverride } from './match-threshold.ts';
@@ -106,13 +108,14 @@ const main = async (): Promise<void> => {
 
   // The planner follows the provider and model chosen in Settings, like the report and the CV do.
   const target = plannerTarget(choice);
-  const providerKey = readSecret(target.provider);
+  // A program the user signed in to prints text for a person: the queries come from the profile instead.
+  const providerKey = isCliProvider(target.provider) ? null : readSecret(target.provider);
   // A dry run buys nothing: no judgment and no planner call, so the profile never
   // leaves the machine. That is what the README promises and what this enforces.
   const plannerDeps = providerKey === null || dryRun
     ? null
     : {
-        provider: target.provider,
+        provider: target.provider as LlmProvider,
         apiKey: providerKey,
         model: target.model,
         fetchImpl: defaultFetch,

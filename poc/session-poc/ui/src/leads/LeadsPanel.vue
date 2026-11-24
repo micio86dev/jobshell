@@ -4,7 +4,7 @@
 // back; the cards and the detail only show what they are given.
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 
 import { t } from '../i18n/store';
 import ImportBox from './ImportBox.vue';
@@ -59,8 +59,12 @@ const select = async (next: View): Promise<void> => {
 const openDetail = async (id: number): Promise<void> => {
   try {
     const parsed = parseDetail(await invoke<unknown>('lead_detail', { id }));
-    if (parsed.ok) detail.value = parsed.detail;
-    else problem.value = parsed.error;
+    if (parsed.ok) {
+      detail.value = parsed.detail;
+      // The detail sits above the list: bring it into view, or a click far down the page seems to do nothing.
+      await nextTick();
+      document.querySelector('.detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else problem.value = parsed.error;
   } catch (error) {
     problem.value = String(error);
   }

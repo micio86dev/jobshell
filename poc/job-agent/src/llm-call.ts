@@ -3,15 +3,19 @@
  * same failure rules: a fixed reason, never the key and never a raw provider or network error.
  */
 import type { FetchLike } from './jev.ts';
+import { isCliProvider, runCli, type CliDeps, type CliProvider } from './llm-cli.ts';
 import { llmAnswer, llmRequest, LLM_LABEL, type LlmProvider } from './llm-providers.ts';
 
 export type AskDeps = {
   apiKey: string;
-  provider: LlmProvider;
+  /** An API provider, or a command-line program the user signed in to (a subscription). */
+  provider: LlmProvider | CliProvider;
   model: string;
   maxTokens: number;
   baseUrl?: string | undefined;
   fetchImpl: FetchLike;
+  /** How a command-line provider is started; absent means the real program. */
+  cli?: CliDeps;
 };
 
 export type AskResult =
@@ -19,6 +23,8 @@ export type AskResult =
   | { ok: false; reason: string };
 
 export const askModel = async (prompt: string, deps: AskDeps): Promise<AskResult> => {
+  // A subscription reached through the user's own program: no key, no HTTP request from here.
+  if (isCliProvider(deps.provider)) return runCli(deps.provider, deps.model, prompt, deps.cli ?? {});
   const label = LLM_LABEL[deps.provider];
   const fail = (reason: string): AskResult => ({ ok: false, reason });
 

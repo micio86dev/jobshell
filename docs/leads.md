@@ -56,6 +56,24 @@ make leads-eval PROFILE=<profile.json>      # the real judge on the ten scenario
 
 The strategy file is `~/.config/jobshell/leads.json`; see `poc/job-agent/leads.example.json`. Only the fields you set are stored; the rest follows the profile.
 
+## Your subscription instead of an API key
+
+In **Impostazioni → Servizio AI** the provider list has a second group: the programs you already use with a subscription (Claude Code, Codex, Gemini CLI, OpenCode). Choosing one makes Jobshell start that program for the text steps and read what it prints. It needs no key from you in this app, and the app never reads, stores or sends your login: the program signs in by itself, from its own place on your computer. It is started with a small environment (no API keys of yours, only what the program needs to find its login), with its tools off or read-only, because the prompt holds text from the web.
+
+| Step | With a subscription program | Needs an API key |
+|---|---|---|
+| naming companies, outreach drafts, search queries, reports, tailored CV | yes | |
+| web research on a company (facts, contacts) | no | Anthropic: the checks need the pages the provider read, and a program prints only its final text |
+| reading the CV in the wizard, the job planner | no (the job planner falls back to the profile) | any API provider |
+| the judge (Jev) | unchanged: its own key | |
+
+**Terms, from the providers' own pages (read 2026-11-24):**
+- **Anthropic** (code.claude.com, "Legal and compliance"): subscription sign-in is for Claude Code and Anthropic's own apps; developers who build products or services, the Agent SDK included, "should use API key authentication", and may not route requests through Free, Pro, Max or Ultra credentials on behalf of users or collect their credentials. The same page says it does not stop a user from signing in to the unmodified Claude Code program with their own subscription. Running `claude -p` from an app sits between the two readings. It is your account and your decision: it is off by default, it is meant for your own use on your own computer, and a build you give to other people should use API keys.
+- **Google** (Gemini CLI terms): using "third-party software, tools, or services (for example, using OpenClaw with Gemini CLI OAuth)" to reach the services behind Gemini CLI is a violation. Jobshell starts the program itself and never touches the OAuth login; read the page before you choose it.
+- **OpenAI (Codex) and OpenCode:** not verified here; read your plan's terms.
+
+**Verified live on this computer (2026-11-24):** Claude Code on a claude.ai subscription wrote a real report and, in a lead run, planned queries, named 33 companies and drafted 7 outreach messages with no API key and no per-token cost. Codex answered with its usage-limit error and OpenCode with its API-limit error (both are shown to the user as a sentence), and Gemini CLI was not signed in (the app says so). So only Claude Code was seen producing answers.
+
 ## Facebook, LinkedIn and anything behind a login
 
 Paste the text of the post (or a public link) in **Aggiungi un cliente a mano**. A link behind a login is refused. The pasted post is judged first in the next run, whatever the budget.

@@ -165,12 +165,14 @@ export const actionEvent = (action: Action): Status => EVENT_OF[action];
 /** The cost of a run in one line: what has a price, what has none, and the searches. */
 type MaybeCost = { [K in keyof Cost]?: Cost[K] | undefined };
 
-export const costLine = (cost: MaybeCost): string => {
+export const costLine = (cost: MaybeCost, qualified = 0): string => {
   const parts: string[] = [];
   const spent = cost.usd_known ?? 0;
   const tokens = (cost.jev_input_tokens ?? 0) + (cost.llm_input_tokens ?? 0) + (cost.llm_output_tokens ?? 0);
   if (spent === 0 && tokens === 0 && (cost.web_searches ?? 0) === 0) return 'nothing was bought';
   parts.push(`US$ ${spent.toFixed(2)}${cost.includes_unpriced === true && (cost.jev_input_tokens ?? 0) > 0 ? ` (without the judgment service tokens, ${cost.jev_input_tokens})` : ''}`);
   if ((cost.web_searches ?? 0) > 0) parts.push(`${cost.web_searches} searches`);
+  // The price of what the user actually gets: the known spend over the leads that qualified.
+  if (qualified > 0 && spent > 0) parts.push(`US$ ${(spent / qualified).toFixed(2)} per qualified lead`);
   return parts.join(', ');
 };

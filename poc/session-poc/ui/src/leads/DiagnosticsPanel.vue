@@ -69,7 +69,7 @@ watch(() => props.refresh, load);
         <h4>{{ t('diag.errors') }}</h4>
         <ul class="small"><li v-for="(error, i) in run.metrics.errors.slice(0, 8)" :key="i"><strong>{{ error.stage }}</strong>: {{ error.message }}</li></ul>
       </template>
-      <p class="small"><strong>{{ t('diag.cost') }}:</strong> {{ costLine(run.cost) }}</p>
+      <p class="small"><strong>{{ t('diag.cost') }}:</strong> {{ costLine(run.cost, run.metrics.qualified) }}</p>
     </article>
 
     <template v-if="rejected.length > 0">

@@ -10,7 +10,7 @@ import LeadsPanel from './leads/LeadsPanel.vue';
 import { setPrimaryLanguage, t } from './i18n/store';
 import { primaryOf } from './onboarding/schema';
 import { describeKeyCheck, parseKeyCheckReport, type KeyCheckView } from './settings/key-check';
-import { modelOptions, validateChoice, type ChoiceProblem, type ProviderChoiceView } from './settings/provider-settings';
+import { CLI_NAMES, CLI_PROVIDERS, isCliProvider, modelAfterSwitch, modelOptions, validateChoice, type ChoiceProblem, type ProviderChoiceView } from './settings/provider-settings';
 import { parseReportResult, type ReportView } from './report/report-result';
 import { renderMarkdown } from './report/markdown-html';
 
@@ -270,6 +270,29 @@ const loadModels = async (account: string): Promise<void> => {
   } catch (error) {
     choiceMessage.value = `elenco modelli non disponibile: ${String(error)}`;
   }
+};
+
+// The programs of a subscription found on this computer, asked on demand: only presence is read.
+const cliFound = ref<Record<string, boolean> | null>(null);
+const checkPrograms = async (): Promise<void> => {
+  try {
+    cliFound.value = await invoke<Record<string, boolean>>('agent_cli_status');
+  } catch {
+    cliFound.value = null;
+  }
+};
+const cliStatusLine = (provider: string): string => {
+  if (!isCliProvider(provider) || cliFound.value === null) return '';
+  const entry = CLI_NAMES[provider];
+  return cliFound.value[entry.program] === true ? t('settings.cli.found', { name: entry.name }) : t('settings.cli.missing', { name: entry.name });
+};
+// Choosing a program needs no list of models and no key; leaving one asks for a model again.
+const onProviderChange = async (): Promise<void> => {
+  const choice = providerChoice.value;
+  if (choice === null) return;
+  choice.llm_model = modelAfterSwitch(choice.llm_provider, choice.llm_model);
+  if (isCliProvider(choice.llm_provider)) await checkPrograms();
+  else await loadModels(choice.llm_provider);
 };
 
 const saveChoice = async (): Promise<void> => {
@@ -610,13 +633,26 @@ onMounted(() => {
       <h2>Servizio AI</h2>
       <div v-if="providerChoice !== null" class="choice">
         <label for="llm-provider">modello per leggere il CV e cercare</label>
-        <select id="llm-provider" v-model="providerChoice.llm_provider" @change="loadModels(providerChoice.llm_provider)">
-          <option v-for="name in LLM_OPTIONS" :key="name" :value="name">{{ name }}</option>
+        <select id="llm-provider" v-model="providerChoice.llm_provider" @change="onProviderChange">
+          <optgroup :label="t('settings.cli.apiGroup')">
+            <option v-for="name in LLM_OPTIONS" :key="name" :value="name">{{ name }}</option>
+          </optgroup>
+          <optgroup :label="t('settings.cli.group')">
+            <option v-for="name in CLI_PROVIDERS" :key="name" :value="name">{{ CLI_NAMES[name].name }}</option>
+          </optgroup>
         </select>
-        <select id="llm-model" v-model="providerChoice.llm_model">
-          <option v-for="name in modelOptions(offeredModels[providerChoice.llm_provider] ?? [], providerChoice.llm_model)" :key="name" :value="name">{{ name }}</option>
-        </select>
-        <button type="button" @click="loadModels(providerChoice.llm_provider)">Aggiorna elenco</button>
+        <template v-if="isCliProvider(providerChoice.llm_provider)">
+          <input id="llm-model" v-model="providerChoice.llm_model" type="text" :aria-label="t('settings.cli.model')" :placeholder="t('settings.cli.model')" />
+          <button type="button" @click="checkPrograms">{{ t('settings.cli.check') }}</button>
+          <p v-if="cliStatusLine(providerChoice.llm_provider) !== ''" class="hint">{{ cliStatusLine(providerChoice.llm_provider) }}</p>
+          <p class="hint">{{ t('settings.cli.hint') }}</p>
+        </template>
+        <template v-else>
+          <select id="llm-model" v-model="providerChoice.llm_model">
+            <option v-for="name in modelOptions(offeredModels[providerChoice.llm_provider] ?? [], providerChoice.llm_model)" :key="name" :value="name">{{ name }}</option>
+          </select>
+          <button type="button" @click="loadModels(providerChoice.llm_provider)">Aggiorna elenco</button>
+        </template>
 
         <label for="judgment-service">servizio che giudica le offerte</label>
         <select id="judgment-service" v-model="providerChoice.judgment_service">

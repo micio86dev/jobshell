@@ -1,6 +1,6 @@
 /**
- * The messages of the lead screens, in every interface language. They are merged into the app
- * messages, and the locale test checks that no key is missing in any language.
+ * The messages of the lead screens and of the subscription provider, in every interface language.
+ * They are merged into the app messages, and the locale test checks that no key is missing in any language.
  */
 export const LEAD_EN = {
   'tab.leads': 'Leads',
@@ -93,6 +93,13 @@ export const LEAD_EN = {
   'settings.leads.off': 'Off: I start it myself',
   'settings.leads.every': 'Every {hours} hours',
   'settings.leads.lastError': 'The last automatic search failed: {reason}',
+  'settings.cli.group': 'Your subscription (a program on this computer)',
+  'settings.cli.hint': 'Jobshell starts the program you already installed and signed in to, and reads what it prints. It never reads, stores or sends your login. It is used for the text steps: naming companies, outreach drafts, reports and the tailored CV. Web research, reading a CV in the wizard and the job planner still need an API key. Check your plan terms: some providers allow a subscription only inside their own program (Anthropic: products and services should use an API key).',
+  'settings.cli.found': '{name} found on this computer.',
+  'settings.cli.missing': '{name} not found: install it and sign in to it in a terminal.',
+  'settings.cli.check': 'Check',
+  'settings.cli.model': 'Model (default = the one the program uses)',
+  'settings.cli.apiGroup': 'With an API key',
 } as const;
 
 export const LEAD_IT: Record<keyof typeof LEAD_EN, string> = {
@@ -186,6 +193,13 @@ export const LEAD_IT: Record<keyof typeof LEAD_EN, string> = {
   'settings.leads.off': 'Spenta: la avvio io',
   'settings.leads.every': 'Ogni {hours} ore',
   'settings.leads.lastError': 'L’ultima ricerca automatica è fallita: {reason}',
+  'settings.cli.group': 'Il tuo abbonamento (un programma su questo computer)',
+  'settings.cli.hint': 'Jobshell avvia il programma che hai già installato e in cui hai fatto login, e legge ciò che stampa. Non legge, non salva e non invia mai il tuo login. Si usa per i passaggi di testo: dare un nome alle aziende, le bozze di contatto, i report e il CV su misura. La ricerca web, la lettura del CV nel wizard e il pianificatore degli annunci richiedono ancora una chiave API. Controlla i termini del tuo piano: alcuni fornitori consentono l’abbonamento solo dentro il loro programma (Anthropic: per prodotti e servizi indica una chiave API).',
+  'settings.cli.found': '{name} trovato su questo computer.',
+  'settings.cli.missing': '{name} non trovato: installalo e fai login da terminale.',
+  'settings.cli.check': 'Controlla',
+  'settings.cli.model': 'Modello (default = quello che usa il programma)',
+  'settings.cli.apiGroup': 'Con una chiave API',
 };
 
 export const LEAD_ES: Record<keyof typeof LEAD_EN, string> = {
@@ -279,4 +293,11 @@ export const LEAD_ES: Record<keyof typeof LEAD_EN, string> = {
   'settings.leads.off': 'Apagada: la inicio yo',
   'settings.leads.every': 'Cada {hours} horas',
   'settings.leads.lastError': 'La última búsqueda automática falló: {reason}',
+  'settings.cli.group': 'Tu suscripción (un programa en este equipo)',
+  'settings.cli.hint': 'Jobshell inicia el programa que ya instalaste y en el que iniciaste sesión, y lee lo que imprime. Nunca lee, guarda ni envía tu sesión. Se usa para los pasos de texto: poner nombre a las empresas, los borradores de contacto, los informes y el CV a medida. La búsqueda web, la lectura del CV en el asistente y el planificador de anuncios siguen necesitando una clave API. Revisa los términos de tu plan: algunos proveedores permiten la suscripción solo dentro de su programa (Anthropic: para productos y servicios indica una clave API).',
+  'settings.cli.found': '{name} encontrado en este equipo.',
+  'settings.cli.missing': '{name} no encontrado: instálalo e inicia sesión en una terminal.',
+  'settings.cli.check': 'Comprobar',
+  'settings.cli.model': 'Modelo (default = el que usa el programa)',
+  'settings.cli.apiGroup': 'Con una clave API',
 };

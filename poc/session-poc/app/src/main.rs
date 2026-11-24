@@ -527,6 +527,12 @@ fn agent_save_settings(settings: settings::ProviderSettings) -> Result<(), Strin
     settings::save(&settings_path(), &settings).map_err(|error| error.to_string())
 }
 
+/// Which of the command-line programs of a subscription are installed on this computer.
+#[tauri::command]
+fn agent_cli_status() -> std::collections::HashMap<String, bool> {
+    agent::cli_status().into_iter().collect()
+}
+
 /// The models a provider offers to the stored key. The key is read here and never returned.
 #[tauri::command]
 async fn agent_list_models(account: String) -> Result<Vec<String>, String> {
@@ -717,6 +723,7 @@ fn main() {
             agent_get_settings,
             agent_save_settings,
             agent_list_models,
+            agent_cli_status,
             agent_run,
             agent_open_sources,
             agent_stop_sources,

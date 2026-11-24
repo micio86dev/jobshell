@@ -29,6 +29,10 @@ All notable changes to the app are listed here. Versions follow [Semantic Versio
 - Settings: minimum score, evidence floor, budgets, spending cap and preferred countries for the client search.
 - `make leads-eval`: the real judge on ten controlled scenarios.
 
+- Use your own subscription instead of an API key for the text steps: Claude Code, Codex, Gemini CLI or OpenCode, chosen in Settings. The app starts the program you already signed in to and never touches your login. Web research still needs an Anthropic API key; check your plan's terms (see docs/leads.md).
+- The sources of the client search appear on the Sources page and can be switched off one by one.
+- The cost of a run is also shown per qualified lead, and opening a lead's evidence scrolls to it.
+
 ### Changed
 - "Search now" and the reports now use the profile you saved in the wizard, not the starter profile the app wrote on first launch.
 - The query planner follows the provider and model chosen in Settings.

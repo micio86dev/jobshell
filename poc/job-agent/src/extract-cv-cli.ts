@@ -14,6 +14,7 @@ import { maxTokensForExtraction, modelForExtraction } from './extract-model.ts';
 import { runExtractCv, MAX_CV_CHARS } from './extract-cv.ts';
 import type { IntakeKind } from './intake.ts';
 import { defaultFetch } from './jev.ts';
+import { isCliProvider } from './llm-cli.ts';
 import { readSecret } from './secrets.ts';
 import { providerChoiceFromEnv } from './provider-choice.ts';
 
@@ -61,13 +62,21 @@ process.stdin.on('end', () => {
     process.exitCode = 2;
     return;
   }
+  const chosen = choice.llm.provider;
+  if (isCliProvider(chosen)) {
+    // The CV reader needs a provider that answers over an API: a program prints only text for a person.
+    process.stderr.write('reading a CV needs a provider with an API key (Anthropic, OpenAI, Gemini or Qwen): choose one in Settings, or fill the fields by hand\n');
+    process.exitCode = 2;
+    return;
+  }
+  const llmProvider = chosen;
   // The Anthropic default keeps its model variable, as before the choice existed.
   const model = process.env['JOBSHELL_LLM_MODEL'] ? choice.llm.model
     : choice.llm.provider === 'anthropic' ? modelForExtraction(process.env)
     : choice.llm.model;
   runExtractCv(cv, {
-    provider: choice.llm.provider,
-    readKey: () => readSecret(choice.llm.provider),
+    provider: llmProvider,
+    readKey: () => readSecret(llmProvider),
     model,
     maxTokens: maxTokensForExtraction(process.env),
     fetchImpl: defaultFetch,

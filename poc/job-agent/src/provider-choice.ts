@@ -3,9 +3,11 @@
  * this module only reads names and numbers. Keys are read elsewhere, from the keychain.
  */
 import { judgmentService, JUDGMENT_SERVICES, type JudgmentService, type JudgmentTarget } from './judgment-services.ts';
+import { CLI_DEFAULT_MODEL, isCliProvider, type CliProvider } from './llm-cli.ts';
 import { LLM_LABEL, LLM_PROVIDERS, type LlmProvider } from './llm-providers.ts';
 
-export type LlmChoice = { provider: LlmProvider; model: string };
+/** An API provider with its key, or a command-line program the user is signed in to. */
+export type LlmChoice = { provider: LlmProvider | CliProvider; model: string };
 export type JudgmentChoice = JudgmentTarget & { model: string };
 export type ProviderChoice = { llm: LlmChoice; judgment: JudgmentChoice };
 
@@ -17,6 +19,8 @@ const env = (values: Record<string, string | undefined>, name: string): string =
 const llmFrom = (values: Record<string, string | undefined>): LlmChoice => {
   const name = env(values, 'JOBSHELL_LLM_PROVIDER');
   if (name === '') return DEFAULT_LLM;
+  // A program of the user's own needs no model: it uses the one it is set to.
+  if (isCliProvider(name)) return { provider: name, model: env(values, 'JOBSHELL_LLM_MODEL') || CLI_DEFAULT_MODEL };
   if (!(LLM_PROVIDERS as readonly string[]).includes(name)) {
     throw new Error(`unknown LLM provider: ${name}`);
   }
