@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+    <channel>
+        <title>Sifted</title>
+        <link>https://sifted.eu/</link>
+        <description>Quality journalism about Europe's New Economy</description>
+        <lastBuildDate>Tue, 24 Nov 2026 11:37:40 GMT</lastBuildDate>
+        <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
+        <generator>Feed for Sifted</generator>
+        <language>en-US</language>
+        <copyright>Sifted EU</copyright>
+        <item>
+            <title><![CDATA[Who could be Starling’s next CEO?]]></title>
+            <link>https://sifted.eu/articles/starlings-next-ceo/</link>
+            <guid>https://sifted.eu/articles/starlings-next-ceo/</guid>
+            <pubDate>Tue, 24 Nov 2026 11:00:37 GMT</pubDate>
+        </item>
+<item>
+            <title><![CDATA[Cybersecurity startups mapped: 108 companies guarding Europe's digital frontline]]></title>
+            <link>https://sifted.eu/articles/cybersecurity-startups-mapped-108-companies-guarding-europes-digital-frontline/</link>
+            <guid>https://sifted.eu/articles/cybersecurity-startups-mapped-108-companies-guarding-europes-digital-frontline/</guid>
+            <pubDate>Tue, 24 Nov 2026 05:00:22 GMT</pubDate>
+        </item>
+<item>
+            <title><![CDATA[Defence startup Agon raises $70m backed by Northzone and Lakestar]]></title>
+            <link>https://sifted.eu/articles/agon-raise-northzone-lakestar-defence/</link>
+            <guid>https://sifted.eu/articles/agon-raise-northzone-lakestar-defence/</guid>
+            <pubDate>Mon, 23 Nov 2026 13:56:34 GMT</pubDate>
+        </item>
+<item>
+            <title><![CDATA[Sign up for the first London tech chess night]]></title>
+            <link>https://sifted.eu/articles/sign-up-for-the-first-london-tech-chess-night-brnd/</link>
+            <guid>https://sifted.eu/articles/sign-up-for-the-first-london-tech-chess-night-brnd/</guid>
+            <pubDate>Mon, 23 Nov 2026 13:07:34 GMT</pubDate>
+        </item>
+<item>
+            <title><![CDATA[Plural’s Sten Tamkivi on its €1bn fund, defence tech and why Europe didn’t miss the AI wave]]></title>
+            <link>https://sifted.eu/articles/plural-fund-ai-podcast/</link>
+            <guid>https://sifted.eu/articles/plural-fund-ai-podcast/</guid>
+            <pubDate>Mon, 23 Nov 2026 10:49:28 GMT</pubDate>
+        </item>
+<item>
+            <title><![CDATA[Why AI startups should build governance early]]></title>
+            <link>https://sifted.eu/articles/why-ai-startups-should-build-governance-early-brnd/</link>
+            <guid>https://sifted.eu/articles/why-ai-startups-should-build-governance-early-brnd/</guid>
+            <pubDate>Mon, 23 Nov 2026 09:00:24 GMT</pubDate>
+        </item>
+<item>
+            <title><![CDATA[Eileen Burbidge backs Monzo alums’ anti-fraud startup in £1.8m pre-seed]]></title>
+            <link>https://sifted.eu/articles/acorda-pre-seed/</link>
+            <guid>https://sifted.eu/articles/acorda-pre-seed/</guid>
+            <pubDate>Mon, 23 Nov 2026 05:00:46 GMT</pubDate>
+        </item>
+<item>
+            <title><![CDATA[Backed by Nvidia and a16z, Black Forest Labs sets its sights on world models]]></title>
+            <link>https://sifted.eu/articles/black-forest-labs-nvidia-a16z-andreas-blattmann-interview/</link>
+            <guid>https://sifted.eu/articles/black-forest-labs-nvidia-a16z-andreas-blattmann-interview/</guid>
+            <pubDate>Mon, 23 Nov 2026 05:00:45 GMT</pubDate>
+        </item>
+</channel></rss>

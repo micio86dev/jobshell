@@ -53,6 +53,12 @@ const ALLOWED: readonly string[] = [
   'breezy',
   'rippling',
   'pinpoint',
+  // Signal sources of the lead pipeline, probed live with robots.txt read first (evidence/source-probe).
+  'hn-hiring',
+  'hn-jobs',
+  'techcrunch-startups',
+  'sifted',
+  'yc-hiring',
   // Fetched by the desktop app through ZipRecruiter's MCP server, with the user's OAuth;
   // the agent only reads the file it leaves behind.
   'ziprecruiter',

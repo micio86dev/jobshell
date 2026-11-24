@@ -101,12 +101,13 @@ export const companyKeyOf = (input: { company: string | null; url: string }): st
   return `d:${registrableDomain(host)}`;
 };
 
-const idOf = (source: string, id: string): string =>
+/** A signal id that is the same for the same source and the same item, whenever it is read. */
+export const signalId = (source: string, id: string): string =>
   createHash('sha256').update(`${source}:${id}`).digest('hex').slice(0, 16);
 
 /** A job posting as a signal: the lowest-grade evidence that a company is hiring, and the carrier of the rest. */
 export const postingToSignal = (posting: Posting, now: Date): Signal => ({
-  id: idOf(posting.source, posting.id),
+  id: signalId(posting.source, posting.id),
   type: 'job_posting',
   source: posting.source,
   sources: [posting.source],
