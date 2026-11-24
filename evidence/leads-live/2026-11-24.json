@@ -1,0 +1,236 @@
+{
+  "generated_at": "2026-11-24T12:20:57.766Z",
+  "what_this_is": "One real run of the lead pipeline against real public sources, with the real profile and the real judgment key. Web research and outreach drafting were NOT exercised: the Anthropic account has no credit (HTTP 400, \"credit balance is too low\"). Scores rest on the signals alone.",
+  "profile": "the maintainer real profile (identity v2 in the app database); not stored here",
+  "strategy": {
+    "classify_budget": 60,
+    "enrich_budget": 10,
+    "usd_cap": 1,
+    "threshold": 60,
+    "min_confidence": 0.4
+  },
+  "sources": [
+    {
+      "source": "hn-hiring",
+      "signals": 234,
+      "skipped": null,
+      "ms": 16793
+    },
+    {
+      "source": "hn-jobs",
+      "signals": 30,
+      "skipped": null,
+      "ms": 440
+    },
+    {
+      "source": "yc-hiring",
+      "signals": 1414,
+      "skipped": null,
+      "ms": 245
+    },
+    {
+      "source": "sifted",
+      "signals": 8,
+      "skipped": null,
+      "ms": 137
+    },
+    {
+      "source": "techcrunch-startups",
+      "signals": 11,
+      "skipped": null,
+      "ms": 124
+    },
+    {
+      "source": "weworkremotely",
+      "signals": 25,
+      "skipped": null,
+      "ms": 1602
+    },
+    {
+      "source": "remoteok",
+      "signals": 100,
+      "skipped": null,
+      "ms": 1213
+    },
+    {
+      "source": "arbeitnow",
+      "signals": 300,
+      "skipped": null,
+      "ms": 641
+    },
+    {
+      "source": "jobicy",
+      "signals": 50,
+      "skipped": null,
+      "ms": 199
+    },
+    {
+      "source": "himalayas",
+      "signals": 20,
+      "skipped": null,
+      "ms": 138
+    },
+    {
+      "source": "getonbrd",
+      "signals": 50,
+      "skipped": null,
+      "ms": 819
+    },
+    {
+      "source": "workingnomads",
+      "signals": 37,
+      "skipped": null,
+      "ms": 807
+    }
+  ],
+  "funnel": {
+    "signals": {
+      "collected": 2279,
+      "unique": 2269,
+      "unidentified": 99,
+      "identified_by_model": 0
+    },
+    "companies": {
+      "found": 1901,
+      "with_every_signal_dropped": 43,
+      "after_filter": 1858,
+      "classified": 60,
+      "from_cache": 60
+    },
+    "prefilter_dropped": {
+      "unpaid": 33,
+      "junior": 11,
+      "internship": 25,
+      "stale": 17,
+      "onsite_only": 1
+    },
+    "judged": {
+      "available": true,
+      "calls": 0,
+      "suspicious": 0,
+      "failed": 0
+    },
+    "rejected": {
+      "score N is below N": 32,
+      "recruitment marketing, not a client": 2,
+      "one source is not enough: research could not confirm it": 18
+    },
+    "research": {
+      "available": false,
+      "reason": "the Anthropic account has no credit left: add credit in the Anthropic console",
+      "companies": 0,
+      "failed": 1,
+      "facts_kept": 0,
+      "facts_downgraded": 0,
+      "contacts_kept": 0,
+      "contacts_dropped": 0,
+      "skipped_for_budget": 0
+    }
+  },
+  "cost": {
+    "jev_input_tokens": 0,
+    "llm_input_tokens": 0,
+    "llm_output_tokens": 0,
+    "web_searches": 0,
+    "llm_usd": null,
+    "search_usd": 0,
+    "usd_known": 0,
+    "includes_unpriced": false
+  },
+  "duration_ms": {
+    "queries": 426,
+    "collect": 23160,
+    "identify": 331,
+    "judge": 2,
+    "research": 263,
+    "outreach": 2072
+  },
+  "explanation": [
+    "99 of 2269 signals name no company and could not be identified, so they stayed out.",
+    "Company research was not available (the Anthropic account has no credit left: add credit in the Anthropic console): scores rest on the signals alone, so confidence is lower and no contact could be found.",
+    "8 qualified leads from 60 companies judged."
+  ],
+  "qualified": [
+    {
+      "company": "Collabify",
+      "score": 77.4,
+      "confidence": 0.6,
+      "completeness": 0.14,
+      "kind": "freelance_request",
+      "source": "hn-hiring",
+      "title": "Collabify | Senior Full-Stack Engineer (backend-heavy) | REMOTE (worldwide) | Contract, 4–5 months | $3,000–4,000/month",
+      "url": "https://news.ycombinator.com/item?id=50428062"
+    },
+    {
+      "company": "hurra.com",
+      "score": 76.9,
+      "confidence": 0.63,
+      "completeness": 0.14,
+      "kind": "job_posting",
+      "source": "arbeitnow",
+      "title": "Freelance Full-Stack Developer | Django | AI Products | Python & LLM Integration | Remote 100%",
+      "url": "https://www.arbeitnow.com/jobs/companies/hurracom/freelance-full-stack-developer-django-ai-products-python-llm-integration-remote-100-berlin-290567"
+    },
+    {
+      "company": "iTalent PLUS",
+      "score": 73.5,
+      "confidence": 0.55,
+      "completeness": 0.14,
+      "kind": "job_posting",
+      "source": "himalayas",
+      "title": "Head of Software Engineering (Hands-on)",
+      "url": "https://himalayas.app/companies/italent-plus/jobs/head-of-software-engineering-hands-on"
+    },
+    {
+      "company": "SadServers",
+      "score": 70.8,
+      "confidence": 0.59,
+      "completeness": 0.14,
+      "kind": "freelance_request",
+      "source": "hn-hiring",
+      "title": "SadServers | Software Engineer | REMOTE (Canada) | Part-time or Contract | $55 - $75/hr | https://sadservers.com",
+      "url": "https://news.ycombinator.com/item?id=50341345"
+    },
+    {
+      "company": "Blackbird",
+      "score": 69.6,
+      "confidence": 0.62,
+      "completeness": 0.14,
+      "kind": "freelance_request",
+      "source": "hn-hiring",
+      "title": "Blackbird | Dev Shop | Remote (US only) | Contract",
+      "url": "https://news.ycombinator.com/item?id=50342576"
+    },
+    {
+      "company": "OpenTrain AI",
+      "score": 68.8,
+      "confidence": 0.61,
+      "completeness": 0.14,
+      "kind": "freelance_request",
+      "source": "hn-hiring",
+      "title": "OpenTrain AI | REMOTE (US) | Part-time | Backend Engineer, AI Coding Task Design",
+      "url": "https://news.ycombinator.com/item?id=50420399"
+    },
+    {
+      "company": "Tether",
+      "score": 67.6,
+      "confidence": 0.55,
+      "completeness": 0.14,
+      "kind": "job_posting",
+      "source": "hn-hiring",
+      "title": "Tether | Product Engineering Lead, Keet | REMOTE (Worldwide) We're looking for a Product Engineering Lead to help build and scale Keet, a fully peer-to-peer mes",
+      "url": "https://news.ycombinator.com/item?id=50355834"
+    },
+    {
+      "company": "eventfirst",
+      "score": 64.4,
+      "confidence": 0.56,
+      "completeness": 0.14,
+      "kind": "job_posting",
+      "source": "hn-hiring",
+      "title": "eventfirst | Senior Full-Stack Engineer | Berlin, Germany | REMOTE (CET) | Full-time | eventfirst.com",
+      "url": "https://news.ycombinator.com/item?id=50341824"
+    }
+  ],
+  "link_check_note": "Source links of the previous run (ten leads, eight of which still qualify here) were requested once each with an identified GET: nine answered 200, iTalent PLUS answered 403 to a non-browser client."
+}
