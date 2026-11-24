@@ -16,6 +16,7 @@ import { ANTHROPIC_VERSION } from '../llm-providers.ts';
 
 export const ANTHROPIC_MESSAGES_URL = 'https://api.anthropic.com/v1/messages';
 const MAX_CONTINUATIONS = 3;
+const LOGIN_WALLED = ['linkedin.com', 'facebook.com', 'instagram.com', 'x.com', 'twitter.com'] as const;
 
 export type ResearchDeps = {
   apiKey: string;
@@ -115,8 +116,9 @@ export const research = async (system: string, prompt: string, deps: ResearchDep
   const check = checkEndpoint(url);
   if (!check.ok) return { ok: false, reason: `provider endpoint refused: ${check.reason}` };
 
-  const tools: Block[] = [{ type: 'web_search_20250305', name: 'web_search', max_uses: deps.maxSearches }];
-  if (deps.maxFetches > 0) tools.push({ type: 'web_fetch_20250910', name: 'web_fetch', max_uses: deps.maxFetches });
+  // Login-walled networks are never read, by the model or by the provider's fetcher.
+  const tools: Block[] = [{ type: 'web_search_20250305', name: 'web_search', max_uses: deps.maxSearches, blocked_domains: [...LOGIN_WALLED] }];
+  if (deps.maxFetches > 0) tools.push({ type: 'web_fetch_20250910', name: 'web_fetch', max_uses: deps.maxFetches, blocked_domains: [...LOGIN_WALLED] });
 
   const messages: Array<{ role: 'user' | 'assistant'; content: unknown }> = [{ role: 'user', content: prompt }];
   const evidence: Evidence = { urls: new Set(), documents: [], citations: [] };

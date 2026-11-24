@@ -14,7 +14,9 @@ export type AskDeps = {
   fetchImpl: FetchLike;
 };
 
-export type AskResult = { ok: true; text: string } | { ok: false; reason: string };
+export type AskResult =
+  | { ok: true; text: string; usage: { input_tokens: number; output_tokens: number } }
+  | { ok: false; reason: string };
 
 export const askModel = async (prompt: string, deps: AskDeps): Promise<AskResult> => {
   const label = LLM_LABEL[deps.provider];
@@ -56,5 +58,5 @@ export const askModel = async (prompt: string, deps: AskDeps): Promise<AskResult
   const text = answer.text.trim();
   if (text.length === 0) return fail('provider answer had no text');
   if (answer.truncated) return fail('the answer was cut short: raise the token budget and try again');
-  return { ok: true, text };
+  return { ok: true, text, usage: answer.usage };
 };

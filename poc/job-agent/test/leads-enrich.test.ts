@@ -66,6 +66,9 @@ test('the request carries the web tools within the budget, and the key only in i
   assert.equal(call?.url, 'https://api.anthropic.com/v1/messages');
   const tools = call?.body['tools'] as Array<{ type: string; max_uses: number }>;
   assert.deepEqual(tools.map((tool) => [tool.type, tool.max_uses]), [['web_search_20250305', 4], ['web_fetch_20250910', 3]]);
+  // Login-walled networks are blocked for both tools, and the prompt says so.
+  for (const tool of call?.body['tools'] as Array<{ blocked_domains: string[] }>) assert.ok(tool.blocked_domains.includes('linkedin.com') && tool.blocked_domains.includes('facebook.com'));
+  assert.match(JSON.stringify(call?.body['messages']), /Do not use LinkedIn, Facebook, Instagram or X/);
   assert.ok(!JSON.stringify(call?.body).includes('sk-ant-test'));
 });
 

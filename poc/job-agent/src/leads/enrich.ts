@@ -264,7 +264,7 @@ export const enrichPrompt = (company: string, signals: readonly Signal[], hintWe
     '',
     'Find out: what the company does and sells, its business model, size, location, funding and investors, revenue or profitability if public, growth and hiring signals, recent launches, contracts or acquisitions, its technology, and whether it is a real business.',
     'Judge whether it plausibly needs outside software engineers (a contractor, freelancer or consultant) and why.',
-    `Find public business contacts for these roles only: ${CONTACT_ROLES.join(', ')}. Use the company site, its contact or team page, or public professional profiles.`,
+    `Find public business contacts for these roles only: ${CONTACT_ROLES.join(', ')}. Use the company site and its contact or team page. Do not use LinkedIn, Facebook, Instagram or X.`,
     '',
     'Rules for every fact and contact:',
     '- source_url: a page you searched or read. quote: words copied exactly from that page, 200 characters at most.',
