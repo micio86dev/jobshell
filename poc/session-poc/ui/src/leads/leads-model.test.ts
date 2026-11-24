@@ -93,6 +93,7 @@ describe('the cost of a run', () => {
     const base = { jev_input_tokens: 4000, llm_input_tokens: 10500, llm_output_tokens: 1350, web_searches: 3, llm_usd: 0.0345, search_usd: 0.03, usd_known: 0.0645, includes_unpriced: true };
     expect(costLine(base)).toBe('US$ 0.06 (without the judgment service tokens, 4000), 3 searches');
     expect(costLine({ ...base, includes_unpriced: false, web_searches: 0, search_usd: 0, usd_known: 0.03, llm_usd: 0.03 })).toBe('US$ 0.03');
+    expect(costLine(base, 4)).toBe('US$ 0.06 (without the judgment service tokens, 4000), 3 searches, US$ 0.02 per qualified lead');
     expect(costLine({ ...base, llm_usd: null, usd_known: 0, web_searches: 0, search_usd: 0, includes_unpriced: true, jev_input_tokens: 0, llm_input_tokens: 0, llm_output_tokens: 0 })).toBe('nothing was bought');
   });
 });

@@ -9,12 +9,13 @@ import { parseConfig, type AgentConfig, type Automation, type SourceOverride } f
 import { baseAutomation } from './policy.ts';
 import { listSources } from './sources/registry.ts';
 import { tenantsFor } from './sources/tenants.ts';
+import { SIGNAL_SOURCES } from './leads/sources.ts';
 
 /** The sources that take an employer id: one request per employer. */
 export const BOARD_SOURCES: readonly string[] = ['greenhouse', 'lever', 'ashby', 'recruitee', 'personio'];
 
-/** Every source the user may switch: each adapter, plus ZipRecruiter, which the desktop app fetches. */
-const knownSources = (): string[] => [...new Set([...listSources(), 'ziprecruiter'])];
+/** Every source the user may switch: each adapter, the signal sources of the client search, and ZipRecruiter, which the desktop app fetches. */
+const knownSources = (): string[] => [...new Set([...listSources(), ...SIGNAL_SOURCES.map((source) => source.id), 'ziprecruiter'])];
 
 export type Change = { ok: true; config: AgentConfig } | { ok: false; error: string };
 
