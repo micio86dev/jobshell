@@ -52,18 +52,35 @@ const contactIn = z.object({
   quote: z.string().min(1).max(500),
 });
 
+/** Prose from a model is cut to its limit, never a reason to lose the whole answer. */
+const clip = (max: number) => z.string().transform((value) => value.slice(0, max));
+
+/** An ISO 3166 alpha-2 code, or null: "United Kingdom" is not one, and "UK" is GB. */
+const countryCode = (value: string | null | undefined): string | null => {
+  const code = (value ?? '').trim().toUpperCase();
+  if (code === 'UK') return 'GB';
+  return /^[A-Z]{2}$/.test(code) ? code : null;
+};
+
+/** The valid items of a list. One malformed fact or contact is skipped; it does not cost the others. */
+const itemsOf = <T>(schema: z.ZodType<T>, max: number) =>
+  z.array(z.unknown()).transform((items) => items.slice(0, max).flatMap((item) => {
+    const parsed = schema.safeParse(item);
+    return parsed.success ? [parsed.data] : [];
+  }));
+
 export const enrichmentIn = z.object({
-  company: z.string().max(200),
+  company: clip(200),
   website: z.string().nullable().optional(),
-  country: z.string().length(2).nullable().optional(),
-  summary: z.string().max(800),
+  country: z.string().nullable().optional().transform(countryCode),
+  summary: clip(800),
   legitimacy: z.enum(['real', 'doubtful', 'unknown']),
-  legitimacy_reason: z.string().max(400).optional(),
-  engineering_need: z.string().max(600).optional(),
-  facts: z.array(factIn).max(40),
-  contacts: z.array(contactIn).max(10),
+  legitimacy_reason: clip(400).optional(),
+  engineering_need: clip(600).optional(),
+  facts: itemsOf(factIn, 40),
+  contacts: itemsOf(contactIn, 10),
 });
-type EnrichmentIn = z.infer<typeof enrichmentIn>;
+type EnrichmentIn = z.output<typeof enrichmentIn>;
 
 export type Dropped = { kind: 'fact' | 'contact'; field: string; reason: string };
 
@@ -135,7 +152,7 @@ const isOfficial = (url: string, website: string | null): boolean => {
 };
 
 const LOGIN_WALLED = ['linkedin.com', 'facebook.com', 'instagram.com', 'x.com', 'twitter.com'];
-const ROLE_WORDS = /\b(cto|chief technology|technical director|technology director|vp\b|vice president|head of engineering|engineering manager|founder|co-founder|ceo|chief executive)/i;
+const ROLE_WORDS = /\b(cto|chief technology|technical director|technology director|vp\b|vice president|head of engineering|engineering manager|founders?|co-?founders?|founded\b[^.]{0,30}\bby\b|ceo|chief executive)/i;
 
 const sameSite = (url: string, site: string | null): boolean => {
   const host = hostOf(url);
@@ -242,26 +259,28 @@ export const guardEnrichment = (
         drop('the address is not on the company site and domain');
         continue;
       }
-    } else if (contact.channel === 'profile') {
-      const host = hostOf(contact.value);
-      if (!/^https:\/\//.test(contact.value) || host === null || LOGIN_WALLED.some((wall) => host === wall || host.endsWith(`.${wall}`))) {
-        drop('a profile that is not a public https page');
-        continue;
+    } else {
+      const own = sameSite(contact.source_url, website) && sameSite(contact.value, website);
+      const shown = /^https:\/\//.test(contact.value) && (evidence.urls.has(canonicalUrl(contact.value)) || where.some((text) => text.includes(norm(contact.value))));
+      if (own) {
+        if (!shown) {
+          drop('the link is not a page of the company site shown by the research');
+          continue;
+        }
+      } else {
+        // On someone else's page (a directory, an article) a person counts only if the quoted words name the
+        // person, a role the search is for, and this company. Without a link the page itself is the contact.
+        const host = hostOf(contact.value);
+        if (!named || companyName === '' || !norm(contact.quote).replace(/[^a-z0-9]+/g, ' ').includes(companyName)) {
+          drop('the quote does not tie the person to the company');
+          continue;
+        }
+        if (host === null || !/^https:\/\//.test(contact.value) || LOGIN_WALLED.some((wall) => host === wall || host.endsWith(`.${wall}`))) {
+          drop('a profile that is not a public https page');
+          continue;
+        }
+        if (!shown) contact.value = contact.source_url;
       }
-      // Someone else's page can name a person only if its words tie the person to this company.
-      if (!named || companyName === '' || !norm(contact.quote).replace(/[^a-z0-9]+/g, ' ').includes(companyName)) {
-        drop('the quote does not tie the person to the company');
-        continue;
-      }
-    } else if (
-      !/^https:\/\//.test(contact.value) ||
-      !sameSite(contact.source_url, website) ||
-      !sameSite(contact.value, website) ||
-      // A link counts when the research touched it, or when the page it was read on shows it.
-      !(evidence.urls.has(canonicalUrl(contact.value)) || where.some((text) => text.includes(norm(contact.value))))
-    ) {
-      drop('the link is not a page of the company site shown by the research');
-      continue;
     }
     contacts.push({
       role: contact.role,
@@ -313,6 +332,8 @@ export const enrichPrompt = (company: string, signals: readonly Signal[], hintWe
     '- source_url: a page you searched or read. quote: words copied exactly from that page, 200 characters at most.',
     '- provenance: "verified" only when the page is the company own site or an official register; "reported" for press or a directory that names its source; "estimated" for a third-party estimate; "inferred" for your own reading (no source needed).',
     '- A contact email must appear letter for letter in the page. Never guess an address from a pattern.',
+    '- A fact can be checked only if its quote is on a page you read in full with the fetch tool (or a passage you cite). Read the company own pages (home, about, team, contact) with the fetch tool before you answer; a quote taken only from a search snippet is treated as your own reading.',
+    '- For a named contact, the quote must hold the person name and the role in the same sentence, copied from the page.',
     `- fact fields allowed: ${FACT_FIELDS.join(', ')}.`,
     '',
     'JSON shape: {"company": string, "website": string|null, "country": "ISO 3166 alpha-2"|null, "summary": string, "legitimacy": "real"|"doubtful"|"unknown", "legitimacy_reason": string, "engineering_need": string, "facts": [{"field","value","provenance","source_url","quote"}], "contacts": [{"role","name","channel":"email"|"form"|"profile"|"page","value","source_url","quote"}]}',

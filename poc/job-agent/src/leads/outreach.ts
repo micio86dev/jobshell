@@ -78,7 +78,7 @@ export const draftPrompt = (input: DraftInput): string => {
     'Rules:',
     '- At most 110 words. Plain, specific, no flattery, no sales phrases, no "I hope this finds you well".',
     '- Name one concrete thing about the company and one concrete way the engineer can help with it.',
-    '- State no number, date or name that is not in the facts or the signals above. Do not invent projects or clients.',
+    '- State no number, date or name that is not in the facts or the signals above. Do not invent projects or clients. Write no durations or counts at all: say "a short call", not "a 20 minute call".',
     '- Suggest one small next step, such as a short call. No links. End with the signature line [Your name].',
     '',
     'Return ONLY JSON: {"subject": string, "body": string, "facts_used": [field names from the facts you relied on]}',
