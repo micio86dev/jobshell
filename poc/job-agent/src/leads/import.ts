@@ -57,6 +57,7 @@ export const refuseLink = (url: string): string | null => {
 export const fetchImportPage = async (
   url: string,
   fetchImpl: FetchLike,
+  limit: number = MAX_TEXT,
 ): Promise<{ ok: true; text: string } | { ok: false; reason: string }> => {
   const refusal = refuseLink(url);
   if (refusal !== null) return { ok: false, reason: refusal };
@@ -77,7 +78,7 @@ export const fetchImportPage = async (
     if (redirected(page.status)) return { ok: false, reason: 'the link redirects: open it, then paste the text or the final link' };
     if (page.status !== 200) return { ok: false, reason: `the page answered ${page.status}` };
     const text = plain(page.text.replace(/<(script|style)[\s\S]*?<\/\1>/gi, ' '));
-    return text.length < MIN_TEXT ? { ok: false, reason: 'the page has no readable text' } : { ok: true, text: text.slice(0, MAX_TEXT) };
+    return text.length < MIN_TEXT ? { ok: false, reason: 'the page has no readable text' } : { ok: true, text: text.slice(0, limit) };
   } catch {
     return { ok: false, reason: 'the page could not be fetched' };
   }

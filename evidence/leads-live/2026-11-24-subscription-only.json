@@ -1,0 +1,1628 @@
+{
+  "run": {
+    "id": "lead-run-2026-11-24T17-14-11-926Z",
+    "started_at": "2026-11-24T17:14:11.926Z",
+    "finished_at": "2026-11-24T17:21:03.417Z",
+    "metrics": {
+      "dry_run": false,
+      "sources": [
+        {
+          "source": "hn-hiring",
+          "policy": "allowed",
+          "url": "https://hn.algolia.com/api/v1/search_by_date?tags=comment,story_50338728&hitsPerPage=200&page=1",
+          "pages": 3,
+          "status": 200,
+          "postings": 234,
+          "challenge": "none",
+          "ms": 16867,
+          "skipped": null
+        },
+        {
+          "source": "hn-jobs",
+          "policy": "allowed",
+          "url": "https://hn.algolia.com/api/v1/search_by_date?tags=job&hitsPerPage=30",
+          "pages": 1,
+          "status": 200,
+          "postings": 30,
+          "challenge": "none",
+          "ms": 510,
+          "skipped": null
+        },
+        {
+          "source": "yc-hiring",
+          "policy": "allowed",
+          "url": "https://yc-oss.github.io/api/companies/hiring.json",
+          "pages": 1,
+          "status": 200,
+          "postings": 1414,
+          "challenge": "none",
+          "ms": 285,
+          "skipped": null
+        },
+        {
+          "source": "sifted",
+          "policy": "allowed",
+          "url": "https://sifted.eu/feed",
+          "pages": 1,
+          "status": 200,
+          "postings": 7,
+          "challenge": "none",
+          "ms": 190,
+          "skipped": null
+        },
+        {
+          "source": "techcrunch-startups",
+          "policy": "allowed",
+          "url": "https://techcrunch.com/category/startups/feed/",
+          "pages": 1,
+          "status": 200,
+          "postings": 11,
+          "challenge": "none",
+          "ms": 150,
+          "skipped": null
+        },
+        {
+          "source": "weworkremotely",
+          "policy": "allowed",
+          "url": "https://weworkremotely.com/categories/remote-programming-jobs.rss",
+          "pages": 1,
+          "status": 200,
+          "postings": 25,
+          "challenge": "none",
+          "ms": 342,
+          "skipped": null
+        },
+        {
+          "source": "remoteok",
+          "policy": "allowed",
+          "url": "https://remoteok.com/api",
+          "pages": 1,
+          "status": 200,
+          "postings": 100,
+          "challenge": "none",
+          "ms": 1250,
+          "skipped": null
+        },
+        {
+          "source": "arbeitnow",
+          "policy": "allowed",
+          "url": "https://www.arbeitnow.com/api/job-board-api",
+          "pages": 1,
+          "status": 200,
+          "postings": 300,
+          "challenge": "none",
+          "ms": 386,
+          "skipped": null
+        }
+      ],
+      "signals": {
+        "collected": 2121,
+        "unique": 2111,
+        "unidentified": 14,
+        "identified_by_model": 34
+      },
+      "companies": {
+        "found": 1868,
+        "with_every_signal_dropped": 36,
+        "after_filter": 1832,
+        "classified": 11,
+        "from_cache": 0
+      },
+      "prefilter_dropped": {
+        "unpaid": 32,
+        "closed": 1,
+        "junior": 7,
+        "internship": 25,
+        "stale": 15,
+        "onsite_only": 1
+      },
+      "judge": {
+        "available": true,
+        "calls": 11,
+        "suspicious": 0,
+        "failed": 1
+      },
+      "research": {
+        "available": true,
+        "reason": null,
+        "companies": 3,
+        "failed": 0,
+        "facts_kept": 23,
+        "facts_downgraded": 2,
+        "contacts_kept": 4,
+        "contacts_dropped": 1,
+        "skipped_for_budget": 0
+      },
+      "outreach": {
+        "drafted": 3,
+        "refused": 0
+      },
+      "qualified": 3,
+      "rejected": {
+        "recruitment marketing, not a client": 1,
+        "score N is below N": 4,
+        "one source is not enough: research could not confirm it": 3
+      },
+      "best_rejected": {
+        "company": "Quill",
+        "score": 61.3,
+        "reason": "one source is not enough: research could not confirm it"
+      },
+      "threshold": 60,
+      "errors": [
+        {
+          "stage": "judge",
+          "message": "judgment: the model answer had no usable answers"
+        }
+      ],
+      "ms": {
+        "queries": 7773,
+        "collect": 19980,
+        "identify": 60665,
+        "judge": 115636,
+        "research": 163539,
+        "outreach": 43767
+      },
+      "cost": {
+        "jev_input_tokens": 0,
+        "llm_input_tokens": 0,
+        "llm_output_tokens": 0,
+        "web_searches": 3,
+        "llm_usd": null,
+        "search_usd": 0.03,
+        "usd_known": 0.03,
+        "includes_unpriced": true
+      },
+      "explanation": [
+        "14 of 2111 signals name no company and could not be identified, so they stayed out.",
+        "1 judgments failed and those companies were not qualified.",
+        "3 qualified leads from 11 companies judged."
+      ]
+    },
+    "cost": {
+      "jev_input_tokens": 0,
+      "llm_input_tokens": 0,
+      "llm_output_tokens": 0,
+      "web_searches": 3,
+      "llm_usd": null,
+      "search_usd": 0.03,
+      "usd_known": 0.03,
+      "includes_unpriced": true
+    }
+  },
+  "leads": [
+    {
+      "company_key": "n:collabify",
+      "company_name": "Collabify",
+      "website": null,
+      "country": null,
+      "qualified": true,
+      "rejection_reason": null,
+      "summary": "Asks for outside engineers. The need is explicit and current: Collabify is hiring its first engineer on a 4-5 month contract to own architecture and build the first version of the product. It also listed a Design Engineer role 4 months ago. A contractor is therefore plausible, but the role is already open, and the pay ($3,000-4,000/month at 20-30+ hours/week) is modest for a senior freelancer. A pitch would have to be for a different scope, or for the same work at a higher rate. It could also be framed as fast delivery of the first version, or as help with the hard parts the post names: tenant isolation, auth flows and v Evidence: Collabify | Senior Full-Stack Engineer (backend-heavy) | REMOTE (worldwide) | Contract, 4–5 months | $3,000–4,000/month",
+      "why_match": "Fit transferable (69%), level matches (94%); names react, typescript, node, postgresql. Level 94%, 4 profile technologies named, work related to software: 100%.",
+      "next_action": "Reply where it was posted: https://news.ycombinator.com/item?id=50428062",
+      "score": {
+        "total": 73.7,
+        "confidence": 0.81,
+        "completeness": 0.29,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 15,
+            "max": 20,
+            "explanation": "Fit transferable (69%), level matches (94%); names react, typescript, node, postgresql.",
+            "evidence": [
+              "66cc3c28400fd6db"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 23.3,
+            "max": 25,
+            "explanation": "Need: explicit_external (96%); could become a B2B engagement: 90%.",
+            "evidence": [
+              "66cc3c28400fd6db"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 11,
+            "max": 20,
+            "explanation": "Counted: hiring or growth.",
+            "evidence": [
+              "66cc3c28400fd6db"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 6.3,
+            "max": 15,
+            "explanation": "Ongoing work: 50%; a single signal.",
+            "evidence": [
+              "66cc3c28400fd6db"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 8.4,
+            "max": 10,
+            "explanation": "Remote: remote_ok (90%); country unknown.",
+            "evidence": [
+              "66cc3c28400fd6db"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 9.7,
+            "max": 10,
+            "explanation": "Level 94%, 4 profile technologies named, work related to software: 100%.",
+            "evidence": [
+              "66cc3c28400fd6db"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "66cc3c28400fd6db",
+          "type": "freelance_request",
+          "source": "hn-hiring",
+          "url": "https://news.ycombinator.com/item?id=50428062",
+          "title": "Collabify | Senior Full-Stack Engineer (backend-heavy) | REMOTE (worldwide) | Contract, 4–5 months | $3,000–4,000/month",
+          "quote": "Collabify | Senior Full-Stack Engineer (backend-heavy) | REMOTE (worldwide) | Contract, 4–5 months | $3,000–4,000/month I'm looking to hire our first engineer to own architecture and build product first version. Stack: TypeScript, React/Nex",
+          "published_at": "2026-11-09T16:46:20.000Z",
+          "observed_at": "2026-11-24T17:14:11.926Z"
+        }
+      ],
+      "facts": [
+        {
+          "field": "hiring",
+          "value": "Collabify | Senior Full-Stack Engineer (backend-heavy) | REMOTE (worldwide) | Contract, 4–5 months | $3,000–4,000/month",
+          "provenance": "reported",
+          "source_url": "https://news.ycombinator.com/item?id=50428062",
+          "quote": "Collabify | Senior Full-Stack Engineer (backend-heavy) | REMOTE (worldwide) | Contract, 4–5 months | $3,000–4,000/month"
+        },
+        {
+          "field": "hiring",
+          "value": "Hiring its first engineer on a paid 4-5 month contract, 20-30+ hours/week, $3,000-4,000/month, paid against agreed milestones; possible founding role with equity afterwards.",
+          "provenance": "reported",
+          "source_url": "https://news.ycombinator.com/item?id=50428062",
+          "quote": "Terms: a paid 4–5-month contract, 20-30+ hours/week, at $3,000–4,000/month, paid against agreed milestones."
+        },
+        {
+          "field": "engineering_need",
+          "value": "No engineer in place yet; the hire is meant to own architecture and build the first version of the product.",
+          "provenance": "reported",
+          "source_url": "https://news.ycombinator.com/item?id=50428062",
+          "quote": "I'm looking to hire our first engineer to own architecture and build product first version."
+        },
+        {
+          "field": "technology",
+          "value": "TypeScript, React/Next.js, Node.js and PostgreSQL.",
+          "provenance": "reported",
+          "source_url": "https://news.ycombinator.com/item?id=50428062",
+          "quote": "Stack: TypeScript, React/Next.js, Node.js and PostgreSQL."
+        },
+        {
+          "field": "technology",
+          "value": "Multi-tenant architecture with tenant isolation on a shared Postgres schema using row level security, multiple authentication flows, subdomain-based client portals and large video uploads.",
+          "provenance": "reported",
+          "source_url": "https://news.ycombinator.com/item?id=50428062",
+          "quote": "tenant isolation on a shared Postgres schema with row level security, multiple authentication flows, subdomain-based client portals and large video uploads."
+        },
+        {
+          "field": "description",
+          "value": "The core product has a landing site, a brand/creator app and admin interfaces; the company says its work is 100% remote.",
+          "provenance": "reported",
+          "source_url": "https://freehire.me/companies/collabify",
+          "quote": "focusing on usability and consistency across landing, brand/creator app, and admin interfaces"
+        },
+        {
+          "field": "hiring",
+          "value": "The job-board listing shows 3 open jobs: the Senior Full-Stack Engineer (contract) and two Design Engineer postings, posted 4 months ago.",
+          "provenance": "reported",
+          "source_url": "https://freehire.me/companies/collabify",
+          "quote": "Collabify is seeking a Design Engineer to design and implement UI for our core product in a 100% remote environment"
+        }
+      ],
+      "contacts": [],
+      "outreach": [
+        {
+          "lang": "en",
+          "subject": "Back-end help for Collabify's first version",
+          "body": "Hi Collabify team,\n\nI saw you're hiring a backend-heavy engineer on contract to own architecture and build the first version of the product. Tenant isolation on a shared Postgres schema with row level security, plus multiple authentication flows, looks like the hard part.\n\nI'm a senior freelance software engineer who builds back-end APIs in Node.js and PHP, working remotely with international companies. I could take on the API and auth layer, or help get the first version out sooner alongside whoever you hire.\n\nWould a short call be useful to see if there's a fit?\n\nBest,\n[Your name]",
+          "fact_ids": [
+            "hiring",
+            "engineering_need",
+            "technology"
+          ]
+        }
+      ]
+    },
+    {
+      "company_key": "n:constructor",
+      "company_name": "Constructor",
+      "website": "https://constructor.com",
+      "country": null,
+      "qualified": true,
+      "rejection_reason": null,
+      "summary": "Shows an engineering gap it may not be able to fill alone. Plausible but modest. The company is a funded, growing engineering-led product firm with 400+ people and open engineering roles (Software Engineer: Core, FullStack Engineer), and it is expanding internationally. It builds its search engine in-house and is remote-first, so it can take on distributed engineers. It has a large in-house team, so outside help is most likely for short-term capacity or specialised projects rather than core work. This is my own reading. Evidence: FullStack Engineer - Prospect Data Solutions",
+      "why_match": "Fit transferable (67%), level matches (89%); names vue, react, typescript, javascript, node. Level 89%, 6 profile technologies named, work related to software: 96%.",
+      "next_action": "Write to Eli Finkelshteyn (CEO) through https://constructor.com/about.",
+      "score": {
+        "total": 69.5,
+        "confidence": 0.81,
+        "completeness": 0.71,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 13.9,
+            "max": 20,
+            "explanation": "Fit transferable (67%), level matches (89%); names vue, react, typescript, javascript, node.",
+            "evidence": [
+              "827ed01d0deacc9c"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 11.3,
+            "max": 25,
+            "explanation": "Need: probable_gap (51%); could become a B2B engagement: 40%.",
+            "evidence": [
+              "827ed01d0deacc9c"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 15,
+            "max": 20,
+            "explanation": "Counted: size, hiring or growth, a real business.",
+            "evidence": [
+              "827ed01d0deacc9c"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 11.9,
+            "max": 15,
+            "explanation": "Ongoing work: 65%; the company is growing or shows several signals.",
+            "evidence": [
+              "827ed01d0deacc9c"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 8,
+            "max": 10,
+            "explanation": "Remote: remote_ok (84%); country unknown.",
+            "evidence": [
+              "827ed01d0deacc9c"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 9.4,
+            "max": 10,
+            "explanation": "Level 89%, 6 profile technologies named, work related to software: 96%.",
+            "evidence": [
+              "827ed01d0deacc9c"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "827ed01d0deacc9c",
+          "type": "job_posting",
+          "source": "arbeitnow",
+          "url": "https://www.arbeitnow.com/jobs/companies/constructor/fullstack-engineer-prospect-data-solutions-munich-211449",
+          "title": "FullStack Engineer - Prospect Data Solutions",
+          "quote": "About You You have a knack for solving intricate Software Development problems. You're driven by the idea of writing code that simplifies life for millions of users globally. You're committed to continuous learning and enjoy tackling new ch",
+          "published_at": "2026-11-24T12:40:17.000Z",
+          "observed_at": "2026-11-24T17:14:11.926Z"
+        },
+        {
+          "id": "aa02f636893d34cc",
+          "type": "job_posting",
+          "source": "arbeitnow",
+          "url": "https://www.arbeitnow.co.uk/jobs/companies/constructor/remote-software-engineer-core-180673",
+          "title": "Software Engineer: Core",
+          "quote": "About Us Constructor is the next-generation platform for search and discovery in ecommerce, built to explicitly optimize for metrics like revenue, conversion rate, and profit. Our search engine is entirely invented in-house utilizing transf",
+          "published_at": "2026-11-24T12:40:17.000Z",
+          "observed_at": "2026-11-24T17:14:11.926Z"
+        }
+      ],
+      "facts": [
+        {
+          "field": "hiring",
+          "value": "FullStack Engineer - Prospect Data Solutions",
+          "provenance": "reported",
+          "source_url": "https://www.arbeitnow.com/jobs/companies/constructor/fullstack-engineer-prospect-data-solutions-munich-211449",
+          "quote": "FullStack Engineer - Prospect Data Solutions"
+        },
+        {
+          "field": "hiring",
+          "value": "Software Engineer: Core",
+          "provenance": "reported",
+          "source_url": "https://www.arbeitnow.co.uk/jobs/companies/constructor/remote-software-engineer-core-180673",
+          "quote": "Software Engineer: Core"
+        },
+        {
+          "field": "website",
+          "value": "https://constructor.com",
+          "provenance": "verified",
+          "source_url": "https://constructor.com/about",
+          "quote": "Constructor is building the next generation of search solutions."
+        },
+        {
+          "field": "description",
+          "value": "Product search and discovery solution for ecommerce retailers, built with AI at its core.",
+          "provenance": "verified",
+          "source_url": "https://constructor.com/about",
+          "quote": "With AI in our DNA and by keeping ecommerce as our core focus, we’ve built the best product search and discovery solution specifically for the unique needs of retailers."
+        },
+        {
+          "field": "business_model",
+          "value": "SaaS sold to ecommerce retailers.",
+          "provenance": "verified",
+          "source_url": "https://constructor.com/about",
+          "quote": "Their vision is to automate the rich complexity required for a modern search experience behind a simple, elegant SaaS solution."
+        },
+        {
+          "field": "company_size",
+          "value": "400+ team members across 40 countries, working remotely.",
+          "provenance": "verified",
+          "source_url": "https://constructor.com/about",
+          "quote": "Our team works remotely all over the world. 40 Countries 400+ Team Members"
+        },
+        {
+          "field": "technology",
+          "value": "AI-driven search and autosuggest using real-time shopper behavior.",
+          "provenance": "verified",
+          "source_url": "https://constructor.com/about",
+          "quote": "Search & Autosuggest Ecommerce search driven by AI and real-time shopper behavior"
+        },
+        {
+          "field": "product_launch",
+          "value": "Commerce AEO, currently in beta, monitors the revenue impact of AI traffic.",
+          "provenance": "verified",
+          "source_url": "https://constructor.com/about",
+          "quote": "Commerce AEO BETA Monitor the impact of AI traffic on revenue"
+        },
+        {
+          "field": "funding",
+          "value": "$25M Series B in June 2024 at a $550M valuation; over $85M raised in total.",
+          "provenance": "inferred",
+          "source_url": null,
+          "quote": null
+        },
+        {
+          "field": "investors",
+          "value": "Sapphire Ventures (lead) and Silversmith Capital Partners.",
+          "provenance": "reported",
+          "source_url": "https://tech.eu/2024/06/17/constructor-headed-for-europe-following-25m-series-b",
+          "quote": "Sapphire Ventures led the round with participation from existing investor Silversmith Capital Partners"
+        },
+        {
+          "field": "growth",
+          "value": "Announced European expansion in June 2024 alongside the Series B.",
+          "provenance": "reported",
+          "source_url": "https://tech.eu/2024/06/17/constructor-headed-for-europe-following-25m-series-b",
+          "quote": "has announced its European expansion plans in tandem with the close of its $25M Series B round"
+        },
+        {
+          "field": "engineering_need",
+          "value": "Large remote engineering organisation that builds its search engine in-house; outside engineers are plausible for added capacity or specialised projects.",
+          "provenance": "inferred",
+          "source_url": null,
+          "quote": null
+        }
+      ],
+      "contacts": [
+        {
+          "role": "CEO",
+          "name": "Eli Finkelshteyn",
+          "channel": "page",
+          "value": "https://constructor.com/about",
+          "source_url": "https://constructor.com/about",
+          "quote": "Eli Finkelshteyn Chief Executive Officer",
+          "verified": true
+        },
+        {
+          "role": "Founder",
+          "name": "Dan McCormick",
+          "channel": "page",
+          "value": "https://constructor.com/about",
+          "source_url": "https://constructor.com/about",
+          "quote": "Constructor was founded in 2015 by Eli Finkelshteyn and Dan McCormick to ease the pain of implementing compelling search experiences.",
+          "verified": true
+        }
+      ],
+      "outreach": [
+        {
+          "lang": "en",
+          "subject": "Short-term engineering capacity for Constructor",
+          "body": "Hi Eli,\n\nI saw that Constructor is hiring for Software Engineer: Core and a FullStack Engineer on Prospect Data Solutions, and that Commerce AEO is in beta.\n\nI'm a senior freelance engineer, working remotely with international companies. I build back-end APIs in Node.js and PHP, and Vue.js/Nuxt front ends. If hiring is running behind the roadmap, I could cover a bounded full-stack piece, such as work around Commerce AEO, alongside your team and away from core search.\n\nWould a short call be useful to see whether there is a fit?\n\n[Your name]",
+          "fact_ids": [
+            "hiring",
+            "product_launch"
+          ]
+        }
+      ]
+    },
+    {
+      "company_key": "n:kapa ai",
+      "company_name": "kapa.ai",
+      "website": "https://kapa.ai",
+      "country": null,
+      "qualified": true,
+      "rejection_reason": null,
+      "summary": "Shows an engineering gap it may not be able to fill alone. Plausible but moderate. It is a funded, growing product company with 22 people. It is hiring a full-stack software engineer and an applied-AI research engineer, which points to a need for engineering capacity. It builds a lot in-house (crawling infrastructure, RAG stack, SDK, retrieval API, hosted MCP server). The pages show no contractor or freelancer programme, so any outside work would probably be short-term overflow on integrations, SDK work or crawling. The most direct approach is to the CTO or the founders. Evidence: kapa.ai: The fastest way to build AI assistants on technical content",
+      "why_match": "Fit transferable (63%), level matches (79%); names api, openai. Level 79%, 2 profile technologies named, work related to software: 90%.",
+      "next_action": "Write to Emil Soerensen (CEO) through https://www.ycombinator.com/companies/kapa-ai.",
+      "score": {
+        "total": 65.5,
+        "confidence": 0.76,
+        "completeness": 0.71,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 11.9,
+            "max": 20,
+            "explanation": "Fit transferable (63%), level matches (79%); names api, openai.",
+            "evidence": [
+              "98305f37731cc3c9"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 11.6,
+            "max": 25,
+            "explanation": "Need: probable_gap (43%); could become a B2B engagement: 50%.",
+            "evidence": [
+              "98305f37731cc3c9"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 15,
+            "max": 20,
+            "explanation": "Counted: size, hiring or growth, a real business.",
+            "evidence": [
+              "98305f37731cc3c9"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 11.4,
+            "max": 15,
+            "explanation": "Ongoing work: 60%; the company is growing or shows several signals.",
+            "evidence": [
+              "98305f37731cc3c9"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 7.8,
+            "max": 10,
+            "explanation": "Remote: remote_ok (82%); country unknown.",
+            "evidence": [
+              "98305f37731cc3c9"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 7.8,
+            "max": 10,
+            "explanation": "Level 79%, 2 profile technologies named, work related to software: 90%.",
+            "evidence": [
+              "98305f37731cc3c9"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "98305f37731cc3c9",
+          "type": "hiring_growth",
+          "source": "yc-hiring",
+          "url": "https://www.ycombinator.com/companies/kapa-ai",
+          "title": "kapa.ai: The fastest way to build AI assistants on technical content",
+          "quote": "The fastest way to build AI assistants on technical content kapa.ai makes it easy for technical companies to build AI support and onboarding bots for their users. Teams at +150 leading startups and enterprises incl. OpenAI, Mixpanel, Mapbox",
+          "published_at": null,
+          "observed_at": "2026-11-24T17:14:11.926Z"
+        }
+      ],
+      "facts": [
+        {
+          "field": "company_size",
+          "value": "22 people",
+          "provenance": "reported",
+          "source_url": "https://www.ycombinator.com/companies/kapa-ai",
+          "quote": "Team size 22"
+        },
+        {
+          "field": "hiring",
+          "value": "Listed as hiring",
+          "provenance": "reported",
+          "source_url": "https://www.ycombinator.com/companies/kapa-ai",
+          "quote": "kapa.ai: The fastest way to build AI assistants on technical content"
+        },
+        {
+          "field": "website",
+          "value": "https://www.kapa.ai",
+          "provenance": "reported",
+          "source_url": "https://www.ycombinator.com/companies/kapa-ai",
+          "quote": "https://www.kapa.ai"
+        },
+        {
+          "field": "description",
+          "value": "AI support agent for technical products",
+          "provenance": "verified",
+          "source_url": "https://www.kapa.ai/about",
+          "quote": "AI support agent for technical products."
+        },
+        {
+          "field": "business_model",
+          "value": "B2B software: sells its AI support agent to technical companies, with a pricing page and demo booking",
+          "provenance": "inferred",
+          "source_url": null,
+          "quote": null
+        },
+        {
+          "field": "funding",
+          "value": "$3.2M, announced October 3, 2024",
+          "provenance": "inferred",
+          "source_url": null,
+          "quote": null
+        },
+        {
+          "field": "investors",
+          "value": "Y Combinator and Initialized",
+          "provenance": "verified",
+          "source_url": "https://www.kapa.ai/about",
+          "quote": "Backed by Y Combinator & Initialized"
+        },
+        {
+          "field": "growth",
+          "value": "200+ companies deployed and 2M+ questions answered per month",
+          "provenance": "verified",
+          "source_url": "https://www.kapa.ai/about",
+          "quote": "2M+ Questions answered every month"
+        },
+        {
+          "field": "hiring",
+          "value": "Hiring researchers and engineers in Copenhagen, New York or remotely",
+          "provenance": "verified",
+          "source_url": "https://www.kapa.ai/about",
+          "quote": "We're a small, ambitious team hiring researchers and engineers, across Copenhagen, New York, or remotely."
+        },
+        {
+          "field": "hiring",
+          "value": "Open roles include a full-stack software engineer and a research engineer in applied AI, both remote-eligible",
+          "provenance": "reported",
+          "source_url": "https://www.ycombinator.com/companies/kapa-ai",
+          "quote": "Software Engineer (Full-stack)"
+        },
+        {
+          "field": "product_launch",
+          "value": "Launch of kapa.ai as 'ChatGPT for developer-facing products'",
+          "provenance": "reported",
+          "source_url": "https://www.ycombinator.com/companies/kapa-ai",
+          "quote": "Company Launches kapa.ai: ChatGPT for developer-facing products"
+        },
+        {
+          "field": "technology",
+          "value": "Full retrieval augmented generation stack with crawling infrastructure to keep technical sources up to date for LLMs",
+          "provenance": "reported",
+          "source_url": "https://www.ycombinator.com/companies/kapa-ai",
+          "quote": "We’ve built a full retrieval augmented generation stack"
+        },
+        {
+          "field": "engineering_need",
+          "value": "Hiring full-time engineers suggests spare demand for engineering capacity; no contractor programme is stated",
+          "provenance": "inferred",
+          "source_url": null,
+          "quote": null
+        }
+      ],
+      "contacts": [
+        {
+          "role": "CEO",
+          "name": "Emil Soerensen",
+          "channel": "page",
+          "value": "https://www.ycombinator.com/companies/kapa-ai",
+          "source_url": "https://www.ycombinator.com/companies/kapa-ai",
+          "quote": "Emil Soerensen Founder Emil is the co-founder and CEO of kapa.ai (S23).",
+          "verified": true
+        },
+        {
+          "role": "CTO",
+          "name": "Finn Bauer",
+          "channel": "page",
+          "value": "https://www.ycombinator.com/companies/kapa-ai",
+          "source_url": "https://www.ycombinator.com/companies/kapa-ai",
+          "quote": "Finn Bauer Founder Finn is the co-founder and CTO of kapa.ai (S23).",
+          "verified": true
+        }
+      ],
+      "outreach": [
+        {
+          "lang": "en",
+          "subject": "Engineering capacity for kapa.ai's crawling and integrations",
+          "body": "Hi Emil,\n\nI saw that kapa.ai is hiring a full-stack engineer and an applied-AI research engineer, and that you run your own RAG stack with crawling infrastructure to keep technical sources current for LLMs.\n\nI'm a senior freelance software engineer working remotely with international companies. My focus is back-end work (Node.js and PHP APIs) and full-stack web with Vue.js and Nuxt. If you have overflow on integrations or source connectors around that crawling pipeline, I can take a well-defined piece while the new hires get started.\n\nWould a short call make sense to see if there's a fit?\n\n[Your name]",
+          "fact_ids": [
+            "hiring",
+            "technology"
+          ]
+        }
+      ]
+    },
+    {
+      "company_key": "n:quill",
+      "company_name": "Quill",
+      "website": null,
+      "country": null,
+      "qualified": false,
+      "rejection_reason": "one source is not enough: research could not confirm it",
+      "summary": "Shows an engineering gap it may not be able to fill alone. Evidence: Quill: Fullstack API and management platform for dashboards and reporting",
+      "why_match": "Fit strong (70%), level matches (87%); names react, api. Level 87%, 2 profile technologies named, work related to software: 84%.",
+      "next_action": "No public contact was found: look for the CTO or a founder on the company site.",
+      "score": {
+        "total": 61.3,
+        "confidence": 0.51,
+        "completeness": 0.29,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 14.1,
+            "max": 20,
+            "explanation": "Fit strong (70%), level matches (87%); names react, api.",
+            "evidence": [
+              "126a4340e47b1e1b"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 10.1,
+            "max": 25,
+            "explanation": "Need: probable_gap (41%); could become a B2B engagement: 40%.",
+            "evidence": [
+              "126a4340e47b1e1b"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 13,
+            "max": 20,
+            "explanation": "Counted: size, hiring or growth.",
+            "evidence": [
+              "126a4340e47b1e1b"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 10.5,
+            "max": 15,
+            "explanation": "Ongoing work: 50%; the company is growing or shows several signals.",
+            "evidence": [
+              "126a4340e47b1e1b"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 5.6,
+            "max": 10,
+            "explanation": "Remote: unknown (50%); country unknown.",
+            "evidence": [
+              "126a4340e47b1e1b"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 8,
+            "max": 10,
+            "explanation": "Level 87%, 2 profile technologies named, work related to software: 84%.",
+            "evidence": [
+              "126a4340e47b1e1b"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "126a4340e47b1e1b",
+          "type": "hiring_growth",
+          "source": "yc-hiring",
+          "url": "https://www.ycombinator.com/companies/quill",
+          "title": "Quill: Fullstack API and management platform for dashboards and reporting",
+          "quote": "Fullstack API and management platform for dashboards and reporting React Library, API, and Management Toolkit, purpose built for customer-facing dashboards. Team size 5. Stage Early. YC Winter 2020.",
+          "published_at": null,
+          "observed_at": "2026-11-24T17:14:11.926Z"
+        }
+      ],
+      "facts": [
+        {
+          "field": "company_size",
+          "value": "5 people",
+          "provenance": "reported",
+          "source_url": "https://www.ycombinator.com/companies/quill",
+          "quote": "Team size 5"
+        },
+        {
+          "field": "hiring",
+          "value": "Listed as hiring",
+          "provenance": "reported",
+          "source_url": "https://www.ycombinator.com/companies/quill",
+          "quote": "Quill: Fullstack API and management platform for dashboards and reporting"
+        }
+      ],
+      "contacts": [],
+      "outreach": []
+    },
+    {
+      "company_key": "n:parsewise",
+      "company_name": "Parsewise",
+      "website": null,
+      "country": null,
+      "qualified": false,
+      "rejection_reason": "one source is not enough: research could not confirm it",
+      "summary": "Shows an engineering gap it may not be able to fill alone. Evidence: Parsewise: Multi-document processing for your risk teams, AI agents, pipelines",
+      "why_match": "Fit transferable (52%), level matches (83%); names api, claude. Level 83%, 2 profile technologies named, work related to software: 90%.",
+      "next_action": "No public contact was found: look for the CTO or a founder on the company site.",
+      "score": {
+        "total": 61.1,
+        "confidence": 0.51,
+        "completeness": 0.29,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 10.7,
+            "max": 20,
+            "explanation": "Fit transferable (52%), level matches (83%); names api, claude.",
+            "evidence": [
+              "b1dafdaed98319f2"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 11.4,
+            "max": 25,
+            "explanation": "Need: probable_gap (46%); could become a B2B engagement: 45%.",
+            "evidence": [
+              "b1dafdaed98319f2"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 13,
+            "max": 20,
+            "explanation": "Counted: size, hiring or growth.",
+            "evidence": [
+              "b1dafdaed98319f2"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 11,
+            "max": 15,
+            "explanation": "Ongoing work: 55%; the company is growing or shows several signals.",
+            "evidence": [
+              "b1dafdaed98319f2"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 7,
+            "max": 10,
+            "explanation": "Remote: remote_ok (70%); country unknown.",
+            "evidence": [
+              "b1dafdaed98319f2"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 8,
+            "max": 10,
+            "explanation": "Level 83%, 2 profile technologies named, work related to software: 90%.",
+            "evidence": [
+              "b1dafdaed98319f2"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "b1dafdaed98319f2",
+          "type": "hiring_growth",
+          "source": "yc-hiring",
+          "url": "https://www.ycombinator.com/companies/parsewise",
+          "title": "Parsewise: Multi-document processing for your risk teams, AI agents, pipelines",
+          "quote": "Multi-document processing for your risk teams, AI agents, pipelines Parsewise provides multi-document processing and analysis that you can embed in your own product.\r\n\r\nOperations teams use our platform for oversight and control over their ",
+          "published_at": null,
+          "observed_at": "2026-11-24T17:14:11.926Z"
+        }
+      ],
+      "facts": [
+        {
+          "field": "company_size",
+          "value": "5 people",
+          "provenance": "reported",
+          "source_url": "https://www.ycombinator.com/companies/parsewise",
+          "quote": "Team size 5"
+        },
+        {
+          "field": "hiring",
+          "value": "Listed as hiring",
+          "provenance": "reported",
+          "source_url": "https://www.ycombinator.com/companies/parsewise",
+          "quote": "Parsewise: Multi-document processing for your risk teams, AI agents, pipelines"
+        }
+      ],
+      "contacts": [],
+      "outreach": []
+    },
+    {
+      "company_key": "n:publitas com",
+      "company_name": "Publitas.com B.V.",
+      "website": null,
+      "country": null,
+      "qualified": false,
+      "rejection_reason": "score 58.3 is below 60",
+      "summary": "Shows an engineering gap it may not be able to fill alone. Evidence: Staff Product Engineer ( SaaS / Remote )",
+      "why_match": "Fit transferable (62%), level matches (77%); names react, typescript, javascript. Level 77%, 3 profile technologies named, work related to software: 97%.",
+      "next_action": "No public contact was found: look for the CTO or a founder on the company site.",
+      "score": {
+        "total": 58.3,
+        "confidence": 0.51,
+        "completeness": 0.14,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 11.7,
+            "max": 20,
+            "explanation": "Fit transferable (62%), level matches (77%); names react, typescript, javascript.",
+            "evidence": [
+              "1d2a7f53c142c39e"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 9.2,
+            "max": 25,
+            "explanation": "Need: probable_gap (44%); could become a B2B engagement: 30%.",
+            "evidence": [
+              "1d2a7f53c142c39e"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 11,
+            "max": 20,
+            "explanation": "Counted: hiring or growth.",
+            "evidence": [
+              "1d2a7f53c142c39e"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 9,
+            "max": 15,
+            "explanation": "Ongoing work: 80%; a single signal.",
+            "evidence": [
+              "1d2a7f53c142c39e"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 8.6,
+            "max": 10,
+            "explanation": "Remote: remote_ok (93%); country unknown.",
+            "evidence": [
+              "1d2a7f53c142c39e"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 8.8,
+            "max": 10,
+            "explanation": "Level 77%, 3 profile technologies named, work related to software: 97%.",
+            "evidence": [
+              "1d2a7f53c142c39e"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "1d2a7f53c142c39e",
+          "type": "job_posting",
+          "source": "arbeitnow",
+          "url": "https://www.arbeitnow.nl/jobs/companies/publitascom-bv/staff-product-engineer-saas-remote-amsterdam-176256",
+          "title": "Staff Product Engineer ( SaaS / Remote )",
+          "quote": "Ready to own it, build it, and grow it? The Mission: Publitas lets people, and increasingly agents, create, host and distribute digital flyers and catalogues for retail brands. Our customers include ALDI, IKEA, Carrefour, Metro and Decathlo",
+          "published_at": "2026-11-24T03:31:42.000Z",
+          "observed_at": "2026-11-24T17:14:11.926Z"
+        }
+      ],
+      "facts": [
+        {
+          "field": "hiring",
+          "value": "Staff Product Engineer ( SaaS / Remote )",
+          "provenance": "reported",
+          "source_url": "https://www.arbeitnow.nl/jobs/companies/publitascom-bv/staff-product-engineer-saas-remote-amsterdam-176256",
+          "quote": "Staff Product Engineer ( SaaS / Remote )"
+        }
+      ],
+      "contacts": [],
+      "outreach": []
+    },
+    {
+      "company_key": "n:cribl",
+      "company_name": "Cribl",
+      "website": null,
+      "country": null,
+      "qualified": false,
+      "rejection_reason": "score 56.7 is below 60",
+      "summary": "Shows an engineering gap it may not be able to fill alone. Evidence: Staff Software Engineer, Agentic Tools",
+      "why_match": "Fit transferable (55%), level matches (84%); names typescript, javascript, node. Level 84%, 3 profile technologies named, work related to software: 96%.",
+      "next_action": "No public contact was found: look for the CTO or a founder on the company site.",
+      "score": {
+        "total": 56.7,
+        "confidence": 0.53,
+        "completeness": 0.14,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 11.2,
+            "max": 20,
+            "explanation": "Fit transferable (55%), level matches (84%); names typescript, javascript, node.",
+            "evidence": [
+              "df06b3c5e737aae4"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 9.4,
+            "max": 25,
+            "explanation": "Need: probable_gap (45%); could become a B2B engagement: 30%.",
+            "evidence": [
+              "df06b3c5e737aae4"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 11,
+            "max": 20,
+            "explanation": "Counted: hiring or growth.",
+            "evidence": [
+              "df06b3c5e737aae4"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 11.4,
+            "max": 15,
+            "explanation": "Ongoing work: 60%; the company is growing or shows several signals.",
+            "evidence": [
+              "df06b3c5e737aae4"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 4.6,
+            "max": 10,
+            "explanation": "Remote: onsite_required (35%); country unknown.",
+            "evidence": [
+              "df06b3c5e737aae4"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 9.1,
+            "max": 10,
+            "explanation": "Level 84%, 3 profile technologies named, work related to software: 96%.",
+            "evidence": [
+              "df06b3c5e737aae4"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "df06b3c5e737aae4",
+          "type": "job_posting",
+          "source": "remoteok",
+          "url": "https://remoteOK.com/remote-jobs/remote-staff-software-engineer-agentic-tools-cribl-1137955",
+          "title": "Staff Software Engineer, Agentic Tools",
+          "quote": "Join the company thatâs building the telemetry infrastructure for the AI era. At Cribl, we partner with IT and Security teams at many of the worldâs biggest enterprises, including half of the Fortune 100, to bridge the gap between AI am",
+          "published_at": "2026-11-21T09:40:06.000Z",
+          "observed_at": "2026-11-24T17:14:11.926Z"
+        },
+        {
+          "id": "383d9713faf16fa8",
+          "type": "job_posting",
+          "source": "remoteok",
+          "url": "https://remoteOK.com/remote-jobs/remote-sr-mgr-software-engineering-cribl-detect-cribl-1137923",
+          "title": "Sr Mgr, Software Engineering (Cribl Detect)",
+          "quote": "Join the company thatâs building the telemetry infrastructure for the AI era. At Cribl, we partner with IT and Security teams at many of the worldâs biggest enterprises, including half of the Fortune 100, to bridge the gap between AI am",
+          "published_at": "2026-11-21T01:00:06.000Z",
+          "observed_at": "2026-11-24T17:14:11.926Z"
+        },
+        {
+          "id": "6d18312ea2451477",
+          "type": "job_posting",
+          "source": "remoteok",
+          "url": "https://remoteOK.com/remote-jobs/remote-international-people-ops-analyst-benefits-cribl-1137875",
+          "title": "International People Ops Analyst, Benefits",
+          "quote": "Join the company thatâs building the telemetry infrastructure for the AI era. At Cribl, we partner with IT and Security teams at many of the worldâs biggest enterprises, including half of the Fortune 100, to bridge the gap between AI am",
+          "published_at": "2026-11-20T02:30:14.000Z",
+          "observed_at": "2026-11-24T17:14:11.926Z"
+        }
+      ],
+      "facts": [
+        {
+          "field": "hiring",
+          "value": "Staff Software Engineer, Agentic Tools",
+          "provenance": "reported",
+          "source_url": "https://remoteOK.com/remote-jobs/remote-staff-software-engineer-agentic-tools-cribl-1137955",
+          "quote": "Staff Software Engineer, Agentic Tools"
+        },
+        {
+          "field": "hiring",
+          "value": "Sr Mgr, Software Engineering (Cribl Detect)",
+          "provenance": "reported",
+          "source_url": "https://remoteOK.com/remote-jobs/remote-sr-mgr-software-engineering-cribl-detect-cribl-1137923",
+          "quote": "Sr Mgr, Software Engineering (Cribl Detect)"
+        },
+        {
+          "field": "hiring",
+          "value": "International People Ops Analyst, Benefits",
+          "provenance": "reported",
+          "source_url": "https://remoteOK.com/remote-jobs/remote-international-people-ops-analyst-benefits-cribl-1137875",
+          "quote": "International People Ops Analyst, Benefits"
+        }
+      ],
+      "contacts": [],
+      "outreach": []
+    },
+    {
+      "company_key": "n:opentrain ai",
+      "company_name": "OpenTrain AI",
+      "website": null,
+      "country": null,
+      "qualified": false,
+      "rejection_reason": "recruitment marketing, not a client; score 52.9 is below 60",
+      "summary": "Hires employees; it could be open to a contractor. Evidence: OpenTrain AI | REMOTE (US) | Part-time | Backend Engineer, AI Coding Task Design",
+      "why_match": "Fit transferable (59%), level matches (87%); names typescript, node, api. Level 87%, 3 profile technologies named, work related to software: 95%.",
+      "next_action": "Reply where it was posted: https://news.ycombinator.com/item?id=50420399",
+      "score": {
+        "total": 52.9,
+        "confidence": 0.49,
+        "completeness": 0.14,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 12.3,
+            "max": 20,
+            "explanation": "Fit transferable (59%), level matches (87%); names typescript, node, api.",
+            "evidence": [
+              "586d1f20744bda90"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 11.2,
+            "max": 25,
+            "explanation": "Need: recruitment_marketing (29%); could become a B2B engagement: 60%.",
+            "evidence": [
+              "586d1f20744bda90"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 11,
+            "max": 20,
+            "explanation": "Counted: hiring or growth.",
+            "evidence": [
+              "586d1f20744bda90"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 4.5,
+            "max": 15,
+            "explanation": "Ongoing work: 30%; a single signal.",
+            "evidence": [
+              "586d1f20744bda90"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 4.6,
+            "max": 10,
+            "explanation": "Remote: onsite_required (35%); country unknown.",
+            "evidence": [
+              "586d1f20744bda90"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 9.3,
+            "max": 10,
+            "explanation": "Level 87%, 3 profile technologies named, work related to software: 95%.",
+            "evidence": [
+              "586d1f20744bda90"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "586d1f20744bda90",
+          "type": "freelance_request",
+          "source": "hn-hiring",
+          "url": "https://news.ycombinator.com/item?id=50420399",
+          "title": "OpenTrain AI | REMOTE (US) | Part-time | Backend Engineer, AI Coding Task Design",
+          "quote": "OpenTrain AI | REMOTE (US) | Part-time | Backend Engineer, AI Coding Task Design OpenTrain AI connects experienced professionals with paid, part-time AI training work. We are the hiring company and are actively filling this role. - $30–$100",
+          "published_at": "2026-11-09T02:48:07.000Z",
+          "observed_at": "2026-11-24T17:14:11.926Z"
+        }
+      ],
+      "facts": [
+        {
+          "field": "hiring",
+          "value": "OpenTrain AI | REMOTE (US) | Part-time | Backend Engineer, AI Coding Task Design",
+          "provenance": "reported",
+          "source_url": "https://news.ycombinator.com/item?id=50420399",
+          "quote": "OpenTrain AI | REMOTE (US) | Part-time | Backend Engineer, AI Coding Task Design"
+        }
+      ],
+      "contacts": [],
+      "outreach": []
+    },
+    {
+      "company_key": "n:deliveroo",
+      "company_name": "Deliveroo",
+      "website": null,
+      "country": null,
+      "qualified": false,
+      "rejection_reason": "score 52.8 is below 60",
+      "summary": "Shows an engineering gap it may not be able to fill alone. Evidence: Senior Software Engineer (Full Stack) - EMEA Pricing and Affordability",
+      "why_match": "Fit transferable (53%), level matches (92%); names react, mysql, postgresql, claude. Level 92%, 4 profile technologies named, work related to software: 96%.",
+      "next_action": "No public contact was found: look for the CTO or a founder on the company site.",
+      "score": {
+        "total": 52.8,
+        "confidence": 0.54,
+        "completeness": 0.14,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 11.7,
+            "max": 20,
+            "explanation": "Fit transferable (53%), level matches (92%); names react, mysql, postgresql, claude.",
+            "evidence": [
+              "38f80f060c7e41d1"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 6.6,
+            "max": 25,
+            "explanation": "Need: probable_gap (43%); could become a B2B engagement: 10%.",
+            "evidence": [
+              "38f80f060c7e41d1"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 11,
+            "max": 20,
+            "explanation": "Counted: hiring or growth.",
+            "evidence": [
+              "38f80f060c7e41d1"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 11.4,
+            "max": 15,
+            "explanation": "Ongoing work: 60%; the company is growing or shows several signals.",
+            "evidence": [
+              "38f80f060c7e41d1"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 2.6,
+            "max": 10,
+            "explanation": "Remote: onsite_required (7%); country unknown.",
+            "evidence": [
+              "38f80f060c7e41d1"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 9.5,
+            "max": 10,
+            "explanation": "Level 92%, 4 profile technologies named, work related to software: 96%.",
+            "evidence": [
+              "38f80f060c7e41d1"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "38f80f060c7e41d1",
+          "type": "job_posting",
+          "source": "arbeitnow",
+          "url": "https://www.arbeitnow.co.uk/jobs/companies/deliveroo/senior-software-engineer-full-stack-emea-pricing-and-affordability-london-267593",
+          "title": "Senior Software Engineer (Full Stack) - EMEA Pricing and Affordability",
+          "quote": "Our Global Structure Deliveroo is now part of DoorDash, bringing together teams with even greater reach, scale, and ambition. Depending on your role, you may collaborate with teammates, systems, and leaders across DoorDash and Wolt. Togethe",
+          "published_at": "2026-11-24T15:45:26.000Z",
+          "observed_at": "2026-11-24T17:14:11.926Z"
+        },
+        {
+          "id": "2faf861a0f7eb25b",
+          "type": "job_posting",
+          "source": "arbeitnow",
+          "url": "https://www.arbeitnow.co.uk/jobs/companies/deliveroo/senior-marketing-manager-retail-london-497178",
+          "title": "Senior Marketing Manager, Retail",
+          "quote": "Our Global Structure Deliveroo is now part of DoorDash, bringing together teams with even greater reach, scale, and ambition. Depending on your role, you may collaborate with teammates, systems, and leaders across DoorDash and Wolt. Togethe",
+          "published_at": "2026-11-24T15:45:26.000Z",
+          "observed_at": "2026-11-24T17:14:11.926Z"
+        }
+      ],
+      "facts": [
+        {
+          "field": "hiring",
+          "value": "Senior Software Engineer (Full Stack) - EMEA Pricing and Affordability",
+          "provenance": "reported",
+          "source_url": "https://www.arbeitnow.co.uk/jobs/companies/deliveroo/senior-software-engineer-full-stack-emea-pricing-and-affordability-london-267593",
+          "quote": "Senior Software Engineer (Full Stack) - EMEA Pricing and Affordability"
+        },
+        {
+          "field": "hiring",
+          "value": "Senior Marketing Manager, Retail",
+          "provenance": "reported",
+          "source_url": "https://www.arbeitnow.co.uk/jobs/companies/deliveroo/senior-marketing-manager-retail-london-497178",
+          "quote": "Senior Marketing Manager, Retail"
+        }
+      ],
+      "contacts": [],
+      "outreach": []
+    },
+    {
+      "company_key": "n:doctolib",
+      "company_name": "Doctolib",
+      "website": null,
+      "country": null,
+      "qualified": false,
+      "rejection_reason": "score 52.7 is below 60",
+      "summary": "Hires employees; it could be open to a contractor. Evidence: Senior Software Engineer FullStack Kotlin / React - Berlin (f/m/d)",
+      "why_match": "Fit transferable (58%), level matches (85%); names react, typescript, react native. Level 85%, 3 profile technologies named, work related to software: 97%.",
+      "next_action": "No public contact was found: look for the CTO or a founder on the company site.",
+      "score": {
+        "total": 52.7,
+        "confidence": 0.55,
+        "completeness": 0.14,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 11.8,
+            "max": 20,
+            "explanation": "Fit transferable (58%), level matches (85%); names react, typescript, react native.",
+            "evidence": [
+              "00a3780acdd129df"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 6.2,
+            "max": 25,
+            "explanation": "Need: employee_only (40%); could become a B2B engagement: 10% (advertised as employment, not ruled out).",
+            "evidence": [
+              "00a3780acdd129df"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 11,
+            "max": 20,
+            "explanation": "Counted: hiring or growth.",
+            "evidence": [
+              "00a3780acdd129df"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 11,
+            "max": 15,
+            "explanation": "Ongoing work: 55%; the company is growing or shows several signals.",
+            "evidence": [
+              "00a3780acdd129df"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 3.5,
+            "max": 10,
+            "explanation": "Remote: onsite_required (21%); country unknown.",
+            "evidence": [
+              "00a3780acdd129df"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 9.2,
+            "max": 10,
+            "explanation": "Level 85%, 3 profile technologies named, work related to software: 97%.",
+            "evidence": [
+              "00a3780acdd129df"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "00a3780acdd129df",
+          "type": "job_posting",
+          "source": "arbeitnow",
+          "url": "https://www.arbeitnow.com/jobs/companies/doctolib/senior-software-engineer-fullstack-kotlin-react-berlin-72632",
+          "title": "Senior Software Engineer FullStack Kotlin / React - Berlin (f/m/d)",
+          "quote": "What we do Join a team of passionate and hardworking entrepreneurs to transform healthcare! Working in the tech team at Doctolib involves building innovative products and features to improve the daily lives of care teams and patients. We wo",
+          "published_at": "2026-11-24T15:40:15.000Z",
+          "observed_at": "2026-11-24T17:14:11.926Z"
+        },
+        {
+          "id": "ad2eb55f45b8cbfd",
+          "type": "job_posting",
+          "source": "arbeitnow",
+          "url": "https://www.arbeitnow.fr/jobs/companies/doctolib/senior-ml-manager-voice-team-levallois-perret-57992",
+          "title": "Senior ML Manager - Voice Team (x/f/m)",
+          "quote": "Senior ML Manager - Applied AI & Voice (x/f/m) Set a new pulse for healthcare! We are looking for a Senior ML Manager to join the Voice team in our Applied AI organization. Your mission will be to drive the development of AI-powered voice a",
+          "published_at": "2026-11-24T15:40:16.000Z",
+          "observed_at": "2026-11-24T17:14:11.926Z"
+        },
+        {
+          "id": "24c3db4bc40cea48",
+          "type": "job_posting",
+          "source": "arbeitnow",
+          "url": "https://www.arbeitnow.com/jobs/companies/doctolib/technical-support-engineer-berlin-267975",
+          "title": "Technical Support Engineer (x/f/m)",
+          "quote": "Werde Teil unserer Mission, werde Teil von Doctolib! Wir suchen dich als Technical Support Engineer als Unterstützung für das Technical Services Team in Berlin. Technical Services ist Teil unseres Customer Care Departments und sowohl für da",
+          "published_at": "2026-11-24T15:40:16.000Z",
+          "observed_at": "2026-11-24T17:14:11.926Z"
+        }
+      ],
+      "facts": [
+        {
+          "field": "hiring",
+          "value": "Senior Software Engineer FullStack Kotlin / React - Berlin (f/m/d)",
+          "provenance": "reported",
+          "source_url": "https://www.arbeitnow.com/jobs/companies/doctolib/senior-software-engineer-fullstack-kotlin-react-berlin-72632",
+          "quote": "Senior Software Engineer FullStack Kotlin / React - Berlin (f/m/d)"
+        },
+        {
+          "field": "hiring",
+          "value": "Senior ML Manager - Voice Team (x/f/m)",
+          "provenance": "reported",
+          "source_url": "https://www.arbeitnow.fr/jobs/companies/doctolib/senior-ml-manager-voice-team-levallois-perret-57992",
+          "quote": "Senior ML Manager - Voice Team (x/f/m)"
+        },
+        {
+          "field": "hiring",
+          "value": "Technical Support Engineer (x/f/m)",
+          "provenance": "reported",
+          "source_url": "https://www.arbeitnow.com/jobs/companies/doctolib/technical-support-engineer-berlin-267975",
+          "quote": "Technical Support Engineer (x/f/m)"
+        }
+      ],
+      "contacts": [],
+      "outreach": []
+    },
+    {
+      "company_key": "n:runanywhere",
+      "company_name": "RunAnywhere",
+      "website": null,
+      "country": null,
+      "qualified": false,
+      "rejection_reason": "one source is not enough: research could not confirm it; score 49.5 is below 60",
+      "summary": "Shows an engineering gap it may not be able to fill alone. Evidence: RunAnywhere: Inference research at the frontier. Faster, cheaper frontier models…",
+      "why_match": "Fit weak (35%), level beyond_profile (36%); names api, openai, claude. Level 36%, 3 profile technologies named, work related to software: 88%.",
+      "next_action": "No public contact was found: look for the CTO or a founder on the company site.",
+      "score": {
+        "total": 49.5,
+        "confidence": 0.5,
+        "completeness": 0.29,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 4.5,
+            "max": 20,
+            "explanation": "Fit weak (35%), level beyond_profile (36%); names api, openai, claude.",
+            "evidence": [
+              "2bfca63ed58bc12a"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 9.4,
+            "max": 25,
+            "explanation": "Need: probable_gap (45%); could become a B2B engagement: 30%.",
+            "evidence": [
+              "2bfca63ed58bc12a"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 13,
+            "max": 20,
+            "explanation": "Counted: size, hiring or growth.",
+            "evidence": [
+              "2bfca63ed58bc12a"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 10.5,
+            "max": 15,
+            "explanation": "Ongoing work: 50%; the company is growing or shows several signals.",
+            "evidence": [
+              "2bfca63ed58bc12a"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 5.6,
+            "max": 10,
+            "explanation": "Remote: unknown (50%); country unknown.",
+            "evidence": [
+              "2bfca63ed58bc12a"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 6.5,
+            "max": 10,
+            "explanation": "Level 36%, 3 profile technologies named, work related to software: 88%.",
+            "evidence": [
+              "2bfca63ed58bc12a"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "2bfca63ed58bc12a",
+          "type": "hiring_growth",
+          "source": "yc-hiring",
+          "url": "https://www.ycombinator.com/companies/runanywhere",
+          "title": "RunAnywhere: Inference research at the frontier. Faster, cheaper frontier models…",
+          "quote": "Inference research at the frontier. Faster, cheaper frontier models… Inference research at the frontier. We make frontier open models faster and cheaper on Wally.\r\n\r\nWe're RunAnywhere (YC W26). You can use frontier open models like GLM-5.3-",
+          "published_at": null,
+          "observed_at": "2026-11-24T17:14:11.926Z"
+        }
+      ],
+      "facts": [
+        {
+          "field": "company_size",
+          "value": "5 people",
+          "provenance": "reported",
+          "source_url": "https://www.ycombinator.com/companies/runanywhere",
+          "quote": "Team size 5"
+        },
+        {
+          "field": "hiring",
+          "value": "Listed as hiring",
+          "provenance": "reported",
+          "source_url": "https://www.ycombinator.com/companies/runanywhere",
+          "quote": "RunAnywhere: Inference research at the frontier. Faster, cheaper frontier models…"
+        }
+      ],
+      "contacts": [],
+      "outreach": []
+    }
+  ]
+}

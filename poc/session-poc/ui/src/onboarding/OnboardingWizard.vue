@@ -8,6 +8,7 @@ import { keyOf, languageName, setPrimaryLanguage, systemLanguageCode, t } from '
 import type { MessageKey } from '../i18n/locale';
 import { readCvFile } from './cv-file';
 import { isPortfolioLink, parseCheckResult } from './portfolio-link';
+import AiServiceChoice from './AiServiceChoice.vue';
 import CountryPicker from './CountryPicker.vue';
 import {
   cvProposalSchema,
@@ -381,6 +382,7 @@ const applyHelp = (scope: ApplyScope): string => t(`apply.${scope}.help` as Mess
 
     <!-- CV first: required to finish; the analysis proposes fields the user can refuse -->
     <div v-if="step === 'cv'" class="pane">
+      <AiServiceChoice />
       <p>{{ t('cv.intro') }}</p>
       <label class="file-button">
         {{ t('cv.file') }}

@@ -8,10 +8,10 @@
 import type { AgentConfig } from '../config.ts';
 import { defaultFetch, type FetchLike, type JeDeps } from '../jev.ts';
 import type { AskDeps } from '../llm-call.ts';
-import { CLI_LABEL, CLI_DEFAULT_MODEL, isCliProvider } from '../llm-cli.ts';
+import { CLI_DEFAULT_MODEL, isCliProvider } from '../llm-cli.ts';
 import { LLM_LABEL } from '../llm-providers.ts';
 import { baseAutomation } from '../policy.ts';
-import { judgmentDepsFor, providerChoiceFromEnv, type ProviderChoice } from '../provider-choice.ts';
+import { judgeViaModel, judgmentDepsFor, providerChoiceFromEnv, type ProviderChoice } from '../provider-choice.ts';
 import { listSources } from '../sources/registry.ts';
 import type { ResearchDeps } from './research.ts';
 import { SIGNAL_SOURCES } from './sources.ts';
@@ -49,7 +49,11 @@ export const wireLead = (input: {
     return { choice, jev: null, llm: null, research: null, researchUnavailable: 'dry run: nothing is bought' };
   }
   const judgment = judgmentDepsFor(choice.judgment, (service) => input.readKey(service));
-  const jev: JeDeps | null = judgment === null ? null : { apiKey: judgment.apiKey, model: judgment.model, baseUrl: judgment.baseUrl, fetchImpl };
+  // "The same as the AI service": the questions go to the model the user chose, and need no other key.
+  const via = judgeViaModel(choice, input.readKey, fetchImpl);
+  const jev: JeDeps | null = choice.judgment.service === 'provider'
+    ? via === null ? null : { apiKey: '', model: via.model, fetchImpl, via }
+    : judgment === null ? null : { apiKey: judgment.apiKey, model: judgment.model, baseUrl: judgment.baseUrl, fetchImpl };
 
   const chosen = choice.llm.provider;
   // A program the user signed in to needs no key from us: it is started as it is, with its own login.
@@ -59,7 +63,8 @@ export const wireLead = (input: {
     : key === '' ? null : { apiKey: key, provider: chosen, model: choice.llm.model, maxTokens: 1500, fetchImpl };
   let research: ResearchDeps | null = null;
   let researchUnavailable: string | null = null;
-  if (isCliProvider(chosen)) researchUnavailable = `web research needs an Anthropic API key: ${CLI_LABEL[chosen]} prints only its final text, and the checks need the pages it read`;
+  // A program of the user's own does the research too: it names the pages and our code reads them.
+  if (isCliProvider(chosen)) research = { apiKey: '', model: choice.llm.model || CLI_DEFAULT_MODEL, fetchImpl, maxSearches: 1, maxFetches: 5, maxTokens: 8000, cli: { provider: chosen } };
   else if (llm === null) researchUnavailable = `no ${LLM_LABEL[chosen]} key is stored`;
   else if (chosen !== 'anthropic') researchUnavailable = `web research needs the Anthropic provider, and ${LLM_LABEL[chosen]} is chosen`;
   else research = { apiKey: key, model: choice.llm.model, fetchImpl, maxSearches: 5, maxFetches: 4, maxTokens: 8000 };

@@ -11,6 +11,7 @@
 import { z } from 'zod';
 import { compileQueries, type UserProfile } from './profile.ts';
 import type { FetchLike } from './jev.ts';
+import { isCliProvider, runCli, type CliDeps, type CliProvider } from './llm-cli.ts';
 import { llmAnswer, llmRequest, type LlmProvider } from './llm-providers.ts';
 
 export const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
@@ -19,7 +20,9 @@ export const QWEN_URL =
   'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions';
 
 export type PlannerDeps = {
-  provider: LlmProvider;
+  /** An API provider, or a program the user signed in to (a subscription: no key). */
+  provider: LlmProvider | CliProvider;
+  cli?: CliDeps;
   apiKey: string;
   model: string;
   baseUrl?: string;
@@ -101,6 +104,13 @@ export const planQueries = async (profile: UserProfile, deps: PlannerDeps): Prom
     reason,
     usage: { input_tokens: 0, output_tokens: 0 },
   });
+
+  if (isCliProvider(deps.provider)) {
+    const said = await runCli(deps.provider, deps.model, prompt, deps.cli ?? {});
+    if (!said.ok) return fallback(said.reason);
+    const listed = extractQueries(said.text, limit);
+    return listed === null ? fallback('provider answer had no usable query array') : { queries: listed, source: 'model', reason: null, usage: { input_tokens: 0, output_tokens: 0 } };
+  }
 
   let request: ReturnType<typeof llmRequest>;
   try {

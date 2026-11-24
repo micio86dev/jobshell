@@ -13,7 +13,8 @@ use serde::{Deserialize, Serialize};
 pub const LLM_PROVIDERS: [&str; 8] = [
     "anthropic", "openai", "gemini", "qwen", "cli-claude", "cli-codex", "cli-gemini", "cli-opencode",
 ];
-pub const JUDGMENT_SERVICES: [&str; 3] = ["typesafe", "ollama", "laya"];
+/// "provider" is no service at all: the model chosen above answers the judge's questions too.
+pub const JUDGMENT_SERVICES: [&str; 4] = ["typesafe", "ollama", "laya", "provider"];
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
@@ -110,6 +111,10 @@ mod tests {
         }
         settings.llm_provider = "cli-vim".to_string();
         assert!(settings.validate().is_err());
+        settings.llm_provider = "cli-claude".to_string();
+        settings.judgment_service = "provider".to_string();
+        assert!(settings.validate().is_ok(), "the judge can be the chosen model");
+        assert!(settings.agent_env().contains(&("JOBSHELL_JUDGMENT_SERVICE".to_string(), "provider".to_string())));
     }
 
     #[test]

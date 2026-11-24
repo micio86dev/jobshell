@@ -22,6 +22,8 @@
 import { z } from 'zod';
 import type { Posting } from './sources/types.ts';
 import { checkEndpoint } from './endpoints.ts';
+import { askViaModel } from './judge-model.ts';
+import type { AskDeps } from './llm-call.ts';
 
 export const TYPESAFE_URL = 'https://api.typesafe.ai/v1/systemone';
 export const DEFAULT_MODEL = 'jev-latest';
@@ -57,6 +59,8 @@ export type JeAnswer =
 export type JeResponse = { model: string; answers: Record<string, JeAnswer>; usage: Usage };
 
 export type JeDeps = {
+  /** When set, the questions go to this model (the user's chosen provider) instead of a System One service. */
+  via?: AskDeps;
   apiKey: string;
   model?: string;
   fetchImpl?: FetchLike;
@@ -80,7 +84,7 @@ const judgeAnswer = z.discriminatedUnion('type', [
   }),
 ]);
 
-const parseAnswers = (raw: unknown): Record<string, JeAnswer> => {
+export const parseAnswers = (raw: unknown): Record<string, JeAnswer> => {
   const answers: Record<string, JeAnswer> = {};
   const named = z.record(z.string(), z.unknown()).safeParse(raw);
   if (!named.success) return answers;
@@ -106,6 +110,7 @@ export const askSystemOne = async (
   request: { state: unknown; questions: Record<string, JeQuestion> },
   deps: JeDeps,
 ): Promise<JeResponse> => {
+  if (deps.via !== undefined) return askViaModel(request, deps.via, parseAnswers);
   const fetchImpl = deps.fetchImpl ?? defaultFetch;
   const url = deps.baseUrl ?? TYPESAFE_URL;
   const check = checkEndpoint(url);

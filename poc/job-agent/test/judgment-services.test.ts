@@ -31,7 +31,7 @@ test('a remote address that is not approved is refused for every service', () =>
 });
 
 test('the list of services names every one the user can pick', () => {
-  assert.deepEqual([...JUDGMENT_SERVICES].sort(), ['laya', 'ollama', 'typesafe']);
+  assert.deepEqual([...JUDGMENT_SERVICES].sort(), ['laya', 'ollama', 'provider', 'typesafe']);
 });
 
 test('a request to an unapproved address is never sent, so the key stays put', async () => {

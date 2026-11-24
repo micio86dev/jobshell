@@ -12,7 +12,7 @@ import { loadRuntime, missingKeyMessage } from './bootstrap.ts';
 import { defaultFetch } from './jev.ts';
 import { loadSeen, serveStdio } from './mcp-server.ts';
 import { readSecret } from './secrets.ts';
-import { judgmentDepsFor, providerChoiceFromEnv, type ProviderChoice } from './provider-choice.ts';
+import { judgeViaModel, judgmentDepsFor, providerChoiceFromEnv, type ProviderChoice } from './provider-choice.ts';
 
 const arg = (name: string): string | undefined => {
   const index = process.argv.indexOf(`--${name}`);
@@ -36,8 +36,9 @@ try {
   process.exit(2);
 }
 const judgment = judgmentDepsFor(choice.judgment, readSecret);
-if (judgment === null) {
-  process.stderr.write(`jobshell: ${missingKeyMessage(choice.judgment.service)}\n`);
+const judgeVia = judgeViaModel(choice, readSecret, defaultFetch);
+if (choice.judgment.service === 'provider' ? judgeVia === null : judgment === null) {
+  process.stderr.write(`jobshell: ${missingKeyMessage(choice.judgment.service === 'provider' ? choice.llm.provider : choice.judgment.service)}\n`);
   process.exit(2);
 }
 
@@ -55,10 +56,11 @@ serveStdio({
   profile: runtime.profile,
   promptContext: runtime.spec.prompt_context,
   jev: {
-    apiKey: judgment.apiKey,
-    model: judgment.model,
-    baseUrl: judgment.baseUrl,
+    apiKey: judgment?.apiKey ?? '',
+    model: choice.judgment.model,
+    baseUrl: judgment?.baseUrl ?? choice.judgment.url,
     fetchImpl: defaultFetch,
+    ...(judgeVia === null ? {} : { via: judgeVia }),
   },
   seen: (key) => loadSeen(seenPath).has(key),
 });

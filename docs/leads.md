@@ -15,7 +15,7 @@ collect → deduplicate → name the company → group by company → free filte
 | name the company | a model, checked by code | only when the signal's own words name it; the name and the quote must be in the text |
 | free filters | code | drops only what is wrong for any profile: unpaid, internship, junior title, on-site only, closed, stale, excluded company. **No budget, no "freelance" wording, an hourly contract or another stack are never reasons to drop** |
 | judge | Jev (TypeSafe System One), one request per company | seven questions: need, B2B conversion, long term, fit, level, remote, quality. A cache avoids paying twice |
-| research | Anthropic with web search and fetch, checked by code | company, size, funding, growth, legitimacy, public contacts. **Needs an Anthropic key with credit.** Without it the run says so and scores on the signals alone |
+| research | Anthropic with web search and fetch, or your subscription program (pages read by Jobshell), checked by code | company, size, funding, growth, legitimacy, public contacts. **Needs an Anthropic key with credit, or a subscription program.** Without either the run says so and scores on the signals alone |
 | score | code | 100 points, each line explained, with evidence ids |
 | gate | code | score, evidence confidence, no hard negative, no scheme, no recruiter marketing, and a company-level signal needs a second independent source |
 | outreach | a model, checked by code | a draft only: nothing in the app sends anything |
@@ -58,21 +58,27 @@ The strategy file is `~/.config/jobshell/leads.json`; see `poc/job-agent/leads.e
 
 ## Your subscription instead of an API key
 
-In **Impostazioni → Servizio AI** the provider list has a second group: the programs you already use with a subscription (Claude Code, Codex, Gemini CLI, OpenCode). Choosing one makes Jobshell start that program for the text steps and read what it prints. It needs no key from you in this app, and the app never reads, stores or sends your login: the program signs in by itself, from its own place on your computer. It is started with a small environment (no API keys of yours, only what the program needs to find its login), with its tools off or read-only, because the prompt holds text from the web.
+Choose the AI service **once**: in the first step of the wizard, or later in **Impostazioni → Servizio AI**, where the provider list has a second group: the programs you already use with a subscription (Claude Code, Codex, Gemini CLI, OpenCode). Choosing one makes Jobshell start that program for **every** AI step, and the judge (the questions about each company) follows the same choice, so no other key is needed. The app never reads, stores or sends your login: the program signs in by itself, from its own place on your computer. It is started with a small environment (no API keys of yours, only what the program needs to find its login), with no shell or file tools, because the prompts hold text from the web.
 
-| Step | With a subscription program | Needs an API key |
-|---|---|---|
-| naming companies, outreach drafts, search queries, reports, tailored CV | yes | |
-| web research on a company (facts, contacts) | no | Anthropic: the checks need the pages the provider read, and a program prints only its final text |
-| reading the CV in the wizard, the job planner | no (the job planner falls back to the profile) | any API provider |
-| the judge (Jev) | unchanged: its own key | |
+| Step | With a subscription program |
+|---|---|
+| reading the CV in the wizard, the job planner, reports, the tailored CV | the program answers |
+| naming companies, outreach drafts, search queries | the program answers |
+| the judge (seven questions per company) | the program answers, when "servizio che giudica" is "the same as the AI service" (set automatically; you can keep the hosted Jev or a local one instead) |
+| company research (facts, contacts) | see below |
+
+**How the research works without an API key.** The API path trusts the provider's web tools. A program prints only its final text, so nothing is taken on its word: Claude Code and Codex may run a web search that only names the company's public pages; Jobshell then fetches those pages itself (public https only, robots.txt respected, no login-walled site, no redirect followed) and keeps their text; a second request, with every tool off, reads those pages and returns facts and contacts. The guards are the same as on the API path and now compare each quote with a page Jobshell read itself. Gemini CLI and OpenCode have no web search here (not verified): they read the company's own website when one is known, and what they cannot find stays unknown.
+
+**Cost, in subscription terms.** No money per token, but your plan has a usage limit. A run with research takes about a minute per researched company and one request per judged company: keep an eye on the budgets in Settings (companies judged, companies researched). When the program reports a limit or a sign-out, the run says so in one sentence and stops that stage.
+
+**The judge is a model, not Jev.** Probabilities from a general model are less calibrated than a purpose-built judge's. On the ten controlled scenarios (`make leads-eval`) Claude Code as the judge agreed on 9 of 11, the same as Jev did (7 of 9 relevant qualified, the other 2 held for a second source, 0 irrelevant qualified): `evidence/leads-eval/2026-11-24-claude-code-judge.json`. Eleven fixtures are a smoke test, not a benchmark.
 
 **Terms, from the providers' own pages (read 2026-11-24):**
-- **Anthropic** (code.claude.com, "Legal and compliance"): subscription sign-in is for Claude Code and Anthropic's own apps; developers who build products or services, the Agent SDK included, "should use API key authentication", and may not route requests through Free, Pro, Max or Ultra credentials on behalf of users or collect their credentials. The same page says it does not stop a user from signing in to the unmodified Claude Code program with their own subscription. Running `claude -p` from an app sits between the two readings. It is your account and your decision: it is off by default, it is meant for your own use on your own computer, and a build you give to other people should use API keys.
+- **Anthropic** (code.claude.com, "Legal and compliance"): subscription sign-in is for Claude Code and Anthropic's own apps; developers who build products or services, the Agent SDK included, "should use API key authentication", and may not route requests through Free, Pro, Max or Ultra credentials on behalf of users or collect their credentials. The same page says it does not stop a user from signing in to the unmodified Claude Code program with their own subscription. Running `claude -p` from an app sits between the two readings. It is your account and your decision: it is meant for your own use on your own computer, and a build you give to other people should use API keys.
 - **Google** (Gemini CLI terms): using "third-party software, tools, or services (for example, using OpenClaw with Gemini CLI OAuth)" to reach the services behind Gemini CLI is a violation. Jobshell starts the program itself and never touches the OAuth login; read the page before you choose it.
 - **OpenAI (Codex) and OpenCode:** not verified here; read your plan's terms.
 
-**Verified live on this computer (2026-11-24):** Claude Code on a claude.ai subscription wrote a real report and, in a lead run, planned queries, named 33 companies and drafted 7 outreach messages with no API key and no per-token cost. Codex answered with its usage-limit error and OpenCode with its API-limit error (both are shown to the user as a sentence), and Gemini CLI was not signed in (the app says so). So only Claude Code was seen producing answers.
+**Verified live on this computer (2026-11-24):** Claude Code on a claude.ai subscription ran every step with no API key: the report, the judge, the research and the outreach drafts, in one lead run (`evidence/leads-live/2026-11-24-subscription-only.json`): 11 companies judged (one answer unusable, now asked again once), 3 researched with 23 facts kept and 4 named contacts with their page, 3 drafts, 3 qualified, 6 minutes in all. The cost is in your plan's usage, not in money per token. Codex answered with its usage-limit error and OpenCode with its API-limit error (both shown as a sentence) and Gemini CLI was not signed in, so **only Claude Code was seen producing answers**; Codex's `--search` and the research path of the other three are written from their help text and tested with a fake program, not seen live.
 
 ## Facebook, LinkedIn and anything behind a login
 

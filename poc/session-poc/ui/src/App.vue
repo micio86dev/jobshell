@@ -10,7 +10,7 @@ import LeadsPanel from './leads/LeadsPanel.vue';
 import { setPrimaryLanguage, t } from './i18n/store';
 import { primaryOf } from './onboarding/schema';
 import { describeKeyCheck, parseKeyCheckReport, type KeyCheckView } from './settings/key-check';
-import { CLI_NAMES, CLI_PROVIDERS, isCliProvider, modelAfterSwitch, modelOptions, validateChoice, type ChoiceProblem, type ProviderChoiceView } from './settings/provider-settings';
+import { chooseProvider, CLI_NAMES, CLI_PROVIDERS, isCliProvider, modelOptions, validateChoice, type ChoiceProblem, type ProviderChoiceView } from './settings/provider-settings';
 import { parseReportResult, type ReportView } from './report/report-result';
 import { renderMarkdown } from './report/markdown-html';
 
@@ -236,7 +236,7 @@ const when = (iso: string): string => {
 type KeyAccount = 'typesafe' | 'anthropic' | 'openai' | 'gemini' | 'qwen';
 const KEY_ACCOUNTS: KeyAccount[] = ['typesafe', 'anthropic', 'openai', 'gemini', 'qwen'];
 const LLM_OPTIONS = ['anthropic', 'openai', 'gemini', 'qwen'];
-const JUDGMENT_OPTIONS = ['typesafe', 'ollama', 'laya'];
+const JUDGMENT_OPTIONS = ['typesafe', 'ollama', 'laya', 'provider'];
 
 const keyInputs = ref<Record<KeyAccount, string>>({ typesafe: '', anthropic: '', openai: '', gemini: '', qwen: '' });
 const keyStatus = ref<Record<string, boolean> | null>(null);
@@ -290,7 +290,8 @@ const cliStatusLine = (provider: string): string => {
 const onProviderChange = async (): Promise<void> => {
   const choice = providerChoice.value;
   if (choice === null) return;
-  choice.llm_model = modelAfterSwitch(choice.llm_provider, choice.llm_model);
+  // One choice moves the judge with it: a subscription program answers its questions too, so no other key.
+  providerChoice.value = chooseProvider(choice, choice.llm_provider);
   if (isCliProvider(choice.llm_provider)) await checkPrograms();
   else await loadModels(choice.llm_provider);
 };
@@ -656,15 +657,15 @@ onMounted(() => {
 
         <label for="judgment-service">servizio che giudica le offerte</label>
         <select id="judgment-service" v-model="providerChoice.judgment_service">
-          <option v-for="name in JUDGMENT_OPTIONS" :key="name" :value="name">{{ name }}</option>
+          <option v-for="name in JUDGMENT_OPTIONS" :key="name" :value="name">{{ name === 'provider' ? t('settings.judge.provider') : name }}</option>
         </select>
         <input
-          v-if="providerChoice.judgment_service !== 'typesafe'"
+          v-if="providerChoice.judgment_service !== 'typesafe' && providerChoice.judgment_service !== 'provider'"
           v-model="providerChoice.judgment_model"
           type="text"
           placeholder="nome del modello"
         />
-        <select v-else v-model="providerChoice.judgment_model">
+        <select v-else-if="providerChoice.judgment_service === 'typesafe'" v-model="providerChoice.judgment_model">
           <option v-for="name in modelOptions(offeredModels['typesafe'] ?? [], providerChoice.judgment_model)" :key="name" :value="name">{{ name }}</option>
         </select>
         <input

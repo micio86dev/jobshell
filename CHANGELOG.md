@@ -29,7 +29,8 @@ All notable changes to the app are listed here. Versions follow [Semantic Versio
 - Settings: minimum score, evidence floor, budgets, spending cap and preferred countries for the client search.
 - `make leads-eval`: the real judge on ten controlled scenarios.
 
-- Use your own subscription instead of an API key for the text steps: Claude Code, Codex, Gemini CLI or OpenCode, chosen in Settings. The app starts the program you already signed in to and never touches your login. Web research still needs an Anthropic API key; check your plan's terms (see docs/leads.md).
+- Use your own subscription instead of an API key for everything: Claude Code, Codex, Gemini CLI or OpenCode, chosen once in the first step of the wizard (and changeable in Settings). The CV reader, the job planner, reports, the judge, the company research and the drafts all run on it. The app starts the program you already signed in to and never touches your login. Check your plan's terms (see docs/leads.md).
+- The judge can be "the same as the AI service": the chosen model answers the seven questions, so no TypeSafe key is needed.
 - The sources of the client search appear on the Sources page and can be switched off one by one.
 - The cost of a run is also shown per qualified lead, and opening a lead's evidence scrolls to it.
 

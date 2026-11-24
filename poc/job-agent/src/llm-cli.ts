@@ -12,8 +12,9 @@
  * - The program is started with its tools off or read-only, because the prompt contains text from the
  *   web and a program with a shell must never obey it.
  *
- * Web research is not offered here: the research checks need the pages the provider actually read,
- * and a command-line program prints only its final text.
+ * Web research does not rely on what the program says it read: the program may only be allowed a web
+ * search that returns addresses, and our own code then fetches those public pages and keeps their
+ * text, which is what the research checks compare quotes against (see leads/research-cli.ts).
  */
 import { execFile } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -33,6 +34,9 @@ export const CLI_LABEL: Record<CliProvider, string> = {
 };
 
 const BINARY: Record<CliProvider, string> = { 'cli-claude': 'claude', 'cli-codex': 'codex', 'cli-gemini': 'gemini', 'cli-opencode': 'opencode' };
+
+/** Programs that were seen to offer a live web search from the command line. */
+export const WEB_SEARCH_PROGRAMS: readonly CliProvider[] = ['cli-claude', 'cli-codex'];
 
 /** The model name that means "whatever the program is set to use". */
 export const CLI_DEFAULT_MODEL = 'default';
@@ -62,17 +66,18 @@ export type Invocation = { args: string[]; stdin: string | null; promptFile: str
 const withModel = (flag: string, model: string): string[] => (model === CLI_DEFAULT_MODEL || model.trim() === '' ? [] : [flag, model]);
 
 /** The command line for one plain-text request. The prompt travels on stdin or in a private file, never in the arguments of a process other users can list. */
-export const invocationFor = (provider: CliProvider, model: string, prompt: string, promptFile: string | null): Invocation => {
+export const invocationFor = (provider: CliProvider, model: string, prompt: string, promptFile: string | null, web = false): Invocation => {
   switch (provider) {
     case 'cli-claude':
       // Every tool is refused: this is a text request, and its prompt holds text from the web.
       return {
-        args: ['-p', '--output-format', 'text', '--no-session-persistence', ...withModel('--model', model), '--disallowedTools', 'Bash', 'Edit', 'Write', 'Read', 'Glob', 'Grep', 'WebFetch', 'WebSearch', 'NotebookEdit', 'Task'],
+        // With `web` the search alone is allowed: it returns addresses and snippets, and nothing else can run.
+        args: ['-p', '--output-format', 'text', '--no-session-persistence', ...withModel('--model', model), ...(web ? ['--allowedTools', 'WebSearch'] : []), '--disallowedTools', 'Bash', 'Edit', 'Write', 'Read', 'Glob', 'Grep', 'WebFetch', ...(web ? [] : ['WebSearch']), 'NotebookEdit', 'Task'],
         stdin: prompt,
         promptFile: null,
       };
     case 'cli-codex':
-      return { args: ['exec', '--skip-git-repo-check', '--sandbox', 'read-only', ...withModel('-m', model), '-'], stdin: prompt, promptFile: null };
+      return { args: [...(web ? ['--search'] : []), 'exec', '--skip-git-repo-check', '--sandbox', 'read-only', ...withModel('-m', model), '-'], stdin: prompt, promptFile: null };
     case 'cli-gemini':
       return { args: ['-p', 'Follow the instructions given on standard input.', '-o', 'text', '--approval-mode', 'plan', ...withModel('-m', model)], stdin: prompt, promptFile: null };
     case 'cli-opencode':
@@ -121,6 +126,8 @@ export type CliDeps = {
   exists?: (path: string) => boolean;
   /** The environment the few allowed variables are read from; absent means the process's own. */
   baseEnv?: Record<string, string | undefined>;
+  /** Allow the program its web search for this request. Ignored by a program with none. */
+  web?: boolean;
 };
 
 /** The only variables a program is given besides PATH, HOME and TMPDIR. USER, LOGNAME and SHELL are not secrets, and on macOS the keychain that holds the program's sign-in is not reachable without them. */
@@ -139,12 +146,13 @@ export const runCli = async (provider: CliProvider, model: string, prompt: strin
     directory = mkdtempSync(join(tmpdir(), 'jobshell-cli-'));
     mkdirSync(directory, { recursive: true, mode: 0o700 });
     let file: string | null = null;
-    const plan = invocationFor(provider, model, prompt, null);
+    const web = deps.web === true && WEB_SEARCH_PROGRAMS.includes(provider);
+    const plan = invocationFor(provider, model, prompt, null, web);
     if (plan.promptFile !== null) {
       file = join(directory, 'prompt.txt');
       writeFileSync(file, plan.promptFile, { mode: 0o600 });
     }
-    const invocation = invocationFor(provider, model, prompt, file);
+    const invocation = invocationFor(provider, model, prompt, file, web);
     // A small environment: the program's own sign-in is in HOME and the keychain, and no key of ours is passed on.
     const base = deps.baseEnv ?? process.env;
     const env: Record<string, string> = { PATH: searchDirs(home, pathEnv).join(':'), HOME: home, TMPDIR: tmpdir() };

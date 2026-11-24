@@ -235,7 +235,9 @@ export const runLeads = async (deps: LeadRunDeps): Promise<LeadDocument> => {
 
   // 4. The judge, on the most promising companies, with the cache first.
   const context = candidateContext(deps.profile, strategy);
-  const contextKey = contentKey(context, String(QUESTIONS_VERSION));
+  // A verdict given by a model is not reused for another judge, and a hosted judge keeps its earlier keys.
+  const judgeId = deps.jev?.via === undefined ? [] : [`${deps.jev.via.provider}:${deps.jev.via.model}`];
+  const contextKey = contentKey(context, String(QUESTIONS_VERSION), ...judgeId);
   const doneJudge = stamp('judge');
   let consecutiveFailures = 0;
   let judged = 0;
@@ -327,7 +329,7 @@ export const runLeads = async (deps: LeadRunDeps): Promise<LeadDocument> => {
         metrics.research.failed += 1;
         metrics.errors.push({ stage: 'research', message: enrichment.reason });
         // A refused key or an empty account will fail every company: say it once and stop spending requests.
-        if (/key was refused|no credit/.test(enrichment.reason)) {
+        if (/key was refused|no credit|is not signed in|is not installed|usage limit|API usage limits/i.test(enrichment.reason)) {
           metrics.research.available = false;
           metrics.research.reason = enrichment.reason;
           break;

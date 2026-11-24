@@ -1,0 +1,394 @@
+{
+  "generated_at": "2026-11-24T17:14:06.601Z",
+  "method": "real judgment service on controlled fixtures; no web research; default strategy (threshold 60)",
+  "judge": "provider provider",
+  "metrics": {
+    "scenarios": 11,
+    "agreement": 9,
+    "recall": 0.7777777777777778,
+    "precision": 1,
+    "relevant_held_for_second_source": [
+      "s02-nl-funded-startup",
+      "s08-no-vacancy-signals"
+    ],
+    "relevant_wrongly_rejected": [],
+    "irrelevant_wrongly_accepted": [],
+    "judge_input_tokens": 0,
+    "judge_failed_calls": 0,
+    "errors": [],
+    "ms": 92642
+  },
+  "rows": [
+    {
+      "id": "s01-de-saas-laravel",
+      "expected_qualified": true,
+      "qualified": true,
+      "analysed": true,
+      "score": 82.2,
+      "confidence": 0.62,
+      "reason": null,
+      "dimensions": [
+        [
+          "technical_relevance",
+          20
+        ],
+        [
+          "b2b_potential",
+          23.3
+        ],
+        [
+          "company_capacity",
+          11
+        ],
+        [
+          "long_term_potential",
+          9.9
+        ],
+        [
+          "remote_international",
+          8.2
+        ],
+        [
+          "profile_relevance",
+          9.8
+        ]
+      ],
+      "agrees": true
+    },
+    {
+      "id": "s02-nl-funded-startup",
+      "expected_qualified": true,
+      "qualified": false,
+      "analysed": true,
+      "score": 66.7,
+      "confidence": 0.56,
+      "reason": "one source is not enough: research could not confirm it",
+      "dimensions": [
+        [
+          "technical_relevance",
+          11.8
+        ],
+        [
+          "b2b_potential",
+          16.3
+        ],
+        [
+          "company_capacity",
+          14
+        ],
+        [
+          "long_term_potential",
+          12.3
+        ],
+        [
+          "remote_international",
+          5.8
+        ],
+        [
+          "profile_relevance",
+          6.5
+        ]
+      ],
+      "agrees": false
+    },
+    {
+      "id": "s03-uk-modernise-platform",
+      "expected_qualified": true,
+      "qualified": true,
+      "analysed": true,
+      "score": 79.8,
+      "confidence": 0.61,
+      "reason": null,
+      "dimensions": [
+        [
+          "technical_relevance",
+          20
+        ],
+        [
+          "b2b_potential",
+          23.9
+        ],
+        [
+          "company_capacity",
+          8
+        ],
+        [
+          "long_term_potential",
+          9.5
+        ],
+        [
+          "remote_international",
+          8.6
+        ],
+        [
+          "profile_relevance",
+          9.8
+        ]
+      ],
+      "agrees": true
+    },
+    {
+      "id": "s04-ch-backend-api",
+      "expected_qualified": true,
+      "qualified": true,
+      "analysed": true,
+      "score": 75.2,
+      "confidence": 0.54,
+      "reason": null,
+      "dimensions": [
+        [
+          "technical_relevance",
+          18.6
+        ],
+        [
+          "b2b_potential",
+          19.6
+        ],
+        [
+          "company_capacity",
+          11
+        ],
+        [
+          "long_term_potential",
+          8.3
+        ],
+        [
+          "remote_international",
+          8.1
+        ],
+        [
+          "profile_relevance",
+          9.6
+        ]
+      ],
+      "agrees": true
+    },
+    {
+      "id": "s05-it-extra-capacity",
+      "expected_qualified": true,
+      "qualified": true,
+      "analysed": true,
+      "score": 82.1,
+      "confidence": 0.65,
+      "reason": null,
+      "dimensions": [
+        [
+          "technical_relevance",
+          20
+        ],
+        [
+          "b2b_potential",
+          24.2
+        ],
+        [
+          "company_capacity",
+          11
+        ],
+        [
+          "long_term_potential",
+          9.2
+        ],
+        [
+          "remote_international",
+          8.8
+        ],
+        [
+          "profile_relevance",
+          8.9
+        ]
+      ],
+      "agrees": true
+    },
+    {
+      "id": "s06-us-ai-llm",
+      "expected_qualified": true,
+      "qualified": true,
+      "analysed": true,
+      "score": 68.2,
+      "confidence": 0.53,
+      "reason": null,
+      "dimensions": [
+        [
+          "technical_relevance",
+          13.3
+        ],
+        [
+          "b2b_potential",
+          21.7
+        ],
+        [
+          "company_capacity",
+          11
+        ],
+        [
+          "long_term_potential",
+          8.5
+        ],
+        [
+          "remote_international",
+          6.1
+        ],
+        [
+          "profile_relevance",
+          7.6
+        ]
+      ],
+      "agrees": true
+    },
+    {
+      "id": "s07-fractional-cto",
+      "expected_qualified": true,
+      "qualified": true,
+      "analysed": true,
+      "score": 67.4,
+      "confidence": 0.56,
+      "reason": null,
+      "dimensions": [
+        [
+          "technical_relevance",
+          11.8
+        ],
+        [
+          "b2b_potential",
+          23.9
+        ],
+        [
+          "company_capacity",
+          8
+        ],
+        [
+          "long_term_potential",
+          8.5
+        ],
+        [
+          "remote_international",
+          8.8
+        ],
+        [
+          "profile_relevance",
+          6.4
+        ]
+      ],
+      "agrees": true
+    },
+    {
+      "id": "s08-no-vacancy-signals",
+      "expected_qualified": true,
+      "qualified": false,
+      "analysed": true,
+      "score": 64.4,
+      "confidence": 0.55,
+      "reason": "one source is not enough: research could not confirm it",
+      "dimensions": [
+        [
+          "technical_relevance",
+          11.1
+        ],
+        [
+          "b2b_potential",
+          14.6
+        ],
+        [
+          "company_capacity",
+          14
+        ],
+        [
+          "long_term_potential",
+          12.5
+        ],
+        [
+          "remote_international",
+          5.9
+        ],
+        [
+          "profile_relevance",
+          6.3
+        ]
+      ],
+      "agrees": false
+    },
+    {
+      "id": "s09-hourly-contract",
+      "expected_qualified": true,
+      "qualified": true,
+      "analysed": true,
+      "score": 75,
+      "confidence": 0.62,
+      "reason": null,
+      "dimensions": [
+        [
+          "technical_relevance",
+          18.6
+        ],
+        [
+          "b2b_potential",
+          22
+        ],
+        [
+          "company_capacity",
+          11
+        ],
+        [
+          "long_term_potential",
+          7.2
+        ],
+        [
+          "remote_international",
+          8.6
+        ],
+        [
+          "profile_relevance",
+          7.6
+        ]
+      ],
+      "agrees": true
+    },
+    {
+      "id": "s10-unpaid-internship",
+      "expected_qualified": false,
+      "qualified": false,
+      "analysed": false,
+      "score": null,
+      "confidence": null,
+      "reason": "set aside before judgment",
+      "dimensions": [],
+      "agrees": true
+    },
+    {
+      "id": "s11-fake-evergreen",
+      "expected_qualified": false,
+      "qualified": false,
+      "analysed": true,
+      "score": 27.5,
+      "confidence": 0.49,
+      "reason": "looks like a scheme or vague bait; recruitment marketing, not a client; score 27.5 is below 60",
+      "dimensions": [
+        [
+          "technical_relevance",
+          1.4
+        ],
+        [
+          "b2b_potential",
+          1.3
+        ],
+        [
+          "company_capacity",
+          11
+        ],
+        [
+          "long_term_potential",
+          2.2
+        ],
+        [
+          "remote_international",
+          8.3
+        ],
+        [
+          "profile_relevance",
+          3.3
+        ]
+      ],
+      "agrees": true
+    }
+  ]
+}

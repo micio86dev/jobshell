@@ -12,6 +12,7 @@
  * companies researched, evidence in evidence/leads-live/2026-11-24-with-research.json.
  */
 import { checkEndpoint } from '../endpoints.ts';
+import type { CliDeps, CliProvider } from '../llm-cli.ts';
 import type { FetchLike } from '../jev.ts';
 import { ANTHROPIC_VERSION } from '../llm-providers.ts';
 
@@ -20,7 +21,9 @@ const MAX_CONTINUATIONS = 3;
 const LOGIN_WALLED = ['linkedin.com', 'facebook.com', 'instagram.com', 'x.com', 'twitter.com'] as const;
 
 export type ResearchDeps = {
+  /** Empty when a command-line program (a subscription) does the work: see research-cli.ts. */
   apiKey: string;
+  cli?: { provider: CliProvider; deps?: CliDeps };
   model: string;
   fetchImpl: FetchLike;
   maxSearches: number;
