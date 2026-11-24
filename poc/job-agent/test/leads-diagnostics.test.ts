@@ -77,7 +77,7 @@ test('an empty run says when the filters removed everything, and with what', () 
   const m = metrics();
   m.sources = [report('hn-hiring', null, 90)];
   m.signals = { collected: 90, unique: 90, unidentified: 0, identified_by_model: 0 };
-  m.companies = { found: 80, with_every_signal_dropped: 80, classified: 0, from_cache: 0 };
+  m.companies = { found: 80, with_every_signal_dropped: 80, after_filter: 0, classified: 0, from_cache: 0 };
   m.prefilter_dropped = { stale: 60, onsite_only: 20 };
   assert.match(explain(m).join(' '), /removed every company before judgment: stale \(60\), onsite_only \(20\)/);
 });
@@ -98,7 +98,7 @@ test('an empty run says when the judge or the research was not available, and wh
 test('an empty run says how near the best company came to the threshold', () => {
   const m = metrics();
   m.sources = [report('hn-hiring', null, 90)];
-  m.companies = { found: 40, with_every_signal_dropped: 0, classified: 40, from_cache: 0 };
+  m.companies = { found: 40, with_every_signal_dropped: 0, after_filter: 0, classified: 40, from_cache: 0 };
   m.rejected = { 'score below threshold': 38, 'confidence below minimum': 2 };
   m.best_rejected = { company: 'Acme', score: 55.5, reason: 'score 55.5 is below 60' };
   assert.match(explain(m).join(' '), /No company reached the threshold of 60\. Reasons: score below threshold \(38\), confidence below minimum \(2\)\. Closest: Acme at 55\.5/);
@@ -108,10 +108,19 @@ test('a run with leads still reports what was weak', () => {
   const m = metrics();
   m.sources = [report('hn-hiring', null, 90), report('yc-hiring', 'status 503')];
   m.qualified = 4;
-  m.companies = { found: 40, with_every_signal_dropped: 0, classified: 30, from_cache: 5 };
+  m.companies = { found: 40, with_every_signal_dropped: 0, after_filter: 0, classified: 30, from_cache: 5 };
   m.research = { ...m.research, skipped_for_budget: 3 };
   const text = explain(m).join(' ');
   assert.match(text, /1 of 2 sources gave nothing: yc-hiring: status 503/);
   assert.match(text, /3 promising companies were not researched/);
   assert.match(text, /4 qualified leads from 30 companies judged/);
+});
+
+test('a dry run says what it did and that it bought nothing, not that something was unavailable', () => {
+  const m = emptyMetrics(60, new CostMeter('none').summary(), true);
+  m.sources = [report('hn-hiring', null, 90)];
+  m.signals = { collected: 90, unique: 88, unidentified: 0, identified_by_model: 0 };
+  m.companies = { found: 80, with_every_signal_dropped: 3, after_filter: 77, classified: 0, from_cache: 0 };
+  m.judge.available = false;
+  assert.deepEqual(explain(m), ['Dry run: 88 signals from 1 sources, 77 of 80 companies passed the free filters. Nothing was judged or researched.']);
 });

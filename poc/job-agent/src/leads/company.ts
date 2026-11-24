@@ -47,7 +47,12 @@ const AGGREGATOR_HOSTS = [
   'reddit.com', 'facebook.com', 'google.com', 'remoteok.com', 'weworkremotely.com', 'jobicy.com', 'himalayas.app',
   'arbeitnow.com', 'getonbrd.com', 'workingnomads.com', 'cryptocurrencyjobs.co', 'iprogrammatori.it',
   'jobsearch.api.jobtechdev.se', 'arbetsformedlingen.se', 'mastodon.social', 'github.com', 'twitter.com', 'x.com',
+  // News and directories: a story about a company is not on the company site.
+  'sifted.eu', 'techcrunch.com', 'tech.eu', 'eu-startups.com', 'crunchbase.com', 'yc-oss.github.io',
 ];
+
+/** A signal of this kind is a page about a company, so its address says nothing about who the company is. */
+const THIRD_PARTY_KINDS: readonly string[] = ['funding', 'community_post', 'manual_import'];
 
 /** Board hosts: the tenant is the employer's id on that board. */
 const BOARDS: Array<{ ats: string; match: (host: string, path: string[]) => string | null }> = [
@@ -86,9 +91,10 @@ const isAggregator = (host: string): boolean =>
   AGGREGATOR_HOSTS.some((aggregator) => host === aggregator || host.endsWith(`.${aggregator}`));
 
 /** The key a company is known by across sources, or null when nothing identifies it. */
-export const companyKeyOf = (input: { company: string | null; url: string }): string | null => {
+export const companyKeyOf = (input: { company: string | null; url: string; type?: string }): string | null => {
   const named = input.company === null ? '' : normalizeCompanyName(input.company);
   if (named !== '') return `n:${named}`;
+  if (input.type !== undefined && THIRD_PARTY_KINDS.includes(input.type)) return null;
   const url = parsed(input.url);
   if (url === null) return null;
   const host = url.hostname.toLowerCase();
@@ -132,7 +138,7 @@ const normalizeTitle = (title: string): string =>
 
 /** The key two signals share when they describe the same item: same company and same title, or the same page. */
 const dedupeKeyOf = (signal: Signal): string => {
-  const company = companyKeyOf({ company: signal.company_name, url: signal.url });
+  const company = companyKeyOf({ company: signal.company_name, url: signal.url, type: signal.type });
   return company === null ? `u:${signal.url}` : `${company}|${normalizeTitle(signal.title)}`;
 };
 
@@ -160,7 +166,7 @@ export const groupByCompany = (
   const groups = new Map<string, CompanyGroup>();
   const unidentified: Signal[] = [];
   for (const signal of signals) {
-    const key = companyKeyOf({ company: signal.company_name, url: signal.url });
+    const key = companyKeyOf({ company: signal.company_name, url: signal.url, type: signal.type });
     if (key === null) {
       unidentified.push(signal);
       continue;

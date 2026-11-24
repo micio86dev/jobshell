@@ -73,6 +73,24 @@ export type Signal = {
 export const PROVENANCES = ['verified', 'reported', 'estimated', 'inferred'] as const;
 export type Provenance = (typeof PROVENANCES)[number];
 
+export const factSchema = z.object({
+  field: z.string().min(1),
+  value: z.string().min(1),
+  provenance: z.enum(PROVENANCES),
+  source_url: z.string().nullable(),
+  quote: z.string().nullable(),
+});
+
+export const contactSchema = z.object({
+  role: z.string().min(1),
+  name: z.string().nullable(),
+  channel: z.enum(['email', 'form', 'profile', 'page']),
+  value: z.string().min(1),
+  source_url: z.string().min(1),
+  quote: z.string().min(1),
+  verified: z.boolean(),
+});
+
 export type Fact = {
   field: string;
   value: string;

@@ -84,3 +84,11 @@ test('grouping puts every signal of a company together, and a signal with no com
   assert.equal(groups.companies.find((g) => g.key === 'n:acme')?.signals.length, 2);
   assert.equal(groups.unidentified.length, 1);
 });
+
+test('a story about a company is not on the company site: a news or pasted signal is never named by its address', () => {
+  assert.equal(companyKeyOf({ company: null, url: 'https://sifted.eu/articles/agon', type: 'funding' }), null);
+  assert.equal(companyKeyOf({ company: null, url: 'https://blog.example.com/post', type: 'manual_import' }), null);
+  assert.equal(companyKeyOf({ company: null, url: 'https://sifted.eu/articles/agon' }), null, 'a news host is an aggregator');
+  assert.equal(companyKeyOf({ company: 'Agon', url: 'https://sifted.eu/articles/agon', type: 'funding' }), 'n:agon', 'a name still wins');
+  assert.equal(companyKeyOf({ company: null, url: 'https://www.acme.io/careers/1', type: 'job_posting' }), 'd:acme.io');
+});

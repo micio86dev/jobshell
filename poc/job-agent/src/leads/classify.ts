@@ -5,6 +5,7 @@
  * regular vacancy is not a rejection here: whether it could become a contractor engagement is its
  * own question. The answers are probabilities, and the score is computed from them by code.
  */
+import { z } from 'zod';
 import { askSystemOne, type JeAnswer, type JeDeps, type JeQuestion, type Usage } from '../jev.ts';
 import { compilePromptContext, type UserProfile } from '../profile.ts';
 import type { LeadStrategy } from './strategy.ts';
@@ -108,6 +109,21 @@ const QUESTIONS: Record<string, JeQuestion> = {
     },
   },
 };
+
+const answerSchema = <T extends string>(values: readonly [T, ...T[]]) =>
+  z.object({ verdict: z.enum(values), probabilities: z.record(z.string(), z.number()) });
+
+/** The shape of a verdict read back from the cache: nothing from disk is trusted until it passes this. */
+export const classificationSchema = z.object({
+  need: answerSchema(NEED_VALUES),
+  b2b: z.number(),
+  longterm: z.number(),
+  fit: answerSchema(FIT_VALUES),
+  level: answerSchema(LEVEL_VALUES),
+  remote: answerSchema(REMOTE_VALUES),
+  quality: z.object({ verdict: z.enum([...QUALITY_VALUES, 'unknown']), suspicion: z.number() }),
+  usage: z.object({ input_tokens: z.number(), output_tokens: z.number() }),
+});
 
 /** Suspicion at or above this drops the signal, as for a job posting. */
 export const SUSPICION_LIMIT = 0.6;

@@ -21,7 +21,7 @@ const MAX_TEXT = 4000;
 const MIN_TEXT = 30;
 const LOGIN_WALLED = ['facebook.com', 'fb.com', 'linkedin.com', 'instagram.com', 'x.com', 'twitter.com'];
 
-export type ImportInput = { text?: string | null; url?: string | null };
+export type ImportInput = { text?: string | null | undefined; url?: string | null | undefined };
 
 const hostOf = (url: string): URL | null => {
   try {

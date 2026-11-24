@@ -12,9 +12,11 @@ import type { CostSummary } from './cost.ts';
 export type RunError = { stage: string; message: string };
 
 export type RunMetrics = {
+  /** True when nothing was bought: sources and free filters only. */
+  dry_run: boolean;
   sources: SourceReport[];
   signals: { collected: number; unique: number; unidentified: number; identified_by_model: number };
-  companies: { found: number; with_every_signal_dropped: number; classified: number; from_cache: number };
+  companies: { found: number; with_every_signal_dropped: number; after_filter: number; classified: number; from_cache: number };
   prefilter_dropped: Record<string, number>;
   judge: { available: boolean; calls: number; suspicious: number; failed: number };
   research: { available: boolean; reason: string | null; companies: number; failed: number; facts_kept: number; facts_downgraded: number; contacts_kept: number; contacts_dropped: number; skipped_for_budget: number };
@@ -29,10 +31,11 @@ export type RunMetrics = {
   cost: CostSummary;
 };
 
-export const emptyMetrics = (threshold: number, cost: CostSummary): RunMetrics => ({
+export const emptyMetrics = (threshold: number, cost: CostSummary, dryRun = false): RunMetrics => ({
+  dry_run: dryRun,
   sources: [],
   signals: { collected: 0, unique: 0, unidentified: 0, identified_by_model: 0 },
-  companies: { found: 0, with_every_signal_dropped: 0, classified: 0, from_cache: 0 },
+  companies: { found: 0, with_every_signal_dropped: 0, after_filter: 0, classified: 0, from_cache: 0 },
   prefilter_dropped: {},
   judge: { available: true, calls: 0, suspicious: 0, failed: 0 },
   research: { available: true, reason: null, companies: 0, failed: 0, facts_kept: 0, facts_downgraded: 0, contacts_kept: 0, contacts_dropped: 0, skipped_for_budget: 0 },
@@ -71,8 +74,12 @@ export const explain = (metrics: RunMetrics): string[] => {
   if (metrics.signals.unidentified > 0) {
     lines.push(`${metrics.signals.unidentified} of ${metrics.signals.unique} signals name no company and could not be identified, so they stayed out.`);
   }
+  if (metrics.dry_run) {
+    lines.push(`Dry run: ${metrics.signals.unique} signals from ${reached.length} sources, ${metrics.companies.after_filter} of ${metrics.companies.found} companies passed the free filters. Nothing was judged or researched.`);
+    return lines;
+  }
   const dropped = Object.values(metrics.prefilter_dropped).reduce((sum, count) => sum + count, 0);
-  if (dropped > 0 && metrics.companies.classified === 0 && metrics.companies.found > 0) {
+  if (dropped > 0 && metrics.companies.classified === 0 && metrics.companies.found > 0 && metrics.judge.available) {
     lines.push(`The free filters removed every company before judgment: ${top(metrics.prefilter_dropped, 4)}. They may be too strict for the strategy.`);
   }
   if (!metrics.judge.available) {
