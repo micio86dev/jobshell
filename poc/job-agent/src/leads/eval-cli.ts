@@ -87,7 +87,9 @@ const main = async (): Promise<void> => {
     agreement: rows.filter((row) => row.agrees).length,
     recall: relevant.length === 0 ? null : truePositive / relevant.length,
     precision: truePositive + falsePositive === 0 ? null : truePositive / (truePositive + falsePositive),
-    relevant_wrongly_rejected: relevant.filter((row) => !row.qualified).map((row) => row.id),
+    // A company-level signal alone is held for a second source, which this evaluation cannot give (no research): held, not lost.
+    relevant_held_for_second_source: relevant.filter((row) => !row.qualified && /one source is not enough/.test(row.reason ?? '')).map((row) => row.id),
+    relevant_wrongly_rejected: relevant.filter((row) => !row.qualified && !/one source is not enough/.test(row.reason ?? '')).map((row) => row.id),
     irrelevant_wrongly_accepted: irrelevant.filter((row) => row.qualified).map((row) => row.id),
     judge_input_tokens: document.run.cost.jev_input_tokens,
     judge_failed_calls: document.run.metrics.judge.failed,
@@ -104,7 +106,7 @@ const main = async (): Promise<void> => {
   for (const row of rows) {
     process.stdout.write(`${row.agrees ? 'ok ' : 'XX '} ${row.id.padEnd(28)} expected=${String(row.expected_qualified).padEnd(5)} got=${String(row.qualified).padEnd(5)} score=${row.score ?? '-'} ${row.reason ?? ''}\n`);
   }
-  process.stdout.write(`\nagreement ${metrics.agreement}/${metrics.scenarios}, recall ${metrics.recall}, precision ${metrics.precision}, judge tokens ${metrics.judge_input_tokens}, failed calls ${metrics.judge_failed_calls}\nevidence: ${outFile}\n`);
+  process.stdout.write(`\nagreement ${metrics.agreement}/${metrics.scenarios}, recall ${metrics.recall}, precision ${metrics.precision}\nheld for a second source: ${metrics.relevant_held_for_second_source.join(', ') || 'none'}; wrongly rejected: ${metrics.relevant_wrongly_rejected.join(', ') || 'none'}; wrongly accepted: ${metrics.irrelevant_wrongly_accepted.join(', ') || 'none'}\njudge tokens ${metrics.judge_input_tokens}, failed calls ${metrics.judge_failed_calls}\nevidence: ${outFile}\n`);
 };
 
 await main();

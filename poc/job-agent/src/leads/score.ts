@@ -18,7 +18,50 @@
  */
 import type { Classification } from './classify.ts';
 import type { LeadStrategy } from './strategy.ts';
+import { registrableDomain } from './company.ts';
 import type { Contact, Fact, Signal } from './types.ts';
+
+/**
+ * Signals about the company, not offers from it: a funding story, a "hiring" flag on a directory.
+ * Alone they show a company that might need help, not one that asked for it, so they need a second
+ * independent source before they are shown as a lead. A posting or a request is the offer itself.
+ */
+const COMPANY_LEVEL: readonly string[] = ['funding', 'hiring_growth', 'product_launch', 'expansion', 'contract_win', 'modernization'];
+
+const originOf = (url: string): string | null => {
+  try {
+    return registrableDomain(new URL(url).hostname.toLowerCase());
+  } catch {
+    return null;
+  }
+};
+
+/** Words that really do ask for an outside engineer. The judge reads meaning; this checks that the text says it. */
+const ENGAGEMENT_WORDS =
+  /\b(freelanc\w*|contract(or|ors|ing)?|consult\w*|fractional|agency|b2b|part[- ]time|hourly|p\.? ?iva|partita iva|aut[oó]nomo|zzp|interim|project[- ]based|retainer|outsourc\w*|technical partner|external (developer|engineer|partner|team))\b/i;
+
+export const asksForOutsideHelp = (signals: readonly Signal[]): boolean =>
+  signals.some((signal) => ENGAGEMENT_WORDS.test(`${signal.title} ${signal.text ?? ''}`));
+
+/** Facts that show a company has money or momentum to spend. Being listed as hiring is not one of them: it is the signal itself. */
+const CORROBORATING_FIELDS: readonly string[] = ['funding', 'revenue', 'profitability', 'growth', 'acquisition', 'contract_win', 'product_launch', 'engineering_need'];
+
+/**
+ * The independent places that back a company-level signal: the signal itself, any page that shows the
+ * company has money or momentum, and any other signal that asks for outside help in so many words. A
+ * second job listing, a headcount or a contact page says the company exists and is hiring; it does not
+ * say it needs outside engineers, so none of them counts.
+ */
+export const independentOrigins = (input: Pick<CaseInput, 'primary' | 'signals' | 'facts'>): number => {
+  const urls = [
+    input.primary.url,
+    ...input.signals.filter((signal) => asksForOutsideHelp([signal])).map((signal) => signal.url),
+    ...input.facts
+      .filter((fact) => fact.provenance !== 'inferred' && fact.source_url !== null && CORROBORATING_FIELDS.includes(fact.field))
+      .map((fact) => fact.source_url ?? ''),
+  ];
+  return new Set(urls.map(originOf).filter((origin): origin is string => origin !== null)).size;
+};
 
 export const DIMENSIONS = [
   { name: 'technical_relevance', max: 20 },
@@ -163,6 +206,11 @@ export const scoreCase = (input: CaseInput): Scored => {
   if (p(c.need.probabilities, 'unrelated') >= 0.5 || c.need.verdict === 'unrelated') reasons.push('not about a company that needs software engineering');
   if (p(c.need.probabilities, 'recruitment_marketing') >= 0.5 || c.need.verdict === 'recruitment_marketing') reasons.push('recruitment marketing, not a client');
   if (input.legitimacy === 'doubtful') reasons.push('the business looks doubtful');
+  // The judge may say a company asks for outside help; the text has to say it too.
+  const explicit = (c.need.verdict === 'explicit_external' || p(c.need.probabilities, 'explicit_external') >= 0.5) && asksForOutsideHelp(input.signals);
+  if (COMPANY_LEVEL.includes(input.primary.type) && !explicit && independentOrigins(input) < 2) {
+    reasons.push(input.researched ? 'one source is not enough: no second independent source confirmed it' : 'one source is not enough: research could not confirm it');
+  }
   if (total < input.strategy.threshold) reasons.push(`score ${total} is below ${input.strategy.threshold}`);
   if (confidence < input.strategy.min_confidence) reasons.push(`confidence ${confidence} is below ${input.strategy.min_confidence}`);
 
