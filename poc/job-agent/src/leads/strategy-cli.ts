@@ -46,8 +46,9 @@ const main = (): void => {
     let existing: unknown = {};
     try {
       existing = JSON.parse(readFileSync(path, 'utf8'));
-    } catch {
-      // No file yet: the change is the first override.
+    } catch (error) {
+      // No file yet: the change is the first override. A file that is damaged is never overwritten blind.
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') return die('the saved strategy file is damaged: fix or delete it, then try again');
     }
     const applied = applyChange(profile, existing, change);
     if (!applied.ok) return die(applied.error);

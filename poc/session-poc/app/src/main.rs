@@ -10,6 +10,7 @@ mod key_check;
 mod leads;
 mod settings;
 mod profile;
+mod schedule;
 mod ziprecruiter;
 
 use leads::{lead_detail, lead_event, lead_forget, lead_list, lead_purge, lead_runs};
@@ -189,12 +190,16 @@ async fn agent_run_search(
     .map_err(|error| error.to_string())
 }
 
-/// Run the lead pipeline from the window and store what it found. `dry_run` reads the sources and
-/// applies the free filters and buys nothing. Returns the run summary as JSON text.
-#[tauri::command]
-async fn lead_run(app: tauri::AppHandle, state: State<'_, Arc<AppState>>, dry_run: bool) -> Result<String, String> {
+/// One lead search: the saved identity becomes the profile, the pipeline runs, and its document is
+/// stored. Shared by the button and the schedule, which hold the same lock. Returns the summary the
+/// pipeline printed, with what the store kept added to it.
+async fn run_lead_job(
+    app: tauri::AppHandle,
+    pool: &Pool<Sqlite>,
+    dry_run: bool,
+) -> Result<(serde_json::Value, session_poc_core::lead_store::IngestSummary), String> {
     if agent::profile_is_app_owned() {
-        if let Some(identity) = session_poc_core::profile_store::current_identity(&state.pool)
+        if let Some(identity) = session_poc_core::profile_store::current_identity(pool)
             .await
             .map_err(|error| error.to_string())?
         {
@@ -202,8 +207,9 @@ async fn lead_run(app: tauri::AppHandle, state: State<'_, Arc<AppState>>, dry_ru
         }
     }
     let profile = agent::profile_path();
+    let progress_app = app.clone();
     let stdout = tauri::async_runtime::spawn_blocking(move || {
-        agent::run_leads(&profile, dry_run, &|message| emit_agent_progress(&app, message))
+        agent::run_leads(&profile, dry_run, &|message| emit_agent_progress(&progress_app, message))
     })
     .await
     .map_err(|error| error.to_string())?
@@ -211,7 +217,7 @@ async fn lead_run(app: tauri::AppHandle, state: State<'_, Arc<AppState>>, dry_ru
 
     let path = agent::lead_document_path(&stdout).map_err(|error| error.to_string())?;
     let document = std::fs::read_to_string(&path).map_err(|error| error.to_string())?;
-    let stored = session_poc_core::lead_store::ingest_run(&state.pool, &document)
+    let stored = session_poc_core::lead_store::ingest_run(pool, &document)
         .await
         .map_err(|error| error.to_string())?;
     let mut summary: serde_json::Value = stdout
@@ -222,7 +228,72 @@ async fn lead_run(app: tauri::AppHandle, state: State<'_, Arc<AppState>>, dry_ru
         .unwrap_or_else(|| serde_json::json!({}));
     summary["stored_leads"] = stored.leads.into();
     summary["skipped_unevidenced"] = stored.skipped_unevidenced.into();
+    summary["new_qualified"] = stored.new_qualified.into();
+    Ok((summary, stored))
+}
+
+/// Run the lead pipeline from the window and store what it found. `dry_run` reads the sources and
+/// applies the free filters and buys nothing. Only one search runs at a time.
+#[tauri::command]
+async fn lead_run(
+    app: tauri::AppHandle,
+    state: State<'_, Arc<AppState>>,
+    lock: State<'_, schedule::RunLock>,
+    dry_run: bool,
+) -> Result<String, String> {
+    let _guard = lock.try_acquire().ok_or_else(|| "a search is already running".to_string())?;
+    let (summary, _stored) = run_lead_job(app, &state.pool, dry_run).await?;
     Ok(summary.to_string())
+}
+
+/// The automatic search: how often it runs, and when it last started.
+#[tauri::command]
+fn lead_schedule_get() -> Result<schedule::Schedule, String> {
+    schedule::load(&schedule_path()).map_err(|error| error.to_string())
+}
+
+/// Change how often the automatic search runs. Zero turns it off.
+#[tauri::command]
+fn lead_schedule_set(every_hours: u32) -> Result<schedule::Schedule, String> {
+    let mut current = schedule::load(&schedule_path()).map_err(|error| error.to_string())?;
+    current.every_hours = every_hours;
+    schedule::save(&schedule_path(), &current).map_err(|error| error.to_string())?;
+    Ok(current)
+}
+
+fn schedule_path() -> std::path::PathBuf {
+    settings_path().with_file_name("lead-schedule.json")
+}
+
+fn epoch_seconds() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|elapsed| i64::try_from(elapsed.as_secs()).unwrap_or(i64::MAX))
+        .unwrap_or(0)
+}
+
+/// One look at the clock: start a search when the schedule says it is due and none is running, and
+/// tell the user when it found someone new. The attempt is written before the search starts.
+async fn scheduler_tick(app: &tauri::AppHandle, pool: &Pool<Sqlite>, lock: &schedule::RunLock) {
+    use tauri_plugin_notification::NotificationExt;
+
+    let Ok(mut current) = schedule::load(&schedule_path()) else { return };
+    let now = epoch_seconds();
+    if !schedule::due(&current, now) {
+        return;
+    }
+    let Some(_guard) = lock.try_acquire() else { return };
+    current.last_attempt = Some(now);
+    if schedule::save(&schedule_path(), &current).is_err() {
+        return;
+    }
+    if let Ok((_summary, stored)) = run_lead_job(app.clone(), pool, false).await {
+        if stored.new_qualified > 0 {
+            let body = format!("{} new client(s) to review", stored.new_qualified);
+            // A refused permission only loses the banner: the leads are on the page.
+            let _ = app.notification().builder().title("Jobshell").body(body).show();
+        }
+    }
 }
 
 /// Queue a pasted post or a public link for the next lead run. A link behind a login is refused
@@ -588,12 +659,27 @@ fn main() {
 
     tracing_hint(&data_dir);
     let state = Arc::new(AppState { pool });
+    let run_lock = schedule::RunLock::default();
     let sources: Arc<Mutex<Sources>> = Arc::new(Mutex::new(Sources::default()));
 
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
-        .manage(state)
+        .manage(Arc::clone(&state))
+        .manage(run_lock.clone())
         .manage(Arc::clone(&sources))
+        .setup(move |app| {
+            // Once a minute the schedule is asked whether a search is due; it is off until the user turns it on.
+            let handle = app.handle().clone();
+            let pool = state.pool.clone();
+            let lock = run_lock.clone();
+            tauri::async_runtime::spawn(async move {
+                loop {
+                    tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+                    scheduler_tick(&handle, &pool, &lock).await;
+                }
+            });
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             enqueue_probe,
             list_tasks,
@@ -642,6 +728,8 @@ fn main() {
             agent_run_search,
             lead_run,
             lead_import,
+            lead_schedule_get,
+            lead_schedule_set,
             lead_strategy_get,
             lead_strategy_set,
             lead_list,

@@ -88,6 +88,10 @@ export const LEAD_EN = {
   'settings.leads.save': 'Save',
   'settings.leads.saved': 'Saved. It applies to the next search.',
   'settings.leads.failed': 'Not saved: {reason}',
+  'settings.leads.schedule': 'Automatic search',
+  'settings.leads.scheduleHint': 'While the app is open, it searches by itself and tells you when there is someone new. Each search costs money, so it is off until you choose.',
+  'settings.leads.off': 'Off: I start it myself',
+  'settings.leads.every': 'Every {hours} hours',
 } as const;
 
 export const LEAD_IT: Record<keyof typeof LEAD_EN, string> = {
@@ -176,6 +180,10 @@ export const LEAD_IT: Record<keyof typeof LEAD_EN, string> = {
   'settings.leads.save': 'Salva',
   'settings.leads.saved': 'Salvato. Vale dalla prossima ricerca.',
   'settings.leads.failed': 'Non salvato: {reason}',
+  'settings.leads.schedule': 'Ricerca automatica',
+  'settings.leads.scheduleHint': 'Finché l’app è aperta cerca da sola e ti avvisa quando c’è qualcuno di nuovo. Ogni ricerca ha un costo, quindi è spenta finché non la scegli.',
+  'settings.leads.off': 'Spenta: la avvio io',
+  'settings.leads.every': 'Ogni {hours} ore',
 };
 
 export const LEAD_ES: Record<keyof typeof LEAD_EN, string> = {
@@ -264,4 +272,8 @@ export const LEAD_ES: Record<keyof typeof LEAD_EN, string> = {
   'settings.leads.save': 'Guardar',
   'settings.leads.saved': 'Guardado. Vale desde la próxima búsqueda.',
   'settings.leads.failed': 'No guardado: {reason}',
+  'settings.leads.schedule': 'Búsqueda automática',
+  'settings.leads.scheduleHint': 'Mientras la app está abierta, busca sola y te avisa cuando hay alguien nuevo. Cada búsqueda cuesta dinero, así que está apagada hasta que la elijas.',
+  'settings.leads.off': 'Apagada: la inicio yo',
+  'settings.leads.every': 'Cada {hours} horas',
 };

@@ -29,6 +29,9 @@ pub struct IngestSummary {
     pub qualified: usize,
     /// Facts and contacts left out because they carried no evidence.
     pub skipped_unevidenced: usize,
+    /// Qualified leads the user has not seen qualified before: new companies, and ones that were
+    /// rejected until now. This is the number worth a notification.
+    pub new_qualified: usize,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -90,7 +93,7 @@ pub async fn ingest_run(pool: &Pool<Sqlite>, document: &str) -> Result<IngestSum
     .await
     .context("storing the run")?;
 
-    let mut summary = IngestSummary { run_id: run_id.clone(), leads: 0, qualified: 0, skipped_unevidenced: 0 };
+    let mut summary = IngestSummary { run_id: run_id.clone(), leads: 0, qualified: 0, skipped_unevidenced: 0, new_qualified: 0 };
     for lead in items(&doc, "leads") {
         let key = text(lead, "company_key").context("a lead has no company key")?;
         let name = text(lead, "company_name").context("a lead has no company name")?;
@@ -110,6 +113,14 @@ pub async fn ingest_run(pool: &Pool<Sqlite>, document: &str) -> Result<IngestSum
 
         let score = lead.get("score").cloned().unwrap_or_else(|| json!({}));
         let qualified = lead.get("qualified").and_then(Value::as_bool).unwrap_or(false);
+        let was_qualified: Option<i64> = sqlx::query_scalar("SELECT qualified FROM leads WHERE company_key = ?")
+            .bind(&key)
+            .fetch_optional(&mut *tx)
+            .await
+            .context("reading the previous state of the lead")?;
+        if qualified && was_qualified != Some(1) {
+            summary.new_qualified += 1;
+        }
         sqlx::query(
             "INSERT INTO leads (company_key, run_id, qualified, rejection_reason, score, confidence, completeness, summary, why_match, next_action) \
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) \
@@ -522,6 +533,17 @@ mod tests {
         assert_eq!(detail["facts"].as_array().map(Vec::len), Some(2));
         assert_eq!(detail["contacts"][0]["source_url"], "https://acme.test/team");
         assert_eq!(detail["drafts"][0]["status"], "draft");
+    }
+
+    #[tokio::test]
+    async fn a_run_counts_the_qualified_leads_that_are_new_to_the_user_and_a_repeat_adds_none() {
+        let (_dir, pool) = store().await;
+        let first = ingest_run(&pool, &document("r1", vec![lead("n:acme", "Acme", 70.0, true), lead("n:globex", "Globex", 30.0, false)])).await.expect("first");
+        assert_eq!(first.new_qualified, 1, "a rejected company is not news");
+        let again = ingest_run(&pool, &document("r2", vec![lead("n:acme", "Acme", 75.0, true), lead("n:initech", "Initech", 80.0, true)])).await.expect("second");
+        assert_eq!(again.new_qualified, 1, "only Initech is new");
+        let upgraded = ingest_run(&pool, &document("r3", vec![lead("n:globex", "Globex", 66.0, true)])).await.expect("third");
+        assert_eq!(upgraded.new_qualified, 1, "a company that was rejected before and now qualifies is news");
     }
 
     #[tokio::test]
