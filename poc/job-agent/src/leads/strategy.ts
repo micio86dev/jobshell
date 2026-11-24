@@ -106,8 +106,10 @@ export const loadStrategy = (
   let raw: string;
   try {
     raw = readFileSync(path, 'utf8');
-  } catch {
-    return { ok: true, strategy: base };
+  } catch (error) {
+    // No file is the defaults. A file that exists and cannot be read is said, never skipped.
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return { ok: true, strategy: base };
+    return { ok: false, error: 'leads strategy: the file cannot be read' };
   }
   let parsed: unknown;
   try {
