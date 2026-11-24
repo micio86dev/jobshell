@@ -144,7 +144,21 @@ fn emit_agent_progress(app: &tauri::AppHandle, message: &str) {
 
 /// Run the agent from the window. `dry_run` fetches and filters without buying a judgment.
 #[tauri::command]
-async fn agent_run(app: tauri::AppHandle, dry_run: bool) -> Result<String, String> {
+async fn agent_run(
+    app: tauri::AppHandle,
+    state: State<'_, Arc<AppState>>,
+    dry_run: bool,
+) -> Result<String, String> {
+    // The identity the user saved in the wizard is the profile a run reads.
+    if agent::profile_is_app_owned() {
+        if let Some(identity) = session_poc_core::profile_store::current_identity(&state.pool)
+            .await
+            .map_err(|error| error.to_string())?
+        {
+            agent::write_active_profile(&agent::profile_path(), &identity.payload)
+                .map_err(|error| error.to_string())?;
+        }
+    }
     tauri::async_runtime::spawn_blocking(move || {
         agent::run_once(dry_run, &|message| emit_agent_progress(&app, message))
     })

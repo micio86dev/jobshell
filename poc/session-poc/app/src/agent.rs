@@ -210,6 +210,30 @@ pub fn ensure_profile(path: &Path) -> Result<bool> {
     Ok(true)
 }
 
+/// True when the profile file is the app's own copy. A user who points `JOBSHELL_PROFILE` at a
+/// file of their own keeps it: the app never rewrites a file it does not own.
+pub fn profile_is_app_owned() -> bool {
+    std::env::var_os("JOBSHELL_PROFILE").is_none()
+}
+
+/// Make the identity the user saved in the wizard the profile a run reads.
+///
+/// Before this, "Search now" ran on the starter profile the app seeded on first launch, while the
+/// wizard's identity sat in SQLite and reached the agent only through saved searches. The payload
+/// must be a JSON object, and it is written to a temporary file first, so an interrupted write
+/// never leaves a half profile behind.
+pub fn write_active_profile(path: &Path, payload: &str) -> Result<()> {
+    let value: Value = serde_json::from_str(payload).context("the identity is not valid JSON")?;
+    anyhow::ensure!(value.is_object(), "the identity must be a JSON object");
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
+    }
+    let temporary = path.with_extension("json.tmp");
+    std::fs::write(&temporary, payload).with_context(|| format!("writing {}", temporary.display()))?;
+    std::fs::rename(&temporary, path).with_context(|| format!("replacing {}", path.display()))?;
+    Ok(())
+}
+
 /// The arguments one run needs. Pure, so the shape is tested without spawning anything.
 pub fn run_args(profile: &Path, dry_run: bool) -> Vec<String> {
     let mut args = vec![
@@ -1136,5 +1160,41 @@ mod open_tests {
         assert!(!is_web_address("https://example.test/a b"));
         assert!(!is_web_address("https://example.test/\n"));
         assert!(!is_web_address(""));
+    }
+}
+
+#[cfg(test)]
+mod active_profile_tests {
+    use super::*;
+
+    fn scratch(name: &str) -> PathBuf {
+        let base = std::env::temp_dir().join(format!("jobshell-active-{name}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        std::fs::create_dir_all(&base).unwrap();
+        base
+    }
+
+    #[test]
+    fn the_saved_identity_replaces_the_starter_profile_the_run_reads() {
+        let base = scratch("replace");
+        let path = base.join("evidence").join("profile.json");
+        ensure_profile(&path).unwrap();
+        write_active_profile(&path, r#"{"headline":"Laravel developer","capabilities":["Laravel"]}"#).unwrap();
+        let written: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+        assert_eq!(written["headline"], "Laravel developer");
+        assert!(!path.with_extension("json.tmp").exists(), "no temporary file is left behind");
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    #[test]
+    fn a_payload_that_is_not_a_json_object_never_touches_the_profile() {
+        let base = scratch("refuse");
+        let path = base.join("profile.json");
+        std::fs::write(&path, r#"{"headline":"kept"}"#).unwrap();
+        assert!(write_active_profile(&path, "[1,2]").is_err());
+        assert!(write_active_profile(&path, "not json").is_err());
+        let kept: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+        assert_eq!(kept["headline"], "kept");
+        let _ = std::fs::remove_dir_all(&base);
     }
 }

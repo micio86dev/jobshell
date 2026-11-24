@@ -118,9 +118,15 @@ pub async fn identity_save(
         .await
         .map_err(|error| error.to_string())?
         .map_err(|error| error.to_string())?;
-    profile_store::save_identity_with_scope(&state.pool, &payload, &apply_scope)
+    let saved = profile_store::save_identity_with_scope(&state.pool, &payload, &apply_scope)
         .await
-        .map_err(|error| error.to_string())
+        .map_err(|error| error.to_string())?;
+    // The report and the tailored CV read the same file as a run, so it follows the identity now.
+    if crate::agent::profile_is_app_owned() {
+        crate::agent::write_active_profile(&crate::agent::profile_path(), &payload)
+            .map_err(|error| error.to_string())?;
+    }
+    Ok(saved)
 }
 
 /// Keep a partial wizard draft, so it survives a restart.
