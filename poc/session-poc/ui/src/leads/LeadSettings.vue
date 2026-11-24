@@ -26,10 +26,11 @@ const exclude = ref('');
 const message = ref('');
 const failed = ref(false);
 const HOURS = [0, 6, 12, 24, 48] as const;
-const scheduleSchema = z.object({ every_hours: z.number(), last_attempt: z.number().nullable() });
+const scheduleSchema = z.object({ every_hours: z.number(), last_attempt: z.number().nullable(), last_error: z.string().nullable().optional() });
 const everyHours = ref<number>(0);
 const lastAttempt = ref<number | null>(null);
 const scheduleMessage = ref('');
+const lastError = ref('');
 
 const split = (value: string): string[] => value.split(',').map((part) => part.trim()).filter((part) => part !== '');
 
@@ -84,6 +85,7 @@ onMounted(async () => {
     const parsed = scheduleSchema.parse(await invoke<unknown>('lead_schedule_get'));
     everyHours.value = parsed.every_hours;
     lastAttempt.value = parsed.last_attempt;
+    lastError.value = parsed.last_error ?? '';
   } catch {
     // Off stays on screen: a schedule that cannot be read is not shown as running.
   }
@@ -119,6 +121,7 @@ onMounted(async () => {
       </select>
     </label>
     <p v-if="lastAttempt !== null" class="hint">{{ new Date(lastAttempt * 1000).toLocaleString() }}</p>
+    <p v-if="lastError !== ''" class="bad">{{ t('settings.leads.lastError', { reason: lastError }) }}</p>
     <p v-if="scheduleMessage !== ''" class="ok">{{ scheduleMessage }}</p>
   </section>
 </template>

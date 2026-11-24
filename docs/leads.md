@@ -39,7 +39,9 @@ Unknown is neutral: a missing fact earns 40% of the capacity line and lowers the
 - A **contact** is kept only with its page and the words that show it, and an email must appear letter for letter in the page. Free-mail addresses are dropped. Names must be in the quote.
 - An **outreach draft** may cite only facts that carry evidence, may state no number that is not in the evidence, contains no link, and ends with a placeholder signature. Nothing sends it; the database refuses any status other than `draft`.
 - The judge's "asks for outside help" is checked against the text: the words must be there.
-- Login-walled networks (LinkedIn, Facebook, Instagram, X) are blocked for the research tools and never read.
+- Login-walled networks (LinkedIn, Facebook, Instagram, X) are blocked for the research tools and never read. A pasted link must be a public https name: addresses in any notation, local suffixes, names that stand for an address and a trailing dot on a blocked host are refused, and a redirect is never followed. (A public name that a resolver points at a private address is not detected.)
+- The company website is accepted only when a page of that site was read in full, names the company, and the domain looks like the company's name; a news site or a directory is never "the company site". A contact must be on that site, at that domain, in words that name the person and a role the search is for; a profile on someone else's page must tie the person to the company in the quoted words.
+- A failed automatic search leaves its reason on the settings page, and the file the identity replaces is kept beside it once as `profile.json.bak`.
 
 ## Run it
 

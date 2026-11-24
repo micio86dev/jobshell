@@ -92,6 +92,7 @@ export const LEAD_EN = {
   'settings.leads.scheduleHint': 'While the app is open, it searches by itself and tells you when there is someone new. Each search costs money, so it is off until you choose.',
   'settings.leads.off': 'Off: I start it myself',
   'settings.leads.every': 'Every {hours} hours',
+  'settings.leads.lastError': 'The last automatic search failed: {reason}',
 } as const;
 
 export const LEAD_IT: Record<keyof typeof LEAD_EN, string> = {
@@ -184,6 +185,7 @@ export const LEAD_IT: Record<keyof typeof LEAD_EN, string> = {
   'settings.leads.scheduleHint': 'Finché l’app è aperta cerca da sola e ti avvisa quando c’è qualcuno di nuovo. Ogni ricerca ha un costo, quindi è spenta finché non la scegli.',
   'settings.leads.off': 'Spenta: la avvio io',
   'settings.leads.every': 'Ogni {hours} ore',
+  'settings.leads.lastError': 'L’ultima ricerca automatica è fallita: {reason}',
 };
 
 export const LEAD_ES: Record<keyof typeof LEAD_EN, string> = {
@@ -276,4 +278,5 @@ export const LEAD_ES: Record<keyof typeof LEAD_EN, string> = {
   'settings.leads.scheduleHint': 'Mientras la app está abierta, busca sola y te avisa cuando hay alguien nuevo. Cada búsqueda cuesta dinero, así que está apagada hasta que la elijas.',
   'settings.leads.off': 'Apagada: la inicio yo',
   'settings.leads.every': 'Cada {hours} horas',
+  'settings.leads.lastError': 'La última búsqueda automática falló: {reason}',
 };

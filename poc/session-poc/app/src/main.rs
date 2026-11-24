@@ -255,10 +255,10 @@ fn lead_schedule_get() -> Result<schedule::Schedule, String> {
 /// Change how often the automatic search runs. Zero turns it off.
 #[tauri::command]
 fn lead_schedule_set(every_hours: u32) -> Result<schedule::Schedule, String> {
-    let mut current = schedule::load(&schedule_path()).map_err(|error| error.to_string())?;
-    current.every_hours = every_hours;
-    schedule::save(&schedule_path(), &current).map_err(|error| error.to_string())?;
-    Ok(current)
+    let current = schedule::load(&schedule_path()).map_err(|error| error.to_string())?;
+    let next = schedule::with_hours(&current, every_hours, epoch_seconds());
+    schedule::save(&schedule_path(), &next).map_err(|error| error.to_string())?;
+    Ok(next)
 }
 
 fn schedule_path() -> std::path::PathBuf {
@@ -287,11 +287,23 @@ async fn scheduler_tick(app: &tauri::AppHandle, pool: &Pool<Sqlite>, lock: &sche
     if schedule::save(&schedule_path(), &current).is_err() {
         return;
     }
-    if let Ok((_summary, stored)) = run_lead_job(app.clone(), pool, false).await {
-        if stored.new_qualified > 0 {
-            let body = format!("{} new client(s) to review", stored.new_qualified);
-            // A refused permission only loses the banner: the leads are on the page.
-            let _ = app.notification().builder().title("Jobshell").body(body).show();
+    match run_lead_job(app.clone(), pool, false).await {
+        Ok((_summary, stored)) => {
+            // The next search that works clears an earlier failure from the settings page.
+            if current.last_error.is_some() {
+                current.last_error = None;
+                let _ = schedule::save(&schedule_path(), &current);
+            }
+            if stored.new_qualified > 0 {
+                let body = format!("{} new client(s) to review", stored.new_qualified);
+                // A refused permission only loses the banner: the leads are on the page.
+                let _ = app.notification().builder().title("Jobshell").body(body).show();
+            }
+        }
+        Err(reason) => {
+            // A failed scheduled search leaves its reason where the user will look, not nowhere.
+            current.last_error = Some(reason.chars().take(300).collect());
+            let _ = schedule::save(&schedule_path(), &current);
         }
     }
 }
@@ -675,7 +687,9 @@ fn main() {
             tauri::async_runtime::spawn(async move {
                 loop {
                     tokio::time::sleep(std::time::Duration::from_secs(60)).await;
-                    scheduler_tick(&handle, &pool, &lock).await;
+                    // Each look is its own task, so a panic in one ends that look and not the schedule.
+                    let (handle, pool, lock) = (handle.clone(), pool.clone(), lock.clone());
+                    let _ = tauri::async_runtime::spawn(async move { scheduler_tick(&handle, &pool, &lock).await }).await;
                 }
             });
             Ok(())

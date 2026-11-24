@@ -228,7 +228,14 @@ pub fn write_active_profile(path: &Path, payload: &str) -> Result<()> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
     }
-    let temporary = path.with_extension("json.tmp");
+    // The file the user may have edited by hand is kept once, beside it, before the identity replaces it.
+    if path.exists() {
+        let _ = std::fs::copy(path, path.with_extension("json.bak"));
+    }
+    // A name of its own, so two writers at the same moment never rename each other's file away.
+    static COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    let unique = COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let temporary = path.with_extension(format!("json.{}.{unique}.tmp", std::process::id()));
     std::fs::write(&temporary, payload).with_context(|| format!("writing {}", temporary.display()))?;
     std::fs::rename(&temporary, path).with_context(|| format!("replacing {}", path.display()))?;
     Ok(())
@@ -1267,7 +1274,19 @@ mod active_profile_tests {
         write_active_profile(&path, r#"{"headline":"Laravel developer","capabilities":["Laravel"]}"#).unwrap();
         let written: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
         assert_eq!(written["headline"], "Laravel developer");
-        assert!(!path.with_extension("json.tmp").exists(), "no temporary file is left behind");
+        let leftovers: Vec<_> = std::fs::read_dir(path.parent().unwrap()).unwrap().filter_map(|entry| entry.ok()).filter(|entry| entry.file_name().to_string_lossy().ends_with(".tmp")).collect();
+        assert!(leftovers.is_empty(), "no temporary file is left behind");
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    #[test]
+    fn the_file_the_identity_replaces_is_kept_once_beside_it() {
+        let base = scratch("backup");
+        let path = base.join("profile.json");
+        std::fs::write(&path, r#"{"headline":"hand edited"}"#).unwrap();
+        write_active_profile(&path, r#"{"headline":"from the wizard"}"#).unwrap();
+        let kept = std::fs::read_to_string(path.with_extension("json.bak")).unwrap();
+        assert!(kept.contains("hand edited"));
         let _ = std::fs::remove_dir_all(&base);
     }
 

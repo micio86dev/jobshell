@@ -122,9 +122,10 @@ pub async fn identity_save(
         .await
         .map_err(|error| error.to_string())?;
     // The report and the tailored CV read the same file as a run, so it follows the identity now.
+    // The identity is saved; the file is a copy for the agent. A failed copy is not a failed save (a retry
+    // would store the identity twice), and every run writes it again before it starts.
     if crate::agent::profile_is_app_owned() {
-        crate::agent::write_active_profile(&crate::agent::profile_path(), &payload)
-            .map_err(|error| error.to_string())?;
+        let _ = crate::agent::write_active_profile(&crate::agent::profile_path(), &payload);
     }
     Ok(saved)
 }

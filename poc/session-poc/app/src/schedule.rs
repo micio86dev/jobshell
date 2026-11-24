@@ -23,6 +23,20 @@ pub struct Schedule {
     /// runs, so a crash in the middle never makes the next tick start another at once.
     #[serde(default)]
     pub last_attempt: Option<i64>,
+    /// Why the last scheduled search failed, if it did. It is cleared by the next one that works.
+    #[serde(default)]
+    pub last_error: Option<String>,
+}
+
+/// The schedule after the user picks an interval. Turning it on from off counts as an attempt now, so
+/// the first paid search comes one interval later, not within the minute.
+pub fn with_hours(current: &Schedule, every_hours: u32, now: i64) -> Schedule {
+    let turning_on = current.every_hours == 0 && every_hours > 0;
+    Schedule {
+        every_hours,
+        last_attempt: if turning_on { Some(now) } else { current.last_attempt },
+        last_error: current.last_error.clone(),
+    }
 }
 
 /// Read the schedule. No file is "off". A file that cannot be read is an error, never "on".
@@ -83,7 +97,30 @@ mod tests {
     use super::*;
 
     fn on(hours: u32, last: Option<i64>) -> Schedule {
-        Schedule { every_hours: hours, last_attempt: last }
+        Schedule { every_hours: hours, last_attempt: last, last_error: None }
+    }
+
+    #[test]
+    fn turning_the_schedule_on_waits_one_interval_before_the_first_paid_search() {
+        let off = Schedule::default();
+        let turned_on = with_hours(&off, 12, 5000);
+        assert_eq!(turned_on.last_attempt, Some(5000));
+        assert!(!due(&turned_on, 5001), "not within the minute");
+        assert!(due(&turned_on, 5000 + 12 * 3600));
+        let changed = with_hours(&on(12, Some(100)), 24, 9000);
+        assert_eq!(changed.last_attempt, Some(100), "changing the interval keeps the last attempt");
+        assert_eq!(with_hours(&on(12, Some(100)), 0, 9000).every_hours, 0);
+    }
+
+    #[test]
+    fn a_failure_is_kept_for_the_screen_and_an_old_file_without_it_still_reads() {
+        let path = scratch("error").join("lead-schedule.json");
+        let failed = Schedule { every_hours: 6, last_attempt: Some(1), last_error: Some("the judgment key is missing".into()) };
+        save(&path, &failed).unwrap();
+        assert_eq!(load(&path).unwrap().last_error.as_deref(), Some("the judgment key is missing"));
+        std::fs::write(&path, r#"{"every_hours":6,"last_attempt":1}"#).unwrap();
+        assert_eq!(load(&path).unwrap().last_error, None);
+        let _ = std::fs::remove_dir_all(path.parent().unwrap());
     }
 
     fn scratch(name: &str) -> std::path::PathBuf {
