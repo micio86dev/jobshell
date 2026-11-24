@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CLI_NAMES, CLI_PROVIDERS, isCliProvider, modelAfterSwitch, modelOptions, validateChoice, type ProviderChoiceView } from './provider-settings';
+import { chooseApi, chooseProvider, CLI_NAMES, CLI_PROVIDERS, isCliProvider, modelAfterSwitch, modelOptions, validateChoice, type ProviderChoiceView } from './provider-settings';
 
 const choice = (overrides: Partial<ProviderChoiceView>): ProviderChoiceView => ({
   llm_provider: 'anthropic',
@@ -71,5 +71,31 @@ describe('the programs of a subscription', () => {
     expect(modelAfterSwitch('cli-codex', 'gpt-x')).toBe('default');
     expect(modelAfterSwitch('openai', 'default')).toBe('');
     expect(modelAfterSwitch('openai', 'gpt-x')).toBe('gpt-x');
+  });
+});
+
+describe('choosing the AI service once', () => {
+  const base: ProviderChoiceView = { llm_provider: 'anthropic', llm_model: 'claude-sonnet-5-5', judgment_service: 'typesafe', judgment_model: 'jev-1.14.0', judgment_address: '', match_threshold: 70 };
+
+  it('a subscription program also judges, so no other key is needed, and the choice can be saved', () => {
+    const next = chooseProvider(base, 'cli-claude');
+    expect(next).toMatchObject({ llm_provider: 'cli-claude', llm_model: 'default', judgment_service: 'provider' });
+    expect(validateChoice(next)).toBeNull();
+  });
+
+  it('a judge the person runs themselves is left alone', () => {
+    expect(chooseProvider({ ...base, judgment_service: 'ollama' }, 'cli-codex').judgment_service).toBe('ollama');
+  });
+
+  it('going back to an API provider puts the hosted judge back, with a model to start from', () => {
+    const cli = chooseProvider(base, 'cli-gemini');
+    expect(chooseApi(cli)).toMatchObject({ llm_provider: 'anthropic', llm_model: 'claude-sonnet-5-5', judgment_service: 'typesafe' });
+    expect(chooseApi(base)).toEqual(base);
+  });
+
+  it('the input is not changed', () => {
+    const copy = { ...base };
+    chooseProvider(base, 'cli-claude');
+    expect(base).toEqual(copy);
   });
 });
