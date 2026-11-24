@@ -164,7 +164,8 @@ export const collectSignals = async (deps: CollectDeps): Promise<{ signals: Sign
       const pageStarted = Date.now();
       let response: HttpResponse;
       try {
-        response = await deps.fetchImpl(url, { method: 'GET', headers: { 'user-agent': USER_AGENT } });
+        // A data request never follows a redirect: its target is another origin whose robots.txt was never read.
+        response = await deps.fetchImpl(url, { method: 'GET', headers: { 'user-agent': USER_AGENT }, redirect: 'manual' });
       } catch (error) {
         report.skipped = `fetch failed: ${error instanceof Error ? error.message : String(error)}`;
         break;

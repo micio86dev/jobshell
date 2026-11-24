@@ -89,3 +89,14 @@ test('a posting adapter is read through the same plan and its postings become si
   assert.equal(signals[0]?.type, 'job_posting');
   assert.equal(signals[0]?.company_name, 'Acme');
 });
+
+test('a redirect is not followed: it ends the source with its status', async () => {
+  const seen: Array<string | undefined> = [];
+  const fetchImpl: FetchLike = async (_url, init) => {
+    seen.push(init.redirect);
+    return { status: 301, text: '' };
+  };
+  const { reports } = await collectSignals({ config, fetchImpl, now, sources: ['sifted'], queries: [], sleep: noSleep });
+  assert.deepEqual(seen, ['manual']);
+  assert.equal(reports[0]?.skipped, 'status 301');
+});
