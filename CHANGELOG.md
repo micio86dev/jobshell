@@ -34,8 +34,8 @@ All notable changes to the app are listed here. Versions follow [Semantic Versio
 - The query planner follows the provider and model chosen in Settings.
 - CI runs the job agent and the UI tests.
 
-### Not exercised yet
-- Company research, contact discovery and outreach drafting need an Anthropic key with credit. They are tested against the documented response shapes and have not run against the real service.
+### Needs
+- Company research, contact discovery and outreach drafting need an Anthropic key with credit (Settings, or the keychain account `anthropic`). They were run live once: 8 companies, 7 founders named with their page, 10 drafts, about US$0.15 per qualified lead.
 
 ## [0.2.1] - 2026-11-14
 
