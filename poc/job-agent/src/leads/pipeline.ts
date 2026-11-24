@@ -12,7 +12,7 @@ import type { FetchLike, JeDeps } from '../jev.ts';
 import type { AskDeps } from '../llm-call.ts';
 import type { UserProfile } from '../profile.ts';
 import { contentKey, type LeadCache } from './cache.ts';
-import { candidateContext, classificationSchema, classifySignal, isSuspicious, type Classification } from './classify.ts';
+import { candidateContext, classificationSchema, classifySignal, isSuspicious, QUESTIONS_VERSION, type Classification } from './classify.ts';
 import { collectSignals } from './collect.ts';
 import { dedupeSignals, groupByCompany, type CompanyGroup } from './company.ts';
 import { CostMeter } from './cost.ts';
@@ -32,6 +32,29 @@ const CACHE_TTL_DAYS = 14;
 /** A judge that fails this many times in a row is down: stop paying for timeouts. */
 const JUDGE_FAILURE_LIMIT = 3;
 const MAX_REJECTED_KEPT = 30;
+/** The kinds of signal that are news about a company, not an advertisement it placed. */
+const BUYING_SIGNALS: readonly string[] = ['funding', 'hiring_growth', 'product_launch', 'expansion', 'contract_win', 'modernization'];
+/** The share of the judgment budget kept for them, so a run does not spend it all on vacancies. */
+const BUYING_SIGNAL_SHARE = 0.3;
+
+/**
+ * Who gets judged: what the user pasted first, then the best buying signals up to their share, then the
+ * best of everything else. Companies with no advertisement are part of the product, and a cheap score
+ * that favours vacancies would otherwise never reach them.
+ */
+export const chooseForJudgment = <T extends { fromImport: boolean; primary: { pre_score: number; signal: { type: string } } }>(
+  cases: readonly T[],
+  budget: number,
+): T[] => {
+  const imports = cases.filter((item) => item.fromImport);
+  const rest = cases.filter((item) => !item.fromImport);
+  const reserved = budget >= 3 ? Math.max(1, Math.round(budget * BUYING_SIGNAL_SHARE)) : 0;
+  const news = rest.filter((item) => BUYING_SIGNALS.includes(item.primary.signal.type)).slice(0, reserved);
+  const chosen = new Set<T>(news);
+  const others = rest.filter((item) => !chosen.has(item));
+  const room = Math.max(0, budget - news.length);
+  return [...imports, ...news, ...others.slice(0, room)];
+};
 const MAX_DRAFTS = 10;
 
 export type LeadRunDeps = {
@@ -212,7 +235,7 @@ export const runLeads = async (deps: LeadRunDeps): Promise<LeadDocument> => {
 
   // 4. The judge, on the most promising companies, with the cache first.
   const context = candidateContext(deps.profile, strategy);
-  const contextKey = contentKey(context);
+  const contextKey = contentKey(context, String(QUESTIONS_VERSION));
   const doneJudge = stamp('judge');
   let consecutiveFailures = 0;
   let judged = 0;
@@ -220,8 +243,7 @@ export const runLeads = async (deps: LeadRunDeps): Promise<LeadDocument> => {
     metrics.judge.available = false;
     metrics.errors.push({ stage: 'judge', message: 'no judgment key is stored' });
   } else {
-    for (const item of cases) {
-      if (judged >= strategy.classify_budget && !item.fromImport) break;
+    for (const item of chooseForJudgment(cases, strategy.classify_budget)) {
       const signal = item.primary.signal;
       const key = contentKey(signal.id, signal.title, signal.text, contextKey);
       const cached = classificationSchema.safeParse(deps.cache.verdict(key, now, CACHE_TTL_DAYS));
@@ -281,7 +303,7 @@ export const runLeads = async (deps: LeadRunDeps): Promise<LeadDocument> => {
   if (deps.research !== null) {
     const doneResearch = stamp('research');
     const worthIt = judgedCases
-      .filter((item) => !isSuspicious(item.classification) && item.classification.need.verdict !== 'unrelated' && (item.scored?.total ?? 0) >= strategy.threshold * 0.7)
+      .filter((item) => !isSuspicious(item.classification) && !['unrelated', 'recruitment_marketing'].includes(item.classification.need.verdict) && (item.scored?.total ?? 0) >= strategy.threshold * 0.7)
       .sort((a, b) => (b.scored?.total ?? 0) - (a.scored?.total ?? 0))
       .slice(0, strategy.enrich_budget);
     for (const [index, item] of worthIt.entries()) {

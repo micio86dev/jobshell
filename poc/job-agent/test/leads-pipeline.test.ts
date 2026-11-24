@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import { defaultConfig } from '../src/config.ts';
 import type { FetchLike } from '../src/jev.ts';
 import { openCache } from '../src/leads/cache.ts';
-import { runLeads, type LeadRunDeps } from '../src/leads/pipeline.ts';
+import { chooseForJudgment, runLeads, type LeadRunDeps } from '../src/leads/pipeline.ts';
 import { defaultStrategy } from '../src/leads/strategy.ts';
 import type { Signal } from '../src/leads/types.ts';
 import { profile } from './support.ts';
@@ -177,4 +177,31 @@ test('no send path: a run touches only sources, the judge and the provider, neve
   const hosts = new Set(script.urls.map((url) => new URL(url).hostname));
   assert.deepEqual([...hosts].sort(), ['api.anthropic.com', 'api.typesafe.ai', 'hn.algolia.com', 'sifted.eu', 'yc-oss.github.io']);
   assert.ok(script.urls.every((url) => !/smtp|mailto|sendgrid|mailgun/i.test(url)));
+});
+
+test('a share of the judgment budget is kept for companies that are in the news, not only for vacancies', () => {
+  const item = (name: string, type: string, preScore: number, fromImport = false) => ({ name, fromImport, primary: { pre_score: preScore, signal: { type } } });
+  const cases = [
+    ...['a', 'b', 'c', 'd', 'e', 'f'].map((name, index) => item(name, 'job_posting', 0.9 - index * 0.05)),
+    item('funded', 'funding', 0.3),
+    item('growing', 'hiring_growth', 0.25),
+    item('pasted', 'manual_import', 0.1, true),
+  ];
+  const names = chooseForJudgment(cases, 4).map((entry) => entry.name);
+  assert.equal(names.length, 5, 'the pasted one is extra: it never counts against the budget');
+  assert.deepEqual(names.slice(0, 2), ['pasted', 'funded'], 'what the user pasted first, then the best news');
+  assert.ok(names.includes('a') && names.includes('b') && names.includes('c'));
+  assert.ok(!names.includes('d') && !names.includes('growing'), 'the share is a share, not the whole budget');
+  assert.equal(chooseForJudgment(cases, 2).filter((entry) => entry.primary.signal.type === 'funding').length, 0, 'a tiny budget keeps no reserve');
+});
+
+test('a verdict cached under an older set of questions is not reused', async () => {
+  const { script, fetchImpl } = world();
+  const cache = openCache('/nonexistent-dir/never-saved.json');
+  await runLeads(base(fetchImpl, { cache }));
+  const first = script.jevCalls.length;
+  const classify = await import('../src/leads/classify.ts');
+  assert.equal(typeof classify.QUESTIONS_VERSION, 'number');
+  await runLeads(base(fetchImpl, { cache }));
+  assert.equal(script.jevCalls.length, first, 'the same version reuses the cache');
 });

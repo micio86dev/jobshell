@@ -11,7 +11,7 @@ ROOT  := $(shell pwd)
 # scatter one run across several timestamped directories.
 OUT   := $(ROOT)/evidence/run/$(shell date -u +%Y%m%dT%H%M%SZ)
 
-.PHONY: test test-ts test-rs typecheck wiring agent-test ui-test smoke agent agent-bridge agent-mcp bench probe persistence crash soak chrome spike desktop dmg phase0 clean clean-deps
+.PHONY: leads-eval test test-ts test-rs typecheck wiring agent-test ui-test smoke agent agent-bridge agent-mcp bench probe persistence crash soak chrome spike desktop dmg phase0 clean clean-deps
 
 # Every check, in the order a change should pass them. `lint` needs the root install (`pnpm install`).
 test: test-ts test-rs typecheck wiring agent-test ui-test lint clippy
@@ -75,6 +75,12 @@ agent:
 	@test -n "$(PROFILE)" || (echo "jobshell: PROFILE is required."; echo "  make $@ PROFILE=./profile.json"; echo "  a real profile is personal data: copy poc/job-agent/profile.example.json"; exit 2)
 	cd poc/job-agent && set -a && . ../../scripts/env.sh && set +a && \
 		node src/cli.ts --profile "$(abspath $(PROFILE))" $(if $(DRY),--dry-run,)
+
+# PROFILE=/path/to/profile.json: the real judge on the ten lead scenarios (a few thousand judge tokens, no model provider).
+leads-eval:
+	@test -n "$(PROFILE)" || (echo "jobshell: PROFILE is required."; echo "  make $@ PROFILE=./profile.json"; exit 2)
+	cd poc/job-agent && set -a && . ../../scripts/env.sh && set +a && \
+		node src/leads/eval-cli.ts --profile "$(abspath $(PROFILE))"
 
 # PROFILE=/path/to/profile.json [PORT=8787] [LOG=path.jsonl] — writes the token to a 0600 file.
 agent-bridge:

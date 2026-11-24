@@ -11,7 +11,10 @@ import { compilePromptContext, type UserProfile } from '../profile.ts';
 import type { LeadStrategy } from './strategy.ts';
 import type { Signal } from './types.ts';
 
-export const NEED_VALUES = ['explicit_external', 'probable_gap', 'employee_only', 'unrelated'] as const;
+export const NEED_VALUES = ['explicit_external', 'probable_gap', 'employee_only', 'recruitment_marketing', 'unrelated'] as const;
+
+/** Bumped whenever a question or an answer changes, so a verdict cached under the old wording is never reused. */
+export const QUESTIONS_VERSION = 2;
 export const FIT_VALUES = ['strong', 'transferable', 'weak', 'none'] as const;
 export const LEVEL_VALUES = ['matches', 'junior_role', 'beyond_profile'] as const;
 export const REMOTE_VALUES = ['remote_ok', 'onsite_required', 'unknown'] as const;
@@ -48,6 +51,8 @@ const QUESTIONS: Record<string, JeQuestion> = {
         'The text shows a software business with engineering work to do and no sign it can do it alone: open engineering roles, fresh funding for a product, a new product or platform, a rebuild or modernisation, or a vacancy for technical leadership.',
       employee_only:
         'An ordinary employee vacancy with no sign that outside engineers would be considered, and no sign of a capacity gap.',
+      recruitment_marketing:
+        'A recruiter, staffing firm or talent marketplace advertising to build its own pool or network of engineers, or to place them with unnamed clients, with no product or project of its own described. A software agency or consultancy that needs more capacity for named work is not this.',
       unrelated: 'The text is not about a company that needs software engineering work.',
     },
   },

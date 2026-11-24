@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 
 import { negativesOf, prefilter, preScore } from '../src/leads/prefilter.ts';
-import { applyChange, defaultStrategy, loadStrategy, techTermsOf } from '../src/leads/strategy.ts';
+import { applyChange, defaultStrategy, loadStrategy, offeringsOf, techTermsOf } from '../src/leads/strategy.ts';
 import type { Signal } from '../src/leads/types.ts';
 import { parseProfile } from '../src/profile.ts';
 
@@ -122,4 +122,11 @@ test('a change the app may not make, or a value that is invalid, is refused by n
   const badMarket = applyChange(profile, {}, { target_markets: ['GERMANY'] });
   assert.ok(!badMarket.ok);
   assert.ok(!applyChange(profile, { threshold: 70 }, { usd_cap: -1 }).ok);
+});
+
+test('AI and LLM integration is an offering when the profile names working with model APIs, and only then', () => {
+  assert.ok(offeringsOf(profile).some((offering) => /AI and LLM integration/.test(offering)), 'the real CV names OpenAI API and Claude Code');
+  assert.deepEqual(offeringsOf({ ...profile, cv: 'PHP and Laravel only.', capabilities: ['Laravel'] }), ['Laravel']);
+  const listed = offeringsOf({ ...profile, capabilities: ['LLM integration', 'Laravel'] });
+  assert.equal(listed.filter((offering) => /LLM/.test(offering)).length, 1, 'never listed twice');
 });

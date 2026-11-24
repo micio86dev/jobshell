@@ -96,7 +96,7 @@ export const scoreCase = (input: CaseInput): Scored => {
     `Fit ${c.fit.verdict} (${pct(fit)}), level ${c.level.verdict} (${pct(level)})${input.tech_hits.length > 0 ? `; names ${input.tech_hits.slice(0, 5).join(', ')}` : '; names none of the profile technologies'}.`,
   );
 
-  const need = expected(c.need, { explicit_external: 1, probable_gap: 0.6, employee_only: 0.25, unrelated: 0 });
+  const need = expected(c.need, { explicit_external: 1, probable_gap: 0.6, employee_only: 0.25, recruitment_marketing: 0, unrelated: 0 });
   add(
     'b2b_potential',
     0.5 * need + 0.5 * c.b2b,
@@ -161,6 +161,7 @@ export const scoreCase = (input: CaseInput): Scored => {
   if ((input.negatives ?? []).length > 0) reasons.push(`set aside: ${(input.negatives ?? []).join(', ')}`);
   if (c.quality.suspicion >= 0.6) reasons.push('looks like a scheme or vague bait');
   if (p(c.need.probabilities, 'unrelated') >= 0.5 || c.need.verdict === 'unrelated') reasons.push('not about a company that needs software engineering');
+  if (p(c.need.probabilities, 'recruitment_marketing') >= 0.5 || c.need.verdict === 'recruitment_marketing') reasons.push('recruitment marketing, not a client');
   if (input.legitimacy === 'doubtful') reasons.push('the business looks doubtful');
   if (total < input.strategy.threshold) reasons.push(`score ${total} is below ${input.strategy.threshold}`);
   if (confidence < input.strategy.min_confidence) reasons.push(`confidence ${confidence} is below ${input.strategy.min_confidence}`);

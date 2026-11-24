@@ -79,9 +79,24 @@ export const techTermsOf = (profile: UserProfile): string[] => {
   return TECH_TERMS.filter((term) => present(haystack, term));
 };
 
+const AI_TERMS = ['llm', 'openai', 'anthropic', 'claude', 'rag', 'agents'];
+const AI_OFFERING = 'AI and LLM integration (model APIs, agentic workflows)';
+
+/**
+ * What the person sells: their capabilities, plus AI and LLM integration when the profile itself names
+ * working with model APIs and does not already list it. The profile is the source; nothing is added
+ * that the CV or the capabilities do not support.
+ */
+export const offeringsOf = (profile: UserProfile): string[] => {
+  const offerings = profile.capabilities.length > 0 ? [...profile.capabilities] : [profile.headline];
+  const namesAi = offerings.some((offering) => /\b(ai|llm|machine learning)\b/i.test(offering));
+  if (!namesAi && techTermsOf(profile).some((term) => AI_TERMS.includes(term))) offerings.push(AI_OFFERING);
+  return offerings;
+};
+
 /** The strategy a profile implies. Nothing here is a guess about the market: it restates the profile. */
 export const defaultStrategy = (profile: UserProfile): LeadStrategy => ({
-  offerings: profile.capabilities.length > 0 ? [...profile.capabilities] : [profile.headline],
+  offerings: offeringsOf(profile),
   tech_terms: techTermsOf(profile),
   target_markets: ['DE', 'NL', 'CH', 'GB', 'US', 'IT'],
   stale_days: { ...DEFAULT_STALE_DAYS },

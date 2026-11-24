@@ -58,6 +58,15 @@ test('capacity does not make a company that does not need engineers a lead', () 
   assert.match(scored.rejection_reason ?? '', /not about a company that needs software engineering/);
 });
 
+test('a recruiter or talent marketplace building its own pool is rejected, and a software agency short of capacity is not', () => {
+  const recruiter: Classification = { ...strong, need: answer('recruitment_marketing', { employee_only: 0.1 }), b2b: 0.4 };
+  const result = scoreCase(base({ classification: recruiter }));
+  assert.equal(result.qualified, false);
+  assert.match(result.rejection_reason ?? '', /recruitment marketing, not a client/);
+  const agency: Classification = { ...strong, need: answer('probable_gap', { explicit_external: 0.2 }) };
+  assert.equal(scoreCase(base({ classification: agency })).qualified, true);
+});
+
 test('an employee vacancy is not rejected: it scores lower on B2B and can still qualify when everything else is strong', () => {
   const vacancy: Classification = { ...strong, need: answer('employee_only', { probable_gap: 0.1 }), b2b: 0.7 };
   const scored = scoreCase(base({ classification: vacancy, facts: [fact('funding'), fact('hiring')], legitimacy: 'real', researched: true, country: 'DE', signals: [signal(), signal({ id: 's2', sources: ['sifted'] })] }));
