@@ -7,13 +7,17 @@ import {
   actionEvent,
   confidenceLevel,
   costLine,
+  lookSeconds,
+  MAX_LOOK_SECONDS,
   orderFacts,
+  parseEffort,
   parseDetail,
   parseLeads,
   parseRunSummary,
   parseRuns,
   scoreTone,
   type Fact,
+  wantedPerHour,
 } from './leads-model';
 
 const lead = {
@@ -95,5 +99,29 @@ describe('the cost of a run', () => {
     expect(costLine({ ...base, includes_unpriced: false, web_searches: 0, search_usd: 0, usd_known: 0.03, llm_usd: 0.03 })).toBe('US$ 0.03');
     expect(costLine(base, 4)).toBe('US$ 0.06 (without the judgment service tokens, 4000), 3 searches, US$ 0.02 per qualified lead');
     expect(costLine({ ...base, llm_usd: null, usd_known: 0, web_searches: 0, search_usd: 0, includes_unpriced: true, jev_input_tokens: 0, llm_input_tokens: 0, llm_output_tokens: 0 })).toBe('nothing was bought');
+  });
+});
+
+
+describe('the user time spent on leads', () => {
+  it('a click through is not a look, a long look is capped, and the rest is rounded to seconds', () => {
+    expect(lookSeconds(0, 1_400)).toBe(0);
+    expect(lookSeconds(0, 2_000)).toBe(2);
+    expect(lookSeconds(1_000, 31_600)).toBe(31);
+    expect(lookSeconds(0, 3_600_000)).toBe(MAX_LOOK_SECONDS);
+    expect(lookSeconds(5_000, 1_000)).toBe(0);
+  });
+
+  it('gives wanted opportunities per hour, and no rate on less than a minute', () => {
+    expect(wantedPerHour({ seconds: 1_800, leads_reviewed: 10, decided: 8, wanted: 3 })).toBe(6);
+    expect(wantedPerHour({ seconds: 2_700, leads_reviewed: 10, decided: 8, wanted: 1 })).toBe(1.3);
+    expect(wantedPerHour({ seconds: 59, leads_reviewed: 1, decided: 1, wanted: 1 })).toBeNull();
+    expect(wantedPerHour({ seconds: 600, leads_reviewed: 4, decided: 4, wanted: 0 })).toBe(0);
+  });
+
+  it('refuses an answer from the backend that is not the expected shape', () => {
+    expect(parseEffort({ seconds: 10, leads_reviewed: 1, decided: 1, wanted: 0 })).toEqual({ seconds: 10, leads_reviewed: 1, decided: 1, wanted: 0 });
+    expect(parseEffort({ seconds: '10' })).toBeNull();
+    expect(parseEffort(null)).toBeNull();
   });
 });

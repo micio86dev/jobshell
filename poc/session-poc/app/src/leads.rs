@@ -34,6 +34,18 @@ pub async fn lead_event(
     lead_store::record_event(&state.pool, id, &event, note.as_deref()).await.map_err(|error| error.to_string())
 }
 
+/// How long the user looked at a lead, so the search can be judged by wanted leads per hour of their time.
+#[tauri::command]
+pub async fn lead_review(state: State<'_, Arc<AppState>>, id: i64, seconds: i64) -> Result<(), String> {
+    lead_store::record_review(&state.pool, id, seconds).await.map_err(|error| error.to_string())
+}
+
+/// What the user's time bought: time spent, leads decided on and the ones they wanted.
+#[tauri::command]
+pub async fn lead_effort(state: State<'_, Arc<AppState>>) -> Result<Value, String> {
+    lead_store::effort(&state.pool).await.map_err(|error| error.to_string())
+}
+
 /// Forget a company: delete it and everything held about it.
 #[tauri::command]
 pub async fn lead_forget(state: State<'_, Arc<AppState>>, key: String) -> Result<u64, String> {

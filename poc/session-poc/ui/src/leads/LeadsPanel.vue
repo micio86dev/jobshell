@@ -13,6 +13,7 @@ import LeadDetail from './LeadDetail.vue';
 import {
   actionEvent,
   costLine,
+  lookSeconds,
   parseDetail,
   parseLeads,
   parseRunSummary,
@@ -38,6 +39,25 @@ const importMessage = ref('');
 const importFailed = ref(false);
 const importBusy = ref(false);
 
+// The time the user spends with a lead open is what the search is judged by (wanted leads per hour of their
+// time). It counts only while the window is visible, and a look is recorded when the lead is closed or left.
+let looking: { id: number; since: number } | null = null;
+const stopLooking = (): void => {
+  if (looking === null) return;
+  const seconds = lookSeconds(looking.since, Date.now());
+  const id = looking.id;
+  looking = null;
+  if (seconds > 0) void invoke('lead_review', { id, seconds }).catch(() => undefined);
+};
+const startLooking = (id: number): void => {
+  stopLooking();
+  if (document.visibilityState === 'visible') looking = { id, since: Date.now() };
+};
+const onVisibility = (): void => {
+  if (document.visibilityState === 'hidden') stopLooking();
+  else if (detail.value !== null) startLooking(detail.value.lead.id);
+};
+
 const load = async (): Promise<void> => {
   problem.value = '';
   try {
@@ -52,6 +72,7 @@ const load = async (): Promise<void> => {
 
 const select = async (next: View): Promise<void> => {
   view.value = next;
+  stopLooking();
   detail.value = null;
   await load();
 };
@@ -61,6 +82,7 @@ const openDetail = async (id: number): Promise<void> => {
     const parsed = parseDetail(await invoke<unknown>('lead_detail', { id }));
     if (parsed.ok) {
       detail.value = parsed.detail;
+      startLooking(parsed.detail.lead.id);
       // The detail sits above the list: bring it into view, or a click far down the page seems to do nothing.
       await nextTick();
       document.querySelector('.detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -89,11 +111,17 @@ const forget = async (): Promise<void> => {
   if (!window.confirm(t('leads.forgetConfirm', { name: current.lead.company_name }))) return;
   try {
     await invoke('lead_forget', { key: current.lead.company_key });
+    looking = null;
     detail.value = null;
     await load();
   } catch (error) {
     problem.value = String(error);
   }
+};
+
+const closeDetail = (): void => {
+  stopLooking();
+  detail.value = null;
 };
 
 const openLink = (url: string): void => {
@@ -148,7 +176,12 @@ onMounted(async () => {
     if (running.value !== '') progress.value = event.payload;
   });
 });
-onBeforeUnmount(() => unlisten?.());
+onMounted(() => document.addEventListener('visibilitychange', onVisibility));
+onBeforeUnmount(() => {
+  unlisten?.();
+  document.removeEventListener('visibilitychange', onVisibility);
+  stopLooking();
+});
 </script>
 
 <template>
@@ -178,7 +211,7 @@ onBeforeUnmount(() => unlisten?.());
     <LeadDetail
       v-if="detail !== null"
       :detail="detail"
-      @close="detail = null"
+      @close="closeDetail"
       @forget="forget"
       @open-link="openLink"
     />

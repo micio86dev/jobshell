@@ -13,7 +13,7 @@ mod profile;
 mod schedule;
 mod ziprecruiter;
 
-use leads::{lead_detail, lead_event, lead_forget, lead_list, lead_purge, lead_runs};
+use leads::{lead_detail, lead_effort, lead_event, lead_forget, lead_list, lead_purge, lead_review, lead_runs};
 use profile::{
     cv_extract, cv_read_pdf, draft_get, draft_save, portfolio_check, profile_validate, identity_get, identity_save, onboarding_complete, onboarding_status, search_create, search_duplicate,
     search_history, search_list, search_save, search_set_status,
@@ -758,6 +758,8 @@ fn main() {
             lead_event,
             lead_forget,
             lead_purge,
+            lead_review,
+            lead_effort,
             lead_runs
         ])
         .build(tauri::generate_context!())

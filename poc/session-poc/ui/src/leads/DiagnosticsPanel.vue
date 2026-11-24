@@ -5,12 +5,13 @@ import { invoke } from '@tauri-apps/api/core';
 import { onMounted, ref, watch } from 'vue';
 
 import { t } from '../i18n/store';
-import { costLine, parseLeads, parseRuns, type Lead, type RunRow } from './leads-model';
+import { costLine, parseEffort, parseLeads, parseRuns, wantedPerHour, type Effort, type Lead, type RunRow } from './leads-model';
 
 const props = defineProps<{ refresh: number }>();
 
 const runs = ref<RunRow[]>([]);
 const rejected = ref<Lead[]>([]);
+const effort = ref<Effort | null>(null);
 const loaded = ref(false);
 const problem = ref('');
 
@@ -22,6 +23,7 @@ const load = async (): Promise<void> => {
     else problem.value = parsed.error;
     const list = parseLeads(await invoke<unknown>('lead_list', { view: 'rejected' }));
     if (list.ok) rejected.value = list.leads;
+    effort.value = parseEffort(await invoke<unknown>('lead_effort'));
   } catch (error) {
     problem.value = String(error);
   }
@@ -39,6 +41,15 @@ watch(() => props.refresh, load);
     <h2>{{ t('diag.title') }}</h2>
     <p v-if="problem !== ''" class="problem">{{ problem }}</p>
     <p v-if="loaded && runs.length === 0" class="empty">{{ t('diag.none') }}</p>
+
+    <article v-if="loaded" class="run effort">
+      <h3>{{ t('diag.effort.title') }}</h3>
+      <p v-if="effort === null || effort.seconds === 0" class="small">{{ t('diag.effort.none') }}</p>
+      <template v-else>
+        <p class="small">{{ t('diag.effort.line', { minutes: Math.max(1, Math.round(effort.seconds / 60)), leads: effort.leads_reviewed, decided: effort.decided, wanted: effort.wanted }) }}</p>
+        <p class="small">{{ wantedPerHour(effort) === null ? t('diag.effort.few') : t('diag.effort.rate', { rate: wantedPerHour(effort) ?? 0 }) }}</p>
+      </template>
+    </article>
 
     <article v-for="(run, index) in runs" :key="run.id" class="run" :open="index === 0">
       <h3>{{ run.started_at.slice(0, 16).replace('T', ' ') }}<span v-if="run.metrics.dry_run" class="meta"> · {{ t('diag.dry') }}</span></h3>
