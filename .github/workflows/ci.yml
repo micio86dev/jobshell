@@ -61,6 +61,36 @@ jobs:
             (cd "$project" && ../runtime-bench/node_modules/.bin/tsc --noEmit)
           done
 
+  agent:
+    name: job-agent and ui (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Test the job agent
+        working-directory: poc/job-agent
+        run: |
+          pnpm install --frozen-lockfile
+          ./node_modules/.bin/tsc --noEmit
+          node --test "test/*.test.ts"
+      - name: Test the UI rules
+        working-directory: poc/session-poc/ui
+        run: |
+          pnpm install --frozen-lockfile
+          npx vitest run
+
   rust:
     name: rust-core (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
