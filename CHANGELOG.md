@@ -19,6 +19,24 @@ All notable changes to the app are listed here. Versions follow [Semantic Versio
 
 ## [Unreleased]
 
+### Added
+- Clienti tab: the app looks for companies that may need outside engineers, researches them, scores them out of 100 with every line explained, and shows only the ones worth your time, each with its evidence, its public contacts, a next step and an outreach draft. Nothing is sent: the drafts are for you to copy.
+- Decisions on each lead: interesting, not interesting, already contacted, later, became a client. They are kept as a log, so any of them can be undone.
+- Diagnostica tab: for every search, the sources that answered or failed, the funnel, why companies were not shown, the errors and the cost. An empty result always says why.
+- Five signal sources, each probed first: Hacker News "Who is hiring" and the YC jobs, funding news from TechCrunch and Sifted, and Y Combinator companies that are hiring.
+- Paste a post or a public link to add a lead by hand (for Facebook groups and other places the agent never logs in to).
+- Automatic search on a schedule you choose (off by default), one search at a time, with a notification when there are new clients.
+- Settings: minimum score, evidence floor, budgets, spending cap and preferred countries for the client search.
+- `make leads-eval`: the real judge on ten controlled scenarios.
+
+### Changed
+- "Search now" and the reports now use the profile you saved in the wizard, not the starter profile the app wrote on first launch.
+- The query planner follows the provider and model chosen in Settings.
+- CI runs the job agent and the UI tests.
+
+### Not exercised yet
+- Company research, contact discovery and outreach drafting need an Anthropic key with credit. They are tested against the documented response shapes and have not run against the real service.
+
 ## [0.2.1] - 2026-11-14
 
 ### Added

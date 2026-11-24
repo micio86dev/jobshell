@@ -183,3 +183,16 @@ public HTTPS URL — that URL *is* the client id.
 
 No client secret exists: `token_endpoint_auth_method` is `none`, which is what a desktop app
 can honestly use. The token is never written to a file.
+
+## Lead pipeline (clients, not postings)
+
+Beside the job matcher, `src/leads/` looks for companies that may buy the user's services, researches them, scores them out of 100, and prepares outreach drafts that nothing sends. How it works, the guards, the cost and the honest limits are in [`docs/leads.md`](../../docs/leads.md); the sources and their verdicts are in [`docs/lead-sources.md`](../../docs/lead-sources.md).
+
+```bash
+node src/leads/cli.ts --profile profile.json --dry-run     # sources and free filters only, buys nothing
+node src/leads/cli.ts --profile profile.json               # a real run: needs the TypeSafe key; research needs Anthropic credit
+node src/leads/source-probe-cli.ts                         # read-only probe of the signal sources
+node src/leads/eval-cli.ts --profile profile.json          # the real judge on the ten scenarios (also: make leads-eval)
+```
+
+Config example: `leads.example.json`. Tests: `node --test "test/leads-*.test.ts"`.
