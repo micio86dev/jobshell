@@ -56,6 +56,6 @@ export const wireLead = (input: {
   let researchUnavailable: string | null = null;
   if (llm === null) researchUnavailable = `no ${LLM_LABEL[choice.llm.provider]} key is stored`;
   else if (choice.llm.provider !== 'anthropic') researchUnavailable = `web research needs the Anthropic provider, and ${LLM_LABEL[choice.llm.provider]} is chosen`;
-  else research = { apiKey: key, model: choice.llm.model, fetchImpl, maxSearches: 5, maxFetches: 3, maxTokens: 8000 };
+  else research = { apiKey: key, model: choice.llm.model, fetchImpl, maxSearches: 5, maxFetches: 4, maxTokens: 8000 };
   return { choice, jev, llm, research, researchUnavailable };
 };

@@ -259,3 +259,43 @@ test('a named person needs a role the search is for in the words quoted, and a p
   const reasons = result.dropped.map((drop) => drop.reason).sort();
   assert.deepEqual(reasons, ['a profile that is not a public https page', 'the quote does not tie the person to the company', 'the role is not in the quote']);
 });
+
+test('one malformed fact, an overlong sentence or a country written in full does not cost the whole answer', async () => {
+  const pages = [{ url: 'https://acme.test/about', text: 'About Acme. Acme is a SaaS company with about 60 employees in Berlin.' }];
+  const answer = {
+    ...shell, website: 'https://acme.test', country: 'United Kingdom', summary: 'x'.repeat(5000), engineering_need: 'y'.repeat(5000),
+    facts: [
+      { field: 'company_size', value: 'about 60 employees', provenance: 'verified', source_url: 'https://acme.test/about', quote: 'about 60 employees' },
+      { field: 'nonsense-field', value: 'z', provenance: 'verified' },
+      'not even an object',
+    ],
+    contacts: [{ role: 'CTO' }],
+  };
+  const result = await enrichCompany('Acme', [], null, deps(worldOf(pages, answer)));
+  assert.equal(result.status, 'ok');
+  if (result.status !== 'ok') return;
+  assert.equal(result.country, null);
+  assert.equal(result.summary.length, 800);
+  assert.deepEqual(result.facts.map((fact) => fact.field), ['company_size']);
+  assert.equal(result.facts[0]?.provenance, 'verified');
+});
+
+test('the country written as UK is Great Britain', async () => {
+  const result = await enrichCompany('Acme', [], null, deps(worldOf([], { ...shell, country: 'uk' })));
+  assert.equal(result.status === 'ok' ? result.country : 'x', 'GB');
+});
+
+test('founders named on a directory page are kept when the words tie them to the company, and the page is the contact', async () => {
+  const pages = [{ url: 'https://directory.test/companies/acme', text: 'Founded in 2022 by Ann Lee and Bob Roe, Acme has 6 employees based in San Francisco.' }];
+  const quote = 'Founded in 2022 by Ann Lee and Bob Roe, Acme has 6 employees';
+  const contacts = [
+    { role: 'Founder', name: 'Ann Lee', channel: 'page', value: 'https://directory.test/founders/1-ann-lee', source_url: 'https://directory.test/companies/acme', quote },
+    { role: 'Founder', name: 'Bob Roe', channel: 'profile', value: 'https://www.linkedin.com/in/bob', source_url: 'https://directory.test/companies/acme', quote },
+    { role: 'CEO', name: 'Cy Doe', channel: 'page', value: 'https://directory.test/founders/3', source_url: 'https://directory.test/companies/acme', quote },
+  ];
+  const result = await enrichCompany('Acme', [], null, deps(worldOf(pages, { ...shell, website: null, contacts })));
+  assert.equal(result.status, 'ok');
+  if (result.status !== 'ok') return;
+  assert.deepEqual(result.contacts.map((contact) => [contact.name, contact.value]), [['Ann Lee', 'https://directory.test/companies/acme']], 'a link the page does not show is replaced by the page itself');
+  assert.deepEqual(result.dropped.map((drop) => drop.reason).sort(), ['a profile that is not a public https page', 'the name is not in the quote']);
+});

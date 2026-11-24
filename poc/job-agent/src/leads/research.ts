@@ -8,7 +8,8 @@
  * reaches the caller: the reasons are fixed sentences.
  *
  * Tool shapes follow the public documentation of the Messages API (web_search_20250305 and
- * web_fetch_20250910). They were read from the docs, not yet exercised against a funded account.
+ * web_fetch_20250910). They were exercised live on 2026-11-24 against a funded account: eight
+ * companies researched, evidence in evidence/leads-live/2026-11-24-with-research.json.
  */
 import { checkEndpoint } from '../endpoints.ts';
 import type { FetchLike } from '../jev.ts';

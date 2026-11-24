@@ -1,0 +1,159 @@
+{
+  "generated_at": "2026-11-24T16:06:02.668Z",
+  "what_this_is": "The same live run as 2026-11-24.json, now with a funded Anthropic key: company research with web search and fetch, contact discovery, outreach drafting. Real sources, real judge, real profile (not stored here).",
+  "strategy": {
+    "classify_budget": 60,
+    "enrich_budget": 8,
+    "usd_cap": 3,
+    "threshold": 60
+  },
+  "research": {
+    "available": true,
+    "reason": null,
+    "companies": 8,
+    "failed": 0,
+    "facts_kept": 59,
+    "facts_downgraded": 32,
+    "contacts_kept": 7,
+    "contacts_dropped": 7,
+    "skipped_for_budget": 0
+  },
+  "outreach": {
+    "drafted": 10,
+    "refused": 0
+  },
+  "cost": {
+    "jev_input_tokens": 0,
+    "llm_input_tokens": 631905,
+    "llm_output_tokens": 45228,
+    "web_searches": 11,
+    "llm_usd": 1.7161,
+    "search_usd": 0.11,
+    "usd_known": 1.8261,
+    "includes_unpriced": false
+  },
+  "duration_ms": {
+    "queries": 2104,
+    "collect": 21353,
+    "identify": 36001,
+    "judge": 1,
+    "research": 233503,
+    "outreach": 64781
+  },
+  "findings": [
+    "First live attempt: 5 of 8 research answers were refused for shape (an overlong sentence or a country written in full cost the whole answer). Fixed: prose is clipped, malformed items are skipped one by one.",
+    "Contacts: 0 kept of 13 on the first attempt, because founders named on a directory page (\"Founded in 2022 by X and Y\") failed the role and own-site checks. Fixed: a person on a third-party page counts when the quoted words name the person, a founder or executive role, and the company; the page itself is the contact when its link is not shown. Second attempt: 7 kept, 7 dropped.",
+    "Outreach drafts: 2 of 10 refused on the first attempt for \"a 20 minute call\"; the prompt now forbids durations. Second attempt: 10 of 10 accepted. One draft was read by hand: every claim traced to a stored fact or to the research text.",
+    "Quotes taken only from search snippets cannot be checked (the provider returns them encrypted); about a third of the facts were downgraded to the agent reading for that reason."
+  ],
+  "qualified": [
+    {
+      "company": "Collabify",
+      "score": 77.9,
+      "confidence": 0.8,
+      "completeness": 0.14,
+      "evidence_facts": 4,
+      "public_contacts": 0,
+      "draft": true
+    },
+    {
+      "company": "a0.dev",
+      "score": 77.9,
+      "confidence": 0.85,
+      "completeness": 0.86,
+      "evidence_facts": 10,
+      "public_contacts": 2,
+      "draft": true
+    },
+    {
+      "company": "Parsewise",
+      "score": 76,
+      "confidence": 0.83,
+      "completeness": 0.71,
+      "evidence_facts": 11,
+      "public_contacts": 0,
+      "draft": true
+    },
+    {
+      "company": "Nango",
+      "score": 75.1,
+      "confidence": 0.87,
+      "completeness": 0.86,
+      "evidence_facts": 10,
+      "public_contacts": 2,
+      "draft": true
+    },
+    {
+      "company": "Constructor",
+      "score": 71.4,
+      "confidence": 0.6,
+      "completeness": 0.14,
+      "evidence_facts": 2,
+      "public_contacts": 0,
+      "draft": true
+    },
+    {
+      "company": "SadServers",
+      "score": 69.8,
+      "confidence": 0.6,
+      "completeness": 0.14,
+      "evidence_facts": 1,
+      "public_contacts": 0,
+      "draft": true
+    },
+    {
+      "company": "Blackbird",
+      "score": 69.6,
+      "confidence": 0.61,
+      "completeness": 0.14,
+      "evidence_facts": 1,
+      "public_contacts": 0,
+      "draft": true
+    },
+    {
+      "company": "Tether",
+      "score": 68.3,
+      "confidence": 0.56,
+      "completeness": 0.14,
+      "evidence_facts": 1,
+      "public_contacts": 0,
+      "draft": true
+    },
+    {
+      "company": "OpenTrain AI",
+      "score": 67.8,
+      "confidence": 0.62,
+      "completeness": 0.14,
+      "evidence_facts": 1,
+      "public_contacts": 0,
+      "draft": true
+    },
+    {
+      "company": "eventfirst",
+      "score": 64.7,
+      "confidence": 0.55,
+      "completeness": 0.14,
+      "evidence_facts": 1,
+      "public_contacts": 0,
+      "draft": true
+    },
+    {
+      "company": "Auterion",
+      "score": 60.8,
+      "confidence": 0.64,
+      "completeness": 0.14,
+      "evidence_facts": 2,
+      "public_contacts": 0,
+      "draft": false
+    },
+    {
+      "company": "Distru",
+      "score": 60.5,
+      "confidence": 0.54,
+      "completeness": 0.14,
+      "evidence_facts": 1,
+      "public_contacts": 0,
+      "draft": false
+    }
+  ]
+}
