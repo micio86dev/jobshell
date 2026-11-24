@@ -184,6 +184,29 @@ export const lookSeconds = (startedMs: number, endedMs: number): number => {
 export const wantedPerHour = (effort: Effort): number | null =>
   effort.seconds < 60 ? null : Math.round(((effort.wanted * 3600) / effort.seconds) * 10) / 10;
 
+const learningSchema = z.object({
+  enabled: z.boolean(),
+  min_decided: z.number(),
+  sources: z.array(z.object({ source: z.string(), decided: z.number(), wanted: z.number(), weight: z.number(), applied: z.boolean() })),
+});
+export type Learning = z.infer<typeof learningSchema>;
+export type SourceLearning = Learning['sources'][number];
+
+export const parseLearning = (raw: unknown): Learning | null => {
+  const parsed = learningSchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
+};
+
+/** What a source's weight does to the order, in the words the page uses; "waiting" until it has enough decisions. */
+export const learningEffect = (item: SourceLearning): 'earlier' | 'later' | 'same' | 'waiting' => {
+  if (!item.applied) return 'waiting';
+  return item.weight > 1 ? 'earlier' : item.weight < 1 ? 'later' : 'same';
+};
+
+/** A real run that bought nothing in money or tokens: it ran on a subscription program, so the cost is in the plan's usage. */
+export const isPlanRun = (cost: MaybeCost): boolean =>
+  (cost.usd_known ?? 0) === 0 && (cost.jev_input_tokens ?? 0) + (cost.llm_input_tokens ?? 0) + (cost.llm_output_tokens ?? 0) === 0 && (cost.web_searches ?? 0) === 0;
+
 /** The cost of a run in one line: what has a price, what has none, and the searches. */
 type MaybeCost = { [K in keyof Cost]?: Cost[K] | undefined };
 

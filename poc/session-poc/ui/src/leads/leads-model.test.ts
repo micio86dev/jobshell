@@ -7,10 +7,13 @@ import {
   actionEvent,
   confidenceLevel,
   costLine,
+  isPlanRun,
+  learningEffect,
   lookSeconds,
   MAX_LOOK_SECONDS,
   orderFacts,
   parseEffort,
+  parseLearning,
   parseDetail,
   parseLeads,
   parseRunSummary,
@@ -123,5 +126,34 @@ describe('the user time spent on leads', () => {
     expect(parseEffort({ seconds: 10, leads_reviewed: 1, decided: 1, wanted: 0 })).toEqual({ seconds: 10, leads_reviewed: 1, decided: 1, wanted: 0 });
     expect(parseEffort({ seconds: '10' })).toBeNull();
     expect(parseEffort(null)).toBeNull();
+  });
+});
+
+describe('what the user decisions do to the order', () => {
+  const item = (weight: number, applied: boolean) => ({ source: 'yc-hiring', decided: 6, wanted: 1, weight, applied });
+
+  it('says earlier, later, no change, or that it is still waiting for decisions', () => {
+    expect(learningEffect(item(1.3, true))).toBe('earlier');
+    expect(learningEffect(item(0.7, true))).toBe('later');
+    expect(learningEffect(item(1, true))).toBe('same');
+    expect(learningEffect(item(1, false))).toBe('waiting');
+    expect(learningEffect(item(0.6, false))).toBe('waiting');
+  });
+
+  it('accepts what the backend sends and refuses anything else', () => {
+    const ok = { enabled: true, min_decided: 5, sources: [item(0.7, true)] };
+    expect(parseLearning(ok)).toEqual(ok);
+    expect(parseLearning({ ...ok, enabled: 'yes' })).toBeNull();
+    expect(parseLearning(null)).toBeNull();
+  });
+});
+
+describe('the cost line of a run on a subscription', () => {
+  it('a real run that bought nothing in money or tokens is a plan run, and one that spent anything is not', () => {
+    expect(isPlanRun({ usd_known: 0, jev_input_tokens: 0, llm_input_tokens: 0, llm_output_tokens: 0, web_searches: 0 })).toBe(true);
+    expect(isPlanRun({})).toBe(true);
+    expect(isPlanRun({ usd_known: 0.4 })).toBe(false);
+    expect(isPlanRun({ jev_input_tokens: 2300 })).toBe(false);
+    expect(isPlanRun({ web_searches: 3 })).toBe(false);
   });
 });

@@ -473,6 +473,23 @@ pub async fn effort(pool: &Pool<Sqlite>) -> Result<Value> {
     Ok(json!({"seconds": seconds, "leads_reviewed": reviewed, "decided": decided, "wanted": wanted}))
 }
 
+/// For each source that produced a signal of a qualified lead: how many of those leads the user wanted
+/// (interesting, contacted or converted, by their latest decision) and how many they did not want.
+/// Leads still new, or set aside for later, say nothing and are not counted.
+pub async fn source_decisions(pool: &Pool<Sqlite>) -> Result<Vec<(String, i64, i64)>> {
+    let sql = format!(
+        "SELECT sg.source, \
+                COALESCE(SUM(CASE WHEN l.s IN ('interesting', 'contacted', 'converted') THEN 1 ELSE 0 END), 0), \
+                COALESCE(SUM(CASE WHEN l.s = 'not_interesting' THEN 1 ELSE 0 END), 0) \
+         FROM (SELECT leads.company_key AS k, {STATUS_SQL} AS s FROM leads WHERE leads.qualified = 1) l \
+         JOIN (SELECT DISTINCT company_key, source FROM signals) sg ON sg.company_key = l.k \
+         GROUP BY sg.source \
+         HAVING SUM(CASE WHEN l.s IN ('interesting', 'contacted', 'converted', 'not_interesting') THEN 1 ELSE 0 END) > 0 \
+         ORDER BY sg.source"
+    );
+    sqlx::query_as(&sql).fetch_all(pool).await.context("reading the decisions by source")
+}
+
 /// Delete a company and everything held about it: its lead, signals, facts, contacts, drafts and
 /// decisions. This is the "forget this company" action.
 pub async fn delete_company(pool: &Pool<Sqlite>, key: &str) -> Result<u64> {
@@ -720,6 +737,44 @@ mod tests {
         record_event(&pool, id("n:c"), "new", None).await.expect("reopen");
 
         assert_eq!(effort(&pool).await.expect("effort"), json!({"seconds": 165, "leads_reviewed": 2, "decided": 2, "wanted": 1}));
+    }
+
+    fn from_source(mut lead: Value, source: &str) -> Value {
+        let id = format!("s-{}", lead["company_key"].as_str().unwrap_or("x"));
+        lead["signals"][0]["id"] = json!(id);
+        lead["signals"][0]["source"] = json!(source);
+        lead
+    }
+
+    #[tokio::test]
+    async fn the_decisions_are_counted_by_the_source_that_produced_the_lead() {
+        let (_dir, pool) = store().await;
+        let leads = vec![
+            from_source(lead("n:1", "One", 80.0, true), "hn-hiring"),
+            from_source(lead("n:2", "Two", 79.0, true), "hn-hiring"),
+            from_source(lead("n:3", "Three", 78.0, true), "hn-hiring"),
+            from_source(lead("n:4", "Four", 77.0, true), "yc-hiring"),
+            from_source(lead("n:5", "Five", 76.0, true), "yc-hiring"),
+            from_source(lead("n:6", "Six", 75.0, false), "yc-hiring"),
+            from_source(lead("n:7", "Seven", 74.0, true), "sifted"),
+        ];
+        ingest_run(&pool, &document("r1", leads)).await.expect("ingest");
+        let all = list_leads(&pool, "all").await.expect("all");
+        let id = |key: &str| all.iter().find(|l| l.company_key == key).expect(key).id;
+        record_event(&pool, id("n:1"), "interesting", None).await.expect("1");
+        record_event(&pool, id("n:2"), "converted", None).await.expect("2");
+        record_event(&pool, id("n:3"), "not_interesting", None).await.expect("3");
+        record_event(&pool, id("n:4"), "not_interesting", None).await.expect("4");
+        record_event(&pool, id("n:5"), "later", None).await.expect("5: later says nothing");
+        record_event(&pool, id("n:6"), "interesting", None).await.expect("6: not qualified, never counted");
+        record_event(&pool, id("n:7"), "contacted", None).await.expect("7a");
+        record_event(&pool, id("n:7"), "new", None).await.expect("7b: reopened, says nothing");
+
+        assert_eq!(
+            source_decisions(&pool).await.expect("decisions"),
+            vec![("hn-hiring".to_string(), 2, 1), ("yc-hiring".to_string(), 0, 1)],
+            "a source with no decision at all is absent"
+        );
     }
 
     #[tokio::test]

@@ -513,8 +513,8 @@ onMounted(() => {
         <button type="button" :disabled="running !== ''" @click="loadRun">Reload</button>
       </div>
       <p class="hint">
-        "Dry run" fetches and filters without spending tokens. "Search now" judges with Jev and
-        needs the TypeSafe key in the Settings tab.
+        "Dry run" fetches and filters without spending tokens. "Search now" judges with the service
+        chosen in the Settings tab: Jev with its TypeSafe key, or the AI service you chose, with no other key.
       </p>
 
       <div class="actions">

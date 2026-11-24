@@ -32,10 +32,17 @@ All notable changes to the app are listed here. Versions follow [Semantic Versio
 - Use your own subscription instead of an API key for everything: Claude Code, Codex, Gemini CLI or OpenCode, chosen once in the first step of the wizard (and changeable in Settings). The CV reader, the job planner, reports, the judge, the company research and the drafts all run on it. The app starts the program you already signed in to and never touches your login. Check your plan's terms (see docs/leads.md).
 - The judge can be "the same as the AI service": the chosen model answers the seven questions, so no TypeSafe key is needed.
 - The sources of the client search appear on the Sources page and can be switched off one by one.
+- Learn from your decisions (off by default): sources whose leads you usually want are judged first when the budget is short. Nothing is hidden, and the page shows every number; turn it off and the order is back.
 - Diagnostica shows your time: minutes spent on leads, the ones you decided on and wanted, and wanted opportunities per hour of your time.
 - Settings: delete the leads you never acted on that are older than a number of days.
 - A program with no web search (Gemini CLI, OpenCode) is asked, without tools, for the company's site when it is not known.
 - The cost of a run is also shown per qualified lead, and opening a lead's evidence scrolls to it.
+
+### Fixed
+- Saving the search settings failed on a fresh install, before the first search.
+- "Forget this company" and "Delete old leads" did nothing in the desktop window: the native confirm dialog does not appear there. They now ask inside the page.
+- A search could spend 20 minutes naming companies with a subscription program: signals the free filters drop are no longer sent for naming, and the number is bounded.
+- A search that was stopped from outside now says so instead of showing an empty reason, and a run on a subscription no longer says "nothing was bought".
 
 ### Changed
 - "Search now" and the reports now use the profile you saved in the wizard, not the starter profile the app wrote on first launch.

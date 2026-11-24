@@ -4,6 +4,7 @@
 import { ref } from 'vue';
 
 import { t } from '../i18n/store';
+import ConfirmAction from './ConfirmAction.vue';
 import { orderFacts, type LeadDetail } from './leads-model';
 
 const props = defineProps<{ detail: LeadDetail }>();
@@ -89,7 +90,9 @@ const facts = (): ReturnType<typeof orderFacts> => orderFacts(props.detail.facts
       <li v-for="(event, index) in detail.events" :key="index">{{ event.at }} · {{ t(('leads.status.' + event.event) as 'leads.status.new') }}<span v-if="event.note"> · {{ event.note }}</span></li>
     </ul>
 
-    <button type="button" class="forget" @click="emit('forget')">{{ t('leads.forget') }}</button>
+    <div class="forget">
+      <ConfirmAction :label="t('leads.forget')" :question="t('leads.forgetConfirm', { name: detail.lead.company_name })" @confirm="emit('forget')" />
+    </div>
   </section>
 </template>
 
