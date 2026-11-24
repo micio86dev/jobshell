@@ -22,6 +22,26 @@ export const validateChoice = (choice: ProviderChoiceView): ChoiceProblem | null
   return null;
 };
 
+/** The programs of a subscription: the user is signed in to them, and the app needs no key for them. */
+export const CLI_PROVIDERS = ['cli-claude', 'cli-codex', 'cli-gemini', 'cli-opencode'] as const;
+export type CliProvider = (typeof CLI_PROVIDERS)[number];
+
+export const isCliProvider = (name: string): name is CliProvider => (CLI_PROVIDERS as readonly string[]).includes(name);
+
+/** The name a person knows each program by, and the file name the status check looks for. */
+export const CLI_NAMES: Readonly<Record<CliProvider, { name: string; program: string }>> = {
+  'cli-claude': { name: 'Claude Code', program: 'claude' },
+  'cli-codex': { name: 'Codex', program: 'codex' },
+  'cli-gemini': { name: 'Gemini CLI', program: 'gemini' },
+  'cli-opencode': { name: 'OpenCode', program: 'opencode' },
+};
+
+/** The model after the provider changes: "default" for a program (it uses its own), empty when leaving one, so the user chooses. */
+export const modelAfterSwitch = (to: string, current: string): string => {
+  if (isCliProvider(to)) return 'default';
+  return current === 'default' ? '' : current;
+};
+
 /** The models to offer: the provider's list, sorted, with the current choice kept even if absent. */
 export const modelOptions = (offered: readonly string[], current: string): string[] => {
   const names = new Set(offered);

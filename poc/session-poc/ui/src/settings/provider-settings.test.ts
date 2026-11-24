@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { modelOptions, validateChoice, type ProviderChoiceView } from './provider-settings';
+import { CLI_NAMES, CLI_PROVIDERS, isCliProvider, modelAfterSwitch, modelOptions, validateChoice, type ProviderChoiceView } from './provider-settings';
 
 const choice = (overrides: Partial<ProviderChoiceView>): ProviderChoiceView => ({
   llm_provider: 'anthropic',
@@ -55,5 +55,21 @@ describe('modelOptions', () => {
 
   it('is empty when there is nothing to choose from and nothing chosen', () => {
     expect(modelOptions([], '')).toEqual([]);
+  });
+});
+
+
+describe('the programs of a subscription', () => {
+  it('knows the four programs and nothing else', () => {
+    expect(CLI_PROVIDERS.map((name) => isCliProvider(name))).toEqual([true, true, true, true]);
+    expect(isCliProvider('anthropic')).toBe(false);
+    expect(isCliProvider('cli-vim')).toBe(false);
+    expect(CLI_NAMES['cli-claude']).toEqual({ name: 'Claude Code', program: 'claude' });
+  });
+
+  it('a program uses its own model, and leaving one asks the user to choose', () => {
+    expect(modelAfterSwitch('cli-codex', 'gpt-x')).toBe('default');
+    expect(modelAfterSwitch('openai', 'default')).toBe('');
+    expect(modelAfterSwitch('openai', 'gpt-x')).toBe('gpt-x');
   });
 });

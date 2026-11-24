@@ -7,6 +7,7 @@
  */
 import { askModel } from './llm-call.ts';
 import type { FetchLike } from './jev.ts';
+import { isCliProvider, type CliDeps, type CliProvider } from './llm-cli.ts';
 import { LLM_LABEL, type LlmProvider } from './llm-providers.ts';
 
 export const MAX_DESCRIPTION_CHARS = 20_000;
@@ -32,11 +33,13 @@ export type ReportInput = {
 
 export type ReportDeps = {
   apiKey: string;
-  provider?: LlmProvider;
+  provider?: LlmProvider | CliProvider;
   model: string;
   maxTokens?: number;
   baseUrl?: string | undefined;
   fetchImpl: FetchLike;
+  /** How a command-line provider is started; absent means the real program. */
+  cli?: CliDeps;
 };
 
 /** The wizard's facts about the candidate. Each one is optional; a fact that is absent is never invented. */
@@ -89,9 +92,10 @@ export const reportInstruction = (input: ReportInput): string => {
 
 /** Write the report with one model call. Every failure is a fixed reason. */
 export const generateReport = async (input: ReportInput, deps: ReportDeps): Promise<ReportResult> => {
-  const provider: LlmProvider = deps.provider ?? 'anthropic';
+  const provider: LlmProvider | CliProvider = deps.provider ?? 'anthropic';
   if (input.cv.trim().length === 0) return { source: 'fallback', reason: 'the CV is empty' };
-  if (deps.apiKey.length === 0) return { source: 'fallback', reason: `no ${LLM_LABEL[provider]} key is stored` };
+  // A program the user signed in to needs no key from us.
+  if (!isCliProvider(provider) && deps.apiKey.length === 0) return { source: 'fallback', reason: `no ${LLM_LABEL[provider]} key is stored` };
 
   const answer = await askModel(reportInstruction(input), {
     apiKey: deps.apiKey,
@@ -100,6 +104,7 @@ export const generateReport = async (input: ReportInput, deps: ReportDeps): Prom
     maxTokens: deps.maxTokens ?? DEFAULT_REPORT_MAX_TOKENS,
     baseUrl: deps.baseUrl,
     fetchImpl: deps.fetchImpl,
+    ...(deps.cli === undefined ? {} : { cli: deps.cli }),
   });
   if (!answer.ok) return { source: 'fallback', reason: answer.reason };
   return { source: 'model', markdown: answer.text };

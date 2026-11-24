@@ -5,6 +5,7 @@
  */
 import { askModel } from './llm-call.ts';
 import { MAX_CV_REPORT_CHARS, MAX_DESCRIPTION_CHARS, type ReportDeps, type ReportInput } from './report.ts';
+import { isCliProvider, type CliProvider } from './llm-cli.ts';
 import { LLM_LABEL, type LlmProvider } from './llm-providers.ts';
 
 /** A complete CV is a long document: more room than a report needs. */
@@ -93,9 +94,10 @@ const invented = (markdown: string, input: ReportInput): string | null => {
 };
 
 export const tailorCv = async (input: ReportInput, deps: ReportDeps): Promise<TailorResult> => {
-  const provider: LlmProvider = deps.provider ?? 'anthropic';
+  const provider: LlmProvider | CliProvider = deps.provider ?? 'anthropic';
   if (input.cv.trim().length === 0) return { source: 'fallback', reason: 'the CV is empty' };
-  if (deps.apiKey.length === 0) return { source: 'fallback', reason: `no ${LLM_LABEL[provider]} key is stored` };
+  // A program the user signed in to needs no key from us.
+  if (!isCliProvider(provider) && deps.apiKey.length === 0) return { source: 'fallback', reason: `no ${LLM_LABEL[provider]} key is stored` };
 
   const answer = await askModel(tailorInstruction(input), {
     apiKey: deps.apiKey,
@@ -104,6 +106,7 @@ export const tailorCv = async (input: ReportInput, deps: ReportDeps): Promise<Ta
     maxTokens: deps.maxTokens ?? TAILOR_MAX_TOKENS,
     baseUrl: deps.baseUrl,
     fetchImpl: deps.fetchImpl,
+    ...(deps.cli === undefined ? {} : { cli: deps.cli }),
   });
   if (!answer.ok) return { source: 'fallback', reason: answer.reason };
 

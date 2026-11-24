@@ -11,6 +11,7 @@ import { modelForExtraction } from './extract-model.ts';
 import { defaultFetch } from './jev.ts';
 import { providerChoiceFromEnv } from './provider-choice.ts';
 import { generateReport, parseReportRequest } from './report.ts';
+import { isCliProvider } from './llm-cli.ts';
 import { readSecret } from './secrets.ts';
 
 const MAX_REQUEST_BYTES = 200_000;
@@ -48,14 +49,16 @@ process.stdin.on('end', () => {
   const model = process.env['JOBSHELL_LLM_MODEL'] ? choice.llm.model
     : choice.llm.provider === 'anthropic' ? modelForExtraction(process.env)
     : choice.llm.model;
-  const apiKey = readSecret(choice.llm.provider);
-  if (apiKey === null || apiKey.trim() === '') {
+  // A program the user signed in to needs no key from us; every other provider does.
+  const chosen = choice.llm.provider;
+  const apiKey = isCliProvider(chosen) ? '' : readSecret(chosen);
+  if (!isCliProvider(chosen) && (apiKey === null || apiKey.trim() === '')) {
     process.stderr.write(`no ${choice.llm.provider} key is stored under the dev.openjob.desktop service\n`);
     process.exitCode = 2;
     return;
   }
   generateReport(parsed.input, {
-    apiKey: apiKey.trim(),
+    apiKey: (apiKey ?? '').trim(),
     provider: choice.llm.provider,
     model,
     fetchImpl: defaultFetch,

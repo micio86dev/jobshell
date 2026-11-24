@@ -8,7 +8,11 @@ use std::path::Path;
 use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 
-pub const LLM_PROVIDERS: [&str; 4] = ["anthropic", "openai", "gemini", "qwen"];
+/// API providers (they need a key) and the programs a user may be signed in to (a subscription:
+/// they need no key from this app, which starts the program and never touches its login).
+pub const LLM_PROVIDERS: [&str; 8] = [
+    "anthropic", "openai", "gemini", "qwen", "cli-claude", "cli-codex", "cli-gemini", "cli-opencode",
+];
 pub const JUDGMENT_SERVICES: [&str; 3] = ["typesafe", "ollama", "laya"];
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -91,6 +95,21 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("jobshell-settings-{}-{name}", std::process::id()));
         std::fs::create_dir_all(&dir).expect("temp dir");
         dir.join("provider-settings.json")
+    }
+
+    #[test]
+    fn a_program_the_user_signed_in_to_is_a_provider_and_carries_no_key() {
+        let mut settings = ProviderSettings::default();
+        for provider in ["cli-claude", "cli-codex", "cli-gemini", "cli-opencode"] {
+            settings.llm_provider = provider.to_string();
+            settings.llm_model = "default".to_string();
+            assert!(settings.validate().is_ok(), "{provider}");
+            let env = settings.agent_env();
+            assert!(env.contains(&("JOBSHELL_LLM_PROVIDER".to_string(), provider.to_string())));
+            assert!(env.iter().all(|(name, _)| !name.contains("KEY")), "no key reaches the agent");
+        }
+        settings.llm_provider = "cli-vim".to_string();
+        assert!(settings.validate().is_err());
     }
 
     #[test]

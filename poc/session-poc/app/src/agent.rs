@@ -296,6 +296,39 @@ pub fn run_with_profile(profile: &Path, dry_run: bool, on_progress: &dyn Fn(&str
     run_script(&run_args(profile, dry_run), on_progress)
 }
 
+/// Where the command-line programs of a subscription usually live. A desktop app starts with a short
+/// PATH that has none of them, so the usual places are searched too, nvm versions included.
+pub fn program_dirs(home: &Path, path_env: &str, nvm_versions: &[String]) -> Vec<PathBuf> {
+    let mut dirs: Vec<PathBuf> = path_env.split(':').filter(|dir| !dir.is_empty()).map(PathBuf::from).collect();
+    dirs.extend([
+        home.join(".local/bin"),
+        home.join(".bun/bin"),
+        home.join(".npm-global/bin"),
+        PathBuf::from("/opt/homebrew/bin"),
+        PathBuf::from("/usr/local/bin"),
+    ]);
+    dirs.extend(nvm_versions.iter().map(|version| home.join(".nvm/versions/node").join(version).join("bin")));
+    dirs
+}
+
+/// Which of the programs are installed: name to found. Only presence is read, never anything they hold.
+pub fn installed_programs(dirs: &[PathBuf], exists: &dyn Fn(&Path) -> bool) -> Vec<(String, bool)> {
+    ["claude", "codex", "gemini", "opencode"]
+        .iter()
+        .map(|name| ((*name).to_string(), dirs.iter().any(|dir| exists(&dir.join(name)))))
+        .collect()
+}
+
+/// The programs found on this computer, for the settings page.
+pub fn cli_status() -> Vec<(String, bool)> {
+    let home = std::env::var_os("HOME").map(PathBuf::from).unwrap_or_default();
+    let path_env = std::env::var("PATH").unwrap_or_default();
+    let nvm: Vec<String> = std::fs::read_dir(home.join(".nvm/versions/node"))
+        .map(|entries| entries.filter_map(|entry| entry.ok()).filter_map(|entry| entry.file_name().into_string().ok()).collect())
+        .unwrap_or_default();
+    installed_programs(&program_dirs(&home, &path_env, &nvm), &|path| path.is_file())
+}
+
 /// The arguments of one lead run: the lead script, the profile, and the flag that buys nothing.
 pub fn lead_run_args(profile: &Path, dry_run: bool) -> Vec<String> {
     let mut args = vec!["src/leads/cli.ts".to_string(), "--profile".to_string(), profile.display().to_string()];
@@ -1368,5 +1401,27 @@ mod strategy_tests {
         assert_eq!(refused, "leads strategy: threshold is invalid");
         assert_eq!(interpret_exit(Some(2), "", "", "strategy change").unwrap_err().to_string(), "the strategy change was refused");
         assert_eq!(interpret_exit(Some(9), "", "", "strategy change").unwrap_err().to_string(), "the strategy change did not finish");
+    }
+}
+
+#[cfg(test)]
+mod program_tests {
+    use super::*;
+
+    #[test]
+    fn the_usual_places_are_searched_and_every_nvm_version_with_them() {
+        let dirs = program_dirs(Path::new("/home/u"), "/usr/bin:/bin", &["v22.1.0".to_string(), "v24.0.0".to_string()]);
+        for expected in ["/usr/bin", "/home/u/.local/bin", "/home/u/.bun/bin", "/opt/homebrew/bin", "/home/u/.nvm/versions/node/v24.0.0/bin"] {
+            assert!(dirs.contains(&PathBuf::from(expected)), "{expected}");
+        }
+    }
+
+    #[test]
+    fn a_program_is_found_when_one_of_the_places_holds_it() {
+        let dirs = program_dirs(Path::new("/home/u"), "", &[]);
+        let found = installed_programs(&dirs, &|path| path == Path::new("/home/u/.local/bin/claude") || path == Path::new("/opt/homebrew/bin/codex"));
+        assert_eq!(found, vec![
+            ("claude".to_string(), true), ("codex".to_string(), true), ("gemini".to_string(), false), ("opencode".to_string(), false),
+        ]);
     }
 }
