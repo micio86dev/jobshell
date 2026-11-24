@@ -661,6 +661,40 @@ mod tests {
         assert!(left.contains(&"n:acted".to_string()) && left.contains(&"n:fresh".to_string()) && !left.contains(&"n:old".to_string()));
     }
 
+    /// A document the Node pipeline really wrote (the ten scenarios, scripted judge and provider), stored by
+    /// the Rust side: the contract between the two languages, not a hand-made shape.
+    #[tokio::test]
+    async fn a_document_written_by_the_agent_is_stored_whole() {
+        let (_dir, pool) = store().await;
+        let stored = ingest_run(&pool, include_str!("../tests/fixtures/lead-run.json")).await.expect("ingest");
+        assert_eq!((stored.leads, stored.qualified, stored.skipped_unevidenced), (10, 9, 0), "nothing the agent kept is refused here");
+        assert_eq!(stored.new_qualified, 9);
+
+        let inbox = list_leads(&pool, "inbox").await.expect("inbox");
+        assert_eq!(inbox.len(), 9);
+        assert!(inbox.windows(2).all(|pair| pair[0].score >= pair[1].score), "best first");
+        let rejected = list_leads(&pool, "rejected").await.expect("rejected");
+        assert_eq!(rejected.len(), 1);
+        assert!(rejected[0].rejection_reason.as_deref().unwrap_or_default().contains("scheme or vague bait"));
+
+        let first = lead_detail(&pool, inbox[0].id).await.expect("detail").expect("present");
+        assert_eq!(first["scores"].as_array().map(Vec::len), Some(6));
+        assert!(first["drafts"].as_array().is_some_and(|drafts| drafts.iter().all(|d| d["status"] == "draft")));
+        let with_contacts = contacts_stored(&pool, &inbox).await;
+        assert!(with_contacts >= 2, "the contacts read on the company pages are stored with their page and quote");
+        let runs = recent_runs(&pool, 5).await.expect("runs");
+        assert_eq!(runs[0]["metrics"]["qualified"], 9);
+    }
+
+    async fn contacts_stored(pool: &Pool<Sqlite>, leads: &[LeadSummary]) -> usize {
+        let mut total = 0;
+        for lead in leads {
+            let detail = lead_detail(pool, lead.id).await.expect("detail").expect("present");
+            total += detail["contacts"].as_array().map_or(0, Vec::len);
+        }
+        total
+    }
+
     #[tokio::test]
     async fn runs_are_listed_newest_first_with_their_funnel_and_cost() {
         let (_dir, pool) = store().await;
