@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 
 import { negativesOf, prefilter, preScore } from '../src/leads/prefilter.ts';
-import { defaultStrategy, loadStrategy, techTermsOf } from '../src/leads/strategy.ts';
+import { applyChange, defaultStrategy, loadStrategy, techTermsOf } from '../src/leads/strategy.ts';
 import type { Signal } from '../src/leads/types.ts';
 import { parseProfile } from '../src/profile.ts';
 
@@ -102,4 +102,24 @@ test('prefilter keeps the promising signals best first and explains every drop',
   const result = prefilter([meh, intern, good], strategy, now);
   assert.deepEqual(result.kept.map((ranked) => ranked.signal.id), ['good', 'meh']);
   assert.deepEqual(result.dropped.map((drop) => [drop.signal.id, drop.negatives]), [['intern', ['internship']]]);
+});
+
+test('a change from the app keeps only the fields the user set, so the rest keeps following the profile', () => {
+  const first = applyChange(profile, {}, { threshold: 70, target_markets: ['DE', 'NL'] });
+  assert.ok(first.ok);
+  if (!first.ok) return;
+  assert.deepEqual(first.overrides, { threshold: 70, target_markets: ['DE', 'NL'] });
+  const second = applyChange(profile, first.overrides, { usd_cap: 2 });
+  assert.ok(second.ok);
+  if (second.ok) assert.deepEqual(second.overrides, { threshold: 70, target_markets: ['DE', 'NL'], usd_cap: 2 });
+});
+
+test('a change the app may not make, or a value that is invalid, is refused by name and writes nothing', () => {
+  assert.deepEqual(applyChange(profile, {}, { stale_days: { funding: 1 } }), { ok: false, error: 'leads strategy: stale_days cannot be changed from the app' });
+  const bad = applyChange(profile, {}, { threshold: 150 });
+  assert.ok(!bad.ok);
+  if (!bad.ok) assert.match(bad.error, /threshold is invalid/);
+  const badMarket = applyChange(profile, {}, { target_markets: ['GERMANY'] });
+  assert.ok(!badMarket.ok);
+  assert.ok(!applyChange(profile, { threshold: 70 }, { usd_cap: -1 }).ok);
 });

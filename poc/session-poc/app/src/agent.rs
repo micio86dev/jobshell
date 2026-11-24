@@ -329,16 +329,38 @@ pub fn import_args() -> Vec<String> {
     vec!["src/leads/import-cli.ts".to_string()]
 }
 
-/// Exit 0 queued it; exit 2 is a refusal whose reason the script printed; anything else is an error.
-pub fn interpret_import(exit_code: Option<i32>, stdout: &str, stderr: &str) -> Result<String> {
+/// Exit 0 is the answer on stdout; exit 2 is a refusal whose reason the script printed; anything
+/// else is an error. `what` names the operation in the fallback sentences.
+pub fn interpret_exit(exit_code: Option<i32>, stdout: &str, stderr: &str, what: &str) -> Result<String> {
     match exit_code {
         Some(0) => Ok(stdout.trim().to_string()),
         Some(2) => {
             let reason = stderr.trim();
-            anyhow::bail!("{}", if reason.is_empty() { "the import was refused" } else { reason })
+            if reason.is_empty() {
+                anyhow::bail!("the {what} was refused")
+            }
+            anyhow::bail!("{reason}")
         }
-        _ => anyhow::bail!("the import did not finish"),
+        _ => anyhow::bail!("the {what} did not finish"),
     }
+}
+
+/// Exit 0 queued the import; see `interpret_exit`.
+pub fn interpret_import(exit_code: Option<i32>, stdout: &str, stderr: &str) -> Result<String> {
+    interpret_exit(exit_code, stdout, stderr, "import")
+}
+
+/// The strategy command: `get` prints the strategy a run would use, `set` validates and stores a change.
+pub fn strategy_args(command: &str, profile: &Path) -> Result<Vec<String>> {
+    anyhow::ensure!(command == "get" || command == "set", "the strategy command is get or set");
+    Ok(vec!["src/leads/strategy-cli.ts".to_string(), command.to_string(), "--profile".to_string(), profile.display().to_string()])
+}
+
+/// Read the strategy (`change` is None) or store a change from the settings page.
+pub fn run_strategy(change: Option<&str>, env: &[(String, String)]) -> Result<String> {
+    let args = strategy_args(if change.is_some() { "set" } else { "get" }, &profile_path())?;
+    let (code, stdout, stderr) = pipe_to_agent_script(&args, change.unwrap_or(""), env)?;
+    interpret_exit(code, &stdout, &stderr, "strategy change")
 }
 
 /// Queue a pasted post, or a public link, for the next lead run. Nothing is bought here.
@@ -1304,5 +1326,28 @@ mod lead_tests {
         assert!(interpret_import(Some(2), "", "").is_err());
         assert!(interpret_import(None, "", "").is_err());
         assert!(interpret_import(Some(1), "x", "").is_err());
+    }
+}
+
+#[cfg(test)]
+mod strategy_tests {
+    use super::*;
+
+    #[test]
+    fn the_strategy_command_names_the_profile_and_only_get_and_set_exist() {
+        let profile = Path::new("/tmp/p.json");
+        assert_eq!(strategy_args("get", profile).unwrap(), vec!["src/leads/strategy-cli.ts", "get", "--profile", "/tmp/p.json"]);
+        assert_eq!(strategy_args("set", profile).unwrap()[1], "set");
+        assert!(strategy_args("delete", profile).is_err());
+        assert!(strategy_args("get --profile /etc/passwd", profile).is_err());
+    }
+
+    #[test]
+    fn a_strategy_answer_is_the_json_it_printed_and_a_refusal_is_its_reason() {
+        assert_eq!(interpret_exit(Some(0), "{\"threshold\":60}\n", "", "strategy change").unwrap(), "{\"threshold\":60}");
+        let refused = interpret_exit(Some(2), "", "leads strategy: threshold is invalid\n", "strategy change").unwrap_err().to_string();
+        assert_eq!(refused, "leads strategy: threshold is invalid");
+        assert_eq!(interpret_exit(Some(2), "", "", "strategy change").unwrap_err().to_string(), "the strategy change was refused");
+        assert_eq!(interpret_exit(Some(9), "", "", "strategy change").unwrap_err().to_string(), "the strategy change did not finish");
     }
 }

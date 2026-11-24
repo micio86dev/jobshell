@@ -95,6 +95,37 @@ export const defaultStrategy = (profile: UserProfile): LeadStrategy => ({
   exclude_terms: [...profile.exclude_terms],
 });
 
+/** The fields a user may change from the app. The rest of the strategy follows the profile. */
+export const EDITABLE = [
+  'threshold', 'min_confidence', 'classify_budget', 'enrich_budget', 'usd_cap', 'target_markets',
+  'exclude_companies', 'exclude_terms', 'offerings', 'outreach_languages',
+] as const;
+
+const asOverrides = (value: unknown): Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value) ? { ...(value as Record<string, unknown>) } : {};
+
+/**
+ * The overrides file after one change from the app. Only the fields the user set are kept in the file,
+ * so everything else keeps following the profile. A field the app may not change, or a value that
+ * does not pass the strategy schema, is an error that names it and writes nothing.
+ */
+export const applyChange = (
+  profile: UserProfile,
+  existing: unknown,
+  change: unknown,
+): { ok: true; overrides: Record<string, unknown> } | { ok: false; error: string } => {
+  const incoming = asOverrides(change);
+  const unknown = Object.keys(incoming).find((key) => !(EDITABLE as readonly string[]).includes(key));
+  if (unknown !== undefined) return { ok: false, error: `leads strategy: ${unknown} cannot be changed from the app` };
+  const overrides = { ...asOverrides(existing), ...incoming };
+  const checked = strategySchema.safeParse({ ...defaultStrategy(profile), ...overrides });
+  if (!checked.success) {
+    const issue = checked.error.issues[0];
+    return { ok: false, error: `leads strategy: ${issue?.path.join('.') ?? 'file'} is invalid: ${issue?.message ?? 'unknown'}` };
+  }
+  return { ok: true, overrides };
+};
+
 export const defaultStrategyPath = (): string => join(homedir(), '.config', 'jobshell', 'leads.json');
 
 /** The profile's strategy with the user's file laid over it. A missing file is the defaults. */

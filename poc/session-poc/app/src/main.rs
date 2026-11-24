@@ -236,6 +236,29 @@ async fn lead_import(text: Option<String>, url: Option<String>) -> Result<String
         .map_err(|error| error.to_string())
 }
 
+/// The client-search strategy a run would use, as JSON.
+#[tauri::command]
+async fn lead_strategy_get() -> Result<String, String> {
+    let env = settings::load(&settings_path()).map_err(|error| error.to_string())?.agent_env();
+    tauri::async_runtime::spawn_blocking(move || agent::run_strategy(None, &env))
+        .await
+        .map_err(|error| error.to_string())?
+        .map_err(|error| error.to_string())
+}
+
+/// Change some fields of the strategy. The agent validates them and writes only what was set.
+#[tauri::command]
+async fn lead_strategy_set(change: String) -> Result<String, String> {
+    if change.len() > 8192 {
+        return Err("the change is too long".to_string());
+    }
+    let env = settings::load(&settings_path()).map_err(|error| error.to_string())?.agent_env();
+    tauri::async_runtime::spawn_blocking(move || agent::run_strategy(Some(&change), &env))
+        .await
+        .map_err(|error| error.to_string())?
+        .map_err(|error| error.to_string())
+}
+
 /// Connect ZipRecruiter: open the consent page, wait for the loopback redirect, exchange
 /// the code and keep the token in the keyring.
 ///
@@ -619,6 +642,8 @@ fn main() {
             agent_run_search,
             lead_run,
             lead_import,
+            lead_strategy_get,
+            lead_strategy_set,
             lead_list,
             lead_detail,
             lead_event,
