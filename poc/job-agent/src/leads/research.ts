@@ -23,7 +23,7 @@ const LOGIN_WALLED = ['linkedin.com', 'facebook.com', 'instagram.com', 'x.com', 
 export type ResearchDeps = {
   /** Empty when a command-line program (a subscription) does the work: see research-cli.ts. */
   apiKey: string;
-  cli?: { provider: CliProvider; deps?: CliDeps };
+  cli?: { provider: CliProvider; deps?: CliDeps; web?: boolean };
   model: string;
   fetchImpl: FetchLike;
   maxSearches: number;

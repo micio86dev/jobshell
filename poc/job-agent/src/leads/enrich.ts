@@ -372,7 +372,7 @@ export const enrichCompany = async (
   const brief = enrichPrompt(company, signals, hintWebsite);
   const result = deps.cli === undefined
     ? await research(SYSTEM, brief, deps)
-    : await researchViaCli(SYSTEM, brief, deps, { provider: deps.cli.provider, model: deps.model, ...(deps.cli.deps === undefined ? {} : { deps: deps.cli.deps }) }, deps.fetchImpl);
+    : await researchViaCli(SYSTEM, brief, deps, { provider: deps.cli.provider, model: deps.model, ...(deps.cli.deps === undefined ? {} : { deps: deps.cli.deps }), ...(deps.cli.web === undefined ? {} : { web: deps.cli.web }) }, deps.fetchImpl);
   if (!result.ok) return { status: 'unavailable', reason: result.reason };
   const parsed = enrichmentIn.safeParse(objectIn(result.text));
   if (!parsed.success) return { status: 'unavailable', reason: 'the research answer did not match the expected shape' };

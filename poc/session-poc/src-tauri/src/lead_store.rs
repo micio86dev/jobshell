@@ -432,6 +432,47 @@ pub async fn record_event(pool: &Pool<Sqlite>, lead_id: i64, event: &str, note: 
     Ok(())
 }
 
+/// The longest a single look at a lead counts: a window left open is not time spent on the lead.
+pub const MAX_REVIEW_SECONDS: i64 = 600;
+
+/// Record how long the user looked at a lead.
+pub async fn record_review(pool: &Pool<Sqlite>, lead_id: i64, seconds: i64) -> Result<()> {
+    if !(1..=MAX_REVIEW_SECONDS).contains(&seconds) {
+        bail!("a review lasts from 1 to {MAX_REVIEW_SECONDS} seconds");
+    }
+    let exists: Option<i64> = sqlx::query_scalar("SELECT id FROM leads WHERE id = ?")
+        .bind(lead_id)
+        .fetch_optional(pool)
+        .await
+        .context("finding the lead")?;
+    if exists.is_none() {
+        bail!("there is no lead {lead_id}");
+    }
+    sqlx::query("INSERT INTO lead_reviews (lead_id, seconds) VALUES (?, ?)")
+        .bind(lead_id)
+        .bind(seconds)
+        .execute(pool)
+        .await
+        .context("recording the review")?;
+    Ok(())
+}
+
+/// What the user's time bought: seconds spent, leads looked at, leads decided on, and the ones they
+/// wanted (interesting, contacted or converted, by their latest decision).
+pub async fn effort(pool: &Pool<Sqlite>) -> Result<Value> {
+    let (seconds, reviewed): (i64, i64) = sqlx::query_as("SELECT COALESCE(SUM(seconds), 0), COUNT(DISTINCT lead_id) FROM lead_reviews")
+        .fetch_one(pool)
+        .await
+        .context("reading the review time")?;
+    let sql = format!(
+        "SELECT COALESCE(SUM(CASE WHEN s <> 'new' THEN 1 ELSE 0 END), 0), \
+                COALESCE(SUM(CASE WHEN s IN ('interesting', 'contacted', 'converted') THEN 1 ELSE 0 END), 0) \
+         FROM (SELECT {STATUS_SQL} AS s FROM leads WHERE leads.qualified = 1)"
+    );
+    let (decided, wanted): (i64, i64) = sqlx::query_as(&sql).fetch_one(pool).await.context("reading the decisions")?;
+    Ok(json!({"seconds": seconds, "leads_reviewed": reviewed, "decided": decided, "wanted": wanted}))
+}
+
 /// Delete a company and everything held about it: its lead, signals, facts, contacts, drafts and
 /// decisions. This is the "forget this company" action.
 pub async fn delete_company(pool: &Pool<Sqlite>, key: &str) -> Result<u64> {
@@ -659,6 +700,41 @@ mod tests {
         assert_eq!(purge_older_than(&pool, 90).await.expect("purge"), 1, "only the untouched one goes");
         let left: Vec<String> = list_leads(&pool, "all").await.expect("all").into_iter().map(|l| l.company_key).collect();
         assert!(left.contains(&"n:acted".to_string()) && left.contains(&"n:fresh".to_string()) && !left.contains(&"n:old".to_string()));
+    }
+
+    #[tokio::test]
+    async fn the_time_spent_on_leads_is_counted_against_the_ones_the_user_wanted() {
+        let (_dir, pool) = store().await;
+        ingest_run(&pool, &document("r1", vec![lead("n:a", "A", 80.0, true), lead("n:b", "B", 70.0, true), lead("n:c", "C", 65.0, true)])).await.expect("ingest");
+        let all = list_leads(&pool, "all").await.expect("all");
+        let id = |key: &str| all.iter().find(|l| l.company_key == key).expect(key).id;
+        assert_eq!(effort(&pool).await.expect("empty"), json!({"seconds": 0, "leads_reviewed": 0, "decided": 0, "wanted": 0}));
+
+        record_review(&pool, id("n:a"), 90).await.expect("a");
+        record_review(&pool, id("n:a"), 30).await.expect("a again");
+        record_review(&pool, id("n:b"), 45).await.expect("b");
+        record_event(&pool, id("n:a"), "interesting", None).await.expect("wanted");
+        record_event(&pool, id("n:b"), "not_interesting", None).await.expect("not wanted");
+        // A decision is the latest one: a lead reopened is no longer decided.
+        record_event(&pool, id("n:c"), "contacted", None).await.expect("c");
+        record_event(&pool, id("n:c"), "new", None).await.expect("reopen");
+
+        assert_eq!(effort(&pool).await.expect("effort"), json!({"seconds": 165, "leads_reviewed": 2, "decided": 2, "wanted": 1}));
+    }
+
+    #[tokio::test]
+    async fn a_review_must_be_a_plausible_look_at_a_real_lead() {
+        let (_dir, pool) = store().await;
+        ingest_run(&pool, &document("r1", vec![lead("n:a", "A", 80.0, true)])).await.expect("ingest");
+        let id = list_leads(&pool, "all").await.expect("all")[0].id;
+        assert!(record_review(&pool, id, 0).await.is_err());
+        assert!(record_review(&pool, id, MAX_REVIEW_SECONDS + 1).await.is_err());
+        assert!(record_review(&pool, 9999, 10).await.is_err());
+        assert_eq!(effort(&pool).await.expect("effort")["seconds"], json!(0), "nothing was recorded");
+        record_review(&pool, id, MAX_REVIEW_SECONDS).await.expect("the longest look");
+        record_event(&pool, id, "interesting", None).await.expect("event");
+        delete_company(&pool, "n:a").await.expect("forget");
+        assert_eq!(effort(&pool).await.expect("after forgetting")["seconds"], json!(0), "reviews go with the lead");
     }
 
     /// A document the Node pipeline really wrote (the ten scenarios, scripted judge and provider), stored by

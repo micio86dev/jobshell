@@ -107,6 +107,17 @@ export const LEAD_EN = {
   'ai.apiHint': 'Add the key in Settings → AI service.',
   'ai.saved': 'Saved. It is used to read the CV, search for clients, judge, and write reports and drafts.',
   'ai.failed': 'The choice was not saved: {reason}',
+  'diag.effort.title': 'Your time',
+  'diag.effort.none': 'No time measured yet: it is counted while a lead is open on the clients page.',
+  'diag.effort.line': '{minutes} min on {leads} leads: {decided} decided, {wanted} wanted.',
+  'diag.effort.rate': '{rate} wanted opportunities per hour of your time (the measure this search is meant to improve).',
+  'diag.effort.few': 'Too little time to give a rate yet (less than a minute).',
+  'settings.leads.purge.title': 'Old leads',
+  'settings.leads.purge.hint': 'Deletes the leads you never acted on (new or not interesting) that are older than this. Anything you marked interesting, later, contacted or converted is kept.',
+  'settings.leads.purge.days': 'Older than (days)',
+  'settings.leads.purge.button': 'Delete old leads',
+  'settings.leads.purge.confirm': 'Delete the leads you never acted on that are older than {days} days? This cannot be undone.',
+  'settings.leads.purge.done': '{count} leads deleted.',
 } as const;
 
 export const LEAD_IT: Record<keyof typeof LEAD_EN, string> = {
@@ -214,6 +225,17 @@ export const LEAD_IT: Record<keyof typeof LEAD_EN, string> = {
   'ai.apiHint': 'Aggiungi la chiave in Impostazioni → Servizio AI.',
   'ai.saved': 'Salvato. Vale per leggere il CV, cercare clienti, giudicare e scrivere report e bozze.',
   'ai.failed': 'La scelta non è stata salvata: {reason}',
+  'diag.effort.title': 'Il tuo tempo',
+  'diag.effort.none': 'Nessun tempo misurato: si conta mentre un cliente è aperto nella pagina Clienti.',
+  'diag.effort.line': '{minutes} min su {leads} clienti: {decided} decisi, {wanted} voluti.',
+  'diag.effort.rate': '{rate} opportunità volute per ora del tuo tempo (la misura che questa ricerca vuole migliorare).',
+  'diag.effort.few': 'Troppo poco tempo per dare un tasso (meno di un minuto).',
+  'settings.leads.purge.title': 'Clienti vecchi',
+  'settings.leads.purge.hint': 'Cancella i clienti su cui non hai mai fatto nulla (nuovi o non interessanti) più vecchi di questo. Quello che hai segnato interessante, più tardi, contattato o cliente resta.',
+  'settings.leads.purge.days': 'Più vecchi di (giorni)',
+  'settings.leads.purge.button': 'Cancella i clienti vecchi',
+  'settings.leads.purge.confirm': 'Cancellare i clienti su cui non hai mai fatto nulla e più vecchi di {days} giorni? Non si può annullare.',
+  'settings.leads.purge.done': '{count} clienti cancellati.',
 };
 
 export const LEAD_ES: Record<keyof typeof LEAD_EN, string> = {
@@ -321,4 +343,15 @@ export const LEAD_ES: Record<keyof typeof LEAD_EN, string> = {
   'ai.apiHint': 'Añade la clave en Ajustes → Servicio de IA.',
   'ai.saved': 'Guardado. Vale para leer el CV, buscar clientes, juzgar y escribir informes y borradores.',
   'ai.failed': 'No se guardó la elección: {reason}',
+  'diag.effort.title': 'Tu tiempo',
+  'diag.effort.none': 'Aún no se mide tiempo: se cuenta mientras un cliente está abierto en la página Clientes.',
+  'diag.effort.line': '{minutes} min en {leads} clientes: {decided} decididos, {wanted} queridos.',
+  'diag.effort.rate': '{rate} oportunidades queridas por hora de tu tiempo (la medida que esta búsqueda quiere mejorar).',
+  'diag.effort.few': 'Demasiado poco tiempo para dar una tasa (menos de un minuto).',
+  'settings.leads.purge.title': 'Clientes antiguos',
+  'settings.leads.purge.hint': 'Borra los clientes sobre los que nunca actuaste (nuevos o sin interés) más antiguos que esto. Lo que marcaste como interesante, más tarde, contactado o cliente se conserva.',
+  'settings.leads.purge.days': 'Más antiguos de (días)',
+  'settings.leads.purge.button': 'Borrar clientes antiguos',
+  'settings.leads.purge.confirm': '¿Borrar los clientes sobre los que nunca actuaste y con más de {days} días? No se puede deshacer.',
+  'settings.leads.purge.done': '{count} clientes borrados.',
 };

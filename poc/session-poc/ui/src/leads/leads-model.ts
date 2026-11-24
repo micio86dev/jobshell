@@ -162,6 +162,28 @@ const EVENT_OF: Record<Action, Status> = {
 
 export const actionEvent = (action: Action): Status => EVENT_OF[action];
 
+const effortSchema = z.object({ seconds: z.number(), leads_reviewed: z.number(), decided: z.number(), wanted: z.number() });
+export type Effort = z.infer<typeof effortSchema>;
+
+export const parseEffort = (raw: unknown): Effort | null => {
+  const parsed = effortSchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
+};
+
+/** A look shorter than this is a click through, and one longer than the cap is a window left open. */
+export const MIN_LOOK_SECONDS = 2;
+export const MAX_LOOK_SECONDS = 600;
+
+/** The seconds to record for a lead that was open from `startedMs` to `endedMs`; 0 when it is not worth recording. */
+export const lookSeconds = (startedMs: number, endedMs: number): number => {
+  const seconds = Math.round((endedMs - startedMs) / 1000);
+  return seconds < MIN_LOOK_SECONDS ? 0 : Math.min(seconds, MAX_LOOK_SECONDS);
+};
+
+/** Wanted opportunities per hour of the user's time, or null when less than a minute was measured. */
+export const wantedPerHour = (effort: Effort): number | null =>
+  effort.seconds < 60 ? null : Math.round(((effort.wanted * 3600) / effort.seconds) * 10) / 10;
+
 /** The cost of a run in one line: what has a price, what has none, and the searches. */
 type MaybeCost = { [K in keyof Cost]?: Cost[K] | undefined };
 

@@ -170,3 +170,13 @@ test('a judge answer in prose is asked again once, and the second answer is used
   assert.equal(fake.calls.length, 2);
   assert.deepEqual(response.answers['need'], { type: 'noul', noul: 0.8 });
 });
+
+test('a program with no web search and no known site is asked, once and without tools, for the pages it is sure of', async () => {
+  const fake = program('{"urls": ["https://acme.test/about"]}', answer);
+  const result = await enrichCompany('Acme', signals, null, { apiKey: '', model: 'default', fetchImpl: siteFetch, maxSearches: 1, maxFetches: 3, maxTokens: 8000, cli: { provider: 'cli-gemini', deps: { ...present, exec: fake.exec } } });
+  assert.equal(result.status, 'ok');
+  assert.equal(fake.calls.length, 2);
+  assert.match(fake.calls[0]?.input ?? '', /You cannot search the web in this request/);
+  assert.ok(!fake.calls[0]?.args.includes('--search'));
+  if (result.status === 'ok') assert.equal(result.searches, 0);
+});

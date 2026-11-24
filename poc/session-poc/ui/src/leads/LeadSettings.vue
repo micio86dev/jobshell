@@ -30,6 +30,19 @@ const scheduleSchema = z.object({ every_hours: z.number(), last_attempt: z.numbe
 const everyHours = ref<number>(0);
 const lastAttempt = ref<number | null>(null);
 const scheduleMessage = ref('');
+const purgeDays = ref(180);
+const purgeMessage = ref('');
+const purge = async (): Promise<void> => {
+  purgeMessage.value = '';
+  const days = Math.max(30, Math.round(purgeDays.value));
+  if (!window.confirm(t('settings.leads.purge.confirm', { days }))) return;
+  try {
+    const count = await invoke<number>('lead_purge', { days });
+    purgeMessage.value = t('settings.leads.purge.done', { count });
+  } catch (error) {
+    purgeMessage.value = t('settings.leads.failed', { reason: String(error) });
+  }
+};
 const lastError = ref('');
 
 const split = (value: string): string[] => value.split(',').map((part) => part.trim()).filter((part) => part !== '');
@@ -123,6 +136,12 @@ onMounted(async () => {
     <p v-if="lastAttempt !== null" class="hint">{{ new Date(lastAttempt * 1000).toLocaleString() }}</p>
     <p v-if="lastError !== ''" class="bad">{{ t('settings.leads.lastError', { reason: lastError }) }}</p>
     <p v-if="scheduleMessage !== ''" class="ok">{{ scheduleMessage }}</p>
+
+    <h3>{{ t('settings.leads.purge.title') }}</h3>
+    <p class="hint">{{ t('settings.leads.purge.hint') }}</p>
+    <label>{{ t('settings.leads.purge.days') }}<input v-model.number="purgeDays" type="number" min="30" max="3650" step="10" /></label>
+    <button type="button" @click="purge">{{ t('settings.leads.purge.button') }}</button>
+    <p v-if="purgeMessage !== ''" class="ok">{{ purgeMessage }}</p>
   </section>
 </template>
 

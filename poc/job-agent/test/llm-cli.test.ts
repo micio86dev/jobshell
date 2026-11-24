@@ -82,6 +82,12 @@ test('a missing program, a program not signed in, a limit and a hang are each a 
   assert.deepEqual(hung, { ok: false, reason: 'Claude Code took too long and was stopped' });
 });
 
+test('an error printed with a capital letter and colour codes is the reason shown', async () => {
+  const stderr = '\u001b[0m\n> plan · m\n\u001b[91m\u001b[1mError: \u001b[0mThis API key has expired. Create a new one.\n';
+  const result = await runCli('cli-opencode', 'default', 'p', { ...present, exec: fake({ code: 0, stdout: '', stderr, failure: null }).exec });
+  assert.deepEqual(result, { ok: false, reason: 'OpenCode gave no answer: Error: This API key has expired. Create a new one.' });
+});
+
 test('a program that exits 0 and prints nothing did not answer, and a warning before the answer is not part of it', async () => {
   const empty = await runCli('cli-opencode', 'default', 'p', { ...present, exec: fake({ code: 0, stdout: '', stderr: 'Error: You have reached your specified API usage limits.', failure: null }).exec });
   assert.match(empty.ok ? '' : empty.reason, /OpenCode gave no answer: Error: You have reached/);
