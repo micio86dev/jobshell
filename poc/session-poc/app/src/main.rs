@@ -189,6 +189,53 @@ async fn agent_run_search(
     .map_err(|error| error.to_string())
 }
 
+/// Run the lead pipeline from the window and store what it found. `dry_run` reads the sources and
+/// applies the free filters and buys nothing. Returns the run summary as JSON text.
+#[tauri::command]
+async fn lead_run(app: tauri::AppHandle, state: State<'_, Arc<AppState>>, dry_run: bool) -> Result<String, String> {
+    if agent::profile_is_app_owned() {
+        if let Some(identity) = session_poc_core::profile_store::current_identity(&state.pool)
+            .await
+            .map_err(|error| error.to_string())?
+        {
+            agent::write_active_profile(&agent::profile_path(), &identity.payload).map_err(|error| error.to_string())?;
+        }
+    }
+    let profile = agent::profile_path();
+    let stdout = tauri::async_runtime::spawn_blocking(move || {
+        agent::run_leads(&profile, dry_run, &|message| emit_agent_progress(&app, message))
+    })
+    .await
+    .map_err(|error| error.to_string())?
+    .map_err(|error| error.to_string())?;
+
+    let path = agent::lead_document_path(&stdout).map_err(|error| error.to_string())?;
+    let document = std::fs::read_to_string(&path).map_err(|error| error.to_string())?;
+    let stored = session_poc_core::lead_store::ingest_run(&state.pool, &document)
+        .await
+        .map_err(|error| error.to_string())?;
+    let mut summary: serde_json::Value = stdout
+        .lines()
+        .rev()
+        .find(|line| !line.trim().is_empty())
+        .and_then(|line| serde_json::from_str(line).ok())
+        .unwrap_or_else(|| serde_json::json!({}));
+    summary["stored_leads"] = stored.leads.into();
+    summary["skipped_unevidenced"] = stored.skipped_unevidenced.into();
+    Ok(summary.to_string())
+}
+
+/// Queue a pasted post or a public link for the next lead run. A link behind a login is refused
+/// with the instruction to paste the text instead.
+#[tauri::command]
+async fn lead_import(text: Option<String>, url: Option<String>) -> Result<String, String> {
+    let env = settings::load(&settings_path()).map_err(|error| error.to_string())?.agent_env();
+    tauri::async_runtime::spawn_blocking(move || agent::run_import(text.as_deref(), url.as_deref(), &env))
+        .await
+        .map_err(|error| error.to_string())?
+        .map_err(|error| error.to_string())
+}
+
 /// Connect ZipRecruiter: open the consent page, wait for the loopback redirect, exchange
 /// the code and keep the token in the keyring.
 ///
@@ -570,6 +617,8 @@ fn main() {
             search_set_status,
             search_history,
             agent_run_search,
+            lead_run,
+            lead_import,
             lead_list,
             lead_detail,
             lead_event,

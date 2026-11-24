@@ -44,7 +44,7 @@ const main = async (): Promise<void> => {
 
   const wiring = (() => {
     try {
-      return wireLead({ env: process.env, readKey: readSecret, strategy, dryRun });
+      return wireLead({ env: process.env, readKey: readSecret, dryRun });
     } catch (error) {
       return die(error instanceof Error ? error.message : 'the provider choice is invalid');
     }

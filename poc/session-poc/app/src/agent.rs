@@ -286,6 +286,69 @@ pub fn write_search_profile(id: &str, payload: &str) -> Result<PathBuf> {
 /// One run of the agent from an explicit profile file. Progress lines reach `on_progress` as
 /// they are written; the other stderr output and the stdout are collected for the result.
 pub fn run_with_profile(profile: &Path, dry_run: bool, on_progress: &dyn Fn(&str)) -> Result<String> {
+    run_script(&run_args(profile, dry_run), on_progress)
+}
+
+/// The arguments of one lead run: the lead script, the profile, and the flag that buys nothing.
+pub fn lead_run_args(profile: &Path, dry_run: bool) -> Vec<String> {
+    let mut args = vec!["src/leads/cli.ts".to_string(), "--profile".to_string(), profile.display().to_string()];
+    if dry_run {
+        args.push("--dry-run".to_string());
+    }
+    args
+}
+
+/// One lead run. The summary line the script prints last is returned with the rest of its output.
+pub fn run_leads(profile: &Path, dry_run: bool, on_progress: &dyn Fn(&str)) -> Result<String> {
+    run_script(&lead_run_args(profile, dry_run), on_progress)
+}
+
+/// The document a lead run wrote, from the summary line it printed. Only a `lead-run-*.json` file
+/// directly inside the evidence folder is accepted, so a summary can never make the app read, and
+/// store, some other file.
+pub fn lead_document_path(stdout: &str) -> Result<PathBuf> {
+    let line = stdout.lines().rev().find(|line| !line.trim().is_empty()).context("the lead run printed nothing")?;
+    let summary: Value = serde_json::from_str(line).context("the lead run did not end with a summary")?;
+    let path = PathBuf::from(summary.get("path").and_then(Value::as_str).context("the summary names no document")?);
+    let name = path.file_name().and_then(|name| name.to_str()).unwrap_or_default();
+    let inside = path.parent() == Some(evidence_dir().as_path());
+    anyhow::ensure!(
+        inside && name.starts_with("lead-run-") && name.ends_with(".json"),
+        "the summary names a file that is not a lead run document"
+    );
+    Ok(path)
+}
+
+/// The request that queues one pasted post or public link. It goes on stdin: a post is personal
+/// text and never belongs in a process argument list.
+pub fn import_request_json(text: Option<&str>, url: Option<&str>) -> String {
+    serde_json::json!({ "text": text, "url": url }).to_string()
+}
+
+pub fn import_args() -> Vec<String> {
+    vec!["src/leads/import-cli.ts".to_string()]
+}
+
+/// Exit 0 queued it; exit 2 is a refusal whose reason the script printed; anything else is an error.
+pub fn interpret_import(exit_code: Option<i32>, stdout: &str, stderr: &str) -> Result<String> {
+    match exit_code {
+        Some(0) => Ok(stdout.trim().to_string()),
+        Some(2) => {
+            let reason = stderr.trim();
+            anyhow::bail!("{}", if reason.is_empty() { "the import was refused" } else { reason })
+        }
+        _ => anyhow::bail!("the import did not finish"),
+    }
+}
+
+/// Queue a pasted post, or a public link, for the next lead run. Nothing is bought here.
+pub fn run_import(text: Option<&str>, url: Option<&str>, env: &[(String, String)]) -> Result<String> {
+    let (code, stdout, stderr) = pipe_to_agent_script(&import_args(), import_request_json(text, url), env)?;
+    interpret_import(code, &stdout, &stderr)
+}
+
+/// Run one agent script that reports progress on stderr, and return its stdout.
+fn run_script(script: &[String], on_progress: &dyn Fn(&str)) -> Result<String> {
     use std::io::{BufRead, BufReader, Read};
     use std::process::Stdio;
 
@@ -294,7 +357,7 @@ pub fn run_with_profile(profile: &Path, dry_run: bool, on_progress: &dyn Fn(&str
     let env = crate::settings::load(&crate::settings_path())?.agent_env();
 
     let mut child = Command::new(node_binary())
-        .args(run_args(profile, dry_run))
+        .args(script)
         .envs(env.iter().map(|(name, value)| (name.as_str(), value.as_str())))
         .current_dir(&dir)
         .stdin(Stdio::null())
@@ -1196,5 +1259,50 @@ mod active_profile_tests {
         let kept: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
         assert_eq!(kept["headline"], "kept");
         let _ = std::fs::remove_dir_all(&base);
+    }
+}
+
+#[cfg(test)]
+mod lead_tests {
+    use super::*;
+
+    #[test]
+    fn a_lead_run_launches_the_lead_script_with_the_profile_and_only_a_dry_run_adds_the_flag() {
+        let profile = Path::new("/tmp/profile.json");
+        assert_eq!(lead_run_args(profile, false), vec!["src/leads/cli.ts", "--profile", "/tmp/profile.json"]);
+        assert_eq!(lead_run_args(profile, true), vec!["src/leads/cli.ts", "--profile", "/tmp/profile.json", "--dry-run"]);
+    }
+
+    #[test]
+    fn the_run_summary_points_only_at_a_lead_document_inside_the_evidence_folder() {
+        let dir = evidence_dir();
+        let inside = dir.join("lead-run-2026-11-24T10-00-00-000Z.json");
+        let line = |path: &Path| format!("jobshell-progress: x\n{{\"path\":{},\"qualified\":2}}\n", serde_json::to_string(&path.display().to_string()).unwrap());
+        assert_eq!(lead_document_path(&line(&inside)).unwrap(), inside);
+        assert!(lead_document_path(&line(Path::new("/etc/passwd"))).is_err(), "a path outside is refused");
+        assert!(lead_document_path(&line(&dir.join("profile.json"))).is_err(), "another file in the folder is refused");
+        assert!(lead_document_path(&line(&dir.join("../lead-run-x.json"))).is_err(), "a parent segment is refused");
+        assert!(lead_document_path("not json").is_err());
+        assert!(lead_document_path("").is_err());
+    }
+
+    #[test]
+    fn an_import_travels_as_json_on_stdin_never_in_the_arguments() {
+        let request: Value = serde_json::from_str(&import_request_json(Some("a post \"quoted\""), Some("https://x.test/p"))).unwrap();
+        assert_eq!(request["text"], "a post \"quoted\"");
+        assert_eq!(request["url"], "https://x.test/p");
+        let empty: Value = serde_json::from_str(&import_request_json(None, None)).unwrap();
+        assert!(empty["text"].is_null() && empty["url"].is_null());
+        assert_eq!(import_args(), vec!["src/leads/import-cli.ts"]);
+    }
+
+    #[test]
+    fn an_import_that_works_returns_its_summary_and_a_refusal_returns_its_reason() {
+        assert_eq!(interpret_import(Some(0), "{\"id\":\"a\"}\n", "").unwrap(), "{\"id\":\"a\"}");
+        let refused = interpret_import(Some(2), "", "facebook.com needs a login\n").unwrap_err().to_string();
+        assert_eq!(refused, "facebook.com needs a login");
+        assert!(interpret_import(Some(2), "", "").is_err());
+        assert!(interpret_import(None, "", "").is_err());
+        assert!(interpret_import(Some(1), "x", "").is_err());
     }
 }

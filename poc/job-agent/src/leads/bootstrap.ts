@@ -14,7 +14,6 @@ import { judgmentDepsFor, providerChoiceFromEnv, type ProviderChoice } from '../
 import { listSources } from '../sources/registry.ts';
 import type { ResearchDeps } from './research.ts';
 import { SIGNAL_SOURCES } from './sources.ts';
-import type { LeadStrategy } from './strategy.ts';
 
 /** The generic Hacker News search is left out: the thread reader supersedes it and does not mix in people offering their own work. */
 const SUPERSEDED = ['hn'];
@@ -40,7 +39,6 @@ export type LeadWiring = {
 export const wireLead = (input: {
   env: Record<string, string | undefined>;
   readKey: (account: string) => string | null;
-  strategy: LeadStrategy;
   dryRun: boolean;
   fetchImpl?: FetchLike;
 }): LeadWiring => {
@@ -59,6 +57,5 @@ export const wireLead = (input: {
   if (llm === null) researchUnavailable = `no ${LLM_LABEL[choice.llm.provider]} key is stored`;
   else if (choice.llm.provider !== 'anthropic') researchUnavailable = `web research needs the Anthropic provider, and ${LLM_LABEL[choice.llm.provider]} is chosen`;
   else research = { apiKey: key, model: choice.llm.model, fetchImpl, maxSearches: 5, maxFetches: 3, maxTokens: 8000 };
-  void input.strategy;
   return { choice, jev, llm, research, researchUnavailable };
 };
