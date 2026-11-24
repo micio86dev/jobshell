@@ -19,13 +19,21 @@ import type { FetchLike } from '../jev.ts';
 const PAGE_CHARS = 9_000;
 const TOTAL_CHARS = 36_000;
 
-export type CliResearch = { provider: CliProvider; model: string; deps?: CliDeps };
+export type CliResearch = {
+  provider: CliProvider;
+  model: string;
+  deps?: CliDeps;
+  /** Whether the program may search the web; absent means what its kind is known to offer. */
+  web?: boolean;
+};
 
-const DISCOVERY = (brief: string, limit: number): string =>
+const DISCOVERY = (brief: string, limit: number, web: boolean): string =>
   [
     'You are helping to find public web pages about one company. Do not research the company yet.',
-    'Search the web and return the addresses of its own public pages (home, about, team, contact) and of at most two pages that report on it (press, funding, a business register).',
-    'Never return LinkedIn, Facebook, Instagram or X addresses. Return only addresses you saw in search results.',
+    web
+      ? 'Search the web and return the addresses of its own public pages (home, about, team, contact) and of at most two pages that report on it (press, funding, a business register). Return only addresses you saw in search results.'
+      : 'You cannot search the web in this request. From your own knowledge, return the address of the company\'s own website and of its about, team and contact pages ONLY if you are sure they exist; otherwise return an empty list. Never guess an address.',
+    'Never return LinkedIn, Facebook, Instagram or X addresses.',
     `Answer with one JSON object and nothing else: {"urls": ["https://..."]} with at most ${limit} addresses.`,
     '',
     'The brief:',
@@ -81,15 +89,16 @@ export const candidates = (brief: string, discovered: string[], limit: number): 
 
 export const researchViaCli = async (system: string, prompt: string, deps: ResearchDeps, cli: CliResearch, fetchImpl: FetchLike): Promise<ResearchResult> => {
   const label = CLI_LABEL[cli.provider];
-  const web = WEB_SEARCH_PROGRAMS.includes(cli.provider);
+  const web = cli.web ?? WEB_SEARCH_PROGRAMS.includes(cli.provider);
   const limit = Math.max(1, deps.maxFetches);
 
   let discovered: string[] = [];
   let searches = 0;
-  if (web && deps.maxSearches > 0) {
-    const found = await runCli(cli.provider, cli.model, DISCOVERY(prompt, limit), { ...cli.deps, web: true });
+  // With a search, the program names pages. Without one it is asked only when the company's site is not known.
+  if ((web && deps.maxSearches > 0) || (!web && hintIn(prompt) === null)) {
+    const found = await runCli(cli.provider, cli.model, DISCOVERY(prompt, limit, web), { ...cli.deps, ...(web ? { web: true } : {}) });
     if (!found.ok) return { ok: false, reason: found.reason };
-    searches = 1;
+    searches = web ? 1 : 0;
     discovered = addressesIn(found.text);
   }
 

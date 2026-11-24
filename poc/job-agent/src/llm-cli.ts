@@ -106,7 +106,7 @@ export type CliResult = { ok: true; text: string; usage: { input_tokens: number;
 
 /** The error line a program printed, when it printed one: the part that tells the user what to do. */
 const errorLine = (stderr: string, stdout: string): string | null => {
-  const line = `${stderr}\n${stdout}`.split('\n').map((entry) => entry.trim()).find((entry) => /^(\x1b\[[0-9;]*m)*\s*(error|ERROR)\b/.test(entry) || /usage limit|rate limit|quota/i.test(entry));
+  const line = `${stderr}\n${stdout}`.split('\n').map((entry) => entry.trim()).find((entry) => /^(\x1b\[[0-9;]*m)*\s*error\b/i.test(entry) || /usage limit|rate limit|quota/i.test(entry));
   return line === undefined ? null : line.replace(/\x1b\[[0-9;]*m/g, '').slice(0, 200);
 };
 

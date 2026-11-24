@@ -329,7 +329,7 @@ export const runLeads = async (deps: LeadRunDeps): Promise<LeadDocument> => {
         metrics.research.failed += 1;
         metrics.errors.push({ stage: 'research', message: enrichment.reason });
         // A refused key or an empty account will fail every company: say it once and stop spending requests.
-        if (/key was refused|no credit|is not signed in|is not installed|usage limit|API usage limits/i.test(enrichment.reason)) {
+        if (/key was refused|no credit|is not signed in|is not installed|usage limit|API usage limits|has expired/i.test(enrichment.reason)) {
           metrics.research.available = false;
           metrics.research.reason = enrichment.reason;
           break;
