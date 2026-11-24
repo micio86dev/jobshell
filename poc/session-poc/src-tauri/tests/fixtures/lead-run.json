@@ -1,0 +1,1153 @@
+{
+  "run": {
+    "id": "lead-run-2026-11-24T12-00-00-000Z",
+    "started_at": "2026-11-24T12:00:00.000Z",
+    "finished_at": "2026-11-24T14:57:49.739Z",
+    "metrics": {
+      "dry_run": false,
+      "sources": [],
+      "signals": {
+        "collected": 11,
+        "unique": 11,
+        "unidentified": 0,
+        "identified_by_model": 0
+      },
+      "companies": {
+        "found": 11,
+        "with_every_signal_dropped": 1,
+        "after_filter": 10,
+        "classified": 10,
+        "from_cache": 0
+      },
+      "prefilter_dropped": {
+        "unpaid": 1,
+        "internship": 1
+      },
+      "judge": {
+        "available": true,
+        "calls": 10,
+        "suspicious": 1,
+        "failed": 0
+      },
+      "research": {
+        "available": true,
+        "reason": null,
+        "companies": 9,
+        "failed": 0,
+        "facts_kept": 4,
+        "facts_downgraded": 0,
+        "contacts_kept": 3,
+        "contacts_dropped": 0,
+        "skipped_for_budget": 0
+      },
+      "outreach": {
+        "drafted": 9,
+        "refused": 0
+      },
+      "qualified": 9,
+      "rejected": {
+        "looks like a scheme or vague bait": 1
+      },
+      "best_rejected": {
+        "company": "GlobalTalent Network",
+        "score": 29.5,
+        "reason": "looks like a scheme or vague bait; not about a company that needs software engineering; score 29.5 is below 60"
+      },
+      "threshold": 60,
+      "errors": [
+        {
+          "stage": "queries",
+          "message": "the model gave no usable query"
+        }
+      ],
+      "ms": {
+        "queries": 0,
+        "collect": 0,
+        "judge": 2,
+        "research": 2,
+        "outreach": 0
+      },
+      "cost": {
+        "jev_input_tokens": 7000,
+        "llm_input_tokens": 14400,
+        "llm_output_tokens": 2160,
+        "web_searches": 0,
+        "llm_usd": 0.0504,
+        "search_usd": 0,
+        "usd_known": 0.0504,
+        "includes_unpriced": true
+      },
+      "explanation": [
+        "No source was queried: every source is switched off or none is configured.",
+        "1 signals looked like schemes or vague bait and were dropped.",
+        "9 qualified leads from 10 companies judged."
+      ]
+    },
+    "cost": {
+      "jev_input_tokens": 7000,
+      "llm_input_tokens": 14400,
+      "llm_output_tokens": 2160,
+      "web_searches": 0,
+      "llm_usd": 0.0504,
+      "search_usd": 0,
+      "usd_known": 0.0504,
+      "includes_unpriced": true
+    }
+  },
+  "leads": [
+    {
+      "company_key": "n:lindenwerk software",
+      "company_name": "Lindenwerk Software GmbH",
+      "website": "https://lindenwerk.test",
+      "country": "DE",
+      "qualified": true,
+      "rejection_reason": null,
+      "summary": "Asks for outside engineers. Needs engineering capacity. Evidence: Senior Laravel / Vue Developer (long-term, remote)",
+      "why_match": "Fit strong (96%), level matches (100%); names php, laravel, vue, mysql. Level 100%, 4 profile technologies named, work related to software: 100%.",
+      "next_action": "Write to Katrin Vogel (CTO) through https://lindenwerk.test/about.",
+      "score": {
+        "total": 86.7,
+        "confidence": 0.82,
+        "completeness": 0.71,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 20,
+            "max": 20,
+            "explanation": "Fit strong (96%), level matches (100%); names php, laravel, vue, mysql.",
+            "evidence": [
+              "s01"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 23,
+            "max": 25,
+            "explanation": "Need: explicit_external (94%); could become a B2B engagement: 90%.",
+            "evidence": [
+              "s01"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 15,
+            "max": 20,
+            "explanation": "Counted: size, hiring or growth, a real business.",
+            "evidence": [
+              "s01"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 9,
+            "max": 15,
+            "explanation": "Ongoing work: 80%; a single signal.",
+            "evidence": [
+              "s01"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 9.7,
+            "max": 10,
+            "explanation": "Remote: remote_ok (96%); country DE, a target market.",
+            "evidence": [
+              "s01"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 10,
+            "max": 10,
+            "explanation": "Level 100%, 4 profile technologies named, work related to software: 100%.",
+            "evidence": [
+              "s01"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "s01",
+          "type": "job_posting",
+          "source": "lever",
+          "url": "https://example.test/s01",
+          "title": "Senior Laravel / Vue Developer (long-term, remote)",
+          "quote": "Lindenwerk builds a B2B logistics SaaS used by 400 carriers. We need a senior Laravel and Vue engineer to own our invoicing module. Long-term collaboration, remote within the EU, contractors welcome (freelance or B2B through your own compan",
+          "published_at": "2026-11-18T09:00:00.000Z",
+          "observed_at": "2026-11-24T12:00:00.000Z"
+        }
+      ],
+      "facts": [
+        {
+          "field": "hiring",
+          "value": "Senior Laravel / Vue Developer (long-term, remote)",
+          "provenance": "reported",
+          "source_url": "https://example.test/s01",
+          "quote": "Senior Laravel / Vue Developer (long-term, remote)"
+        },
+        {
+          "field": "company_size",
+          "value": "about 60 employees",
+          "provenance": "verified",
+          "source_url": "https://lindenwerk.test/about",
+          "quote": "about 60 employees"
+        }
+      ],
+      "contacts": [
+        {
+          "role": "CTO",
+          "name": "Katrin Vogel",
+          "channel": "page",
+          "value": "https://lindenwerk.test/team",
+          "source_url": "https://lindenwerk.test/about",
+          "quote": "Our CTO Katrin Vogel leads engineering",
+          "verified": true
+        },
+        {
+          "role": "Engineering",
+          "name": null,
+          "channel": "email",
+          "value": "engineering@lindenwerk.test",
+          "source_url": "https://lindenwerk.test/about",
+          "quote": "Write to engineering@lindenwerk.test",
+          "verified": true
+        }
+      ],
+      "outreach": [
+        {
+          "lang": "en",
+          "subject": "Backend capacity for your team",
+          "body": "Hello team, I build SaaS back ends with Laravel and Vue as an independent engineer and could take a defined part of your roadmap. Would a short call help? [Your name]",
+          "fact_ids": []
+        }
+      ]
+    },
+    {
+      "company_key": "n:officina digitale",
+      "company_name": "Officina Digitale S.r.l.",
+      "website": null,
+      "country": "IT",
+      "qualified": true,
+      "rejection_reason": null,
+      "summary": "Asks for outside engineers. Needs engineering capacity. Evidence: Officina Digitale S.r.l. | Sviluppatore Laravel senior in P.IVA | Torino / REMOTO",
+      "why_match": "Fit strong (96%), level matches (100%); names laravel, api. Level 100%, 2 profile technologies named, work related to software: 100%.",
+      "next_action": "Reply where it was posted: https://example.test/s05",
+      "score": {
+        "total": 84.1,
+        "confidence": 0.8,
+        "completeness": 0.43,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 20,
+            "max": 20,
+            "explanation": "Fit strong (96%), level matches (100%); names laravel, api.",
+            "evidence": [
+              "s05"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 23.6,
+            "max": 25,
+            "explanation": "Need: explicit_external (96%); could become a B2B engagement: 93%.",
+            "evidence": [
+              "s05"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 13,
+            "max": 20,
+            "explanation": "Counted: hiring or growth, a real business.",
+            "evidence": [
+              "s05"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 8.8,
+            "max": 15,
+            "explanation": "Ongoing work: 78%; a single signal.",
+            "evidence": [
+              "s05"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 9.7,
+            "max": 10,
+            "explanation": "Remote: remote_ok (95%); country IT, a target market.",
+            "evidence": [
+              "s05"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 9,
+            "max": 10,
+            "explanation": "Level 100%, 2 profile technologies named, work related to software: 100%.",
+            "evidence": [
+              "s05"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "s05",
+          "type": "freelance_request",
+          "source": "hn-hiring",
+          "url": "https://example.test/s05",
+          "title": "Officina Digitale S.r.l. | Sviluppatore Laravel senior in P.IVA | Torino / REMOTO",
+          "quote": "Officina Digitale sviluppa gestionali per PMI. Cerchiamo un o una sviluppatore Laravel senior in partita IVA per ampliare la capacita del team: nuovi moduli, API e integrazioni. Collaborazione continuativa, lavoro da remoto, fatturazione me",
+          "published_at": "2026-11-18T09:00:00.000Z",
+          "observed_at": "2026-11-24T12:00:00.000Z"
+        }
+      ],
+      "facts": [
+        {
+          "field": "hiring",
+          "value": "Officina Digitale S.r.l. | Sviluppatore Laravel senior in P.IVA | Torino / REMOTO",
+          "provenance": "reported",
+          "source_url": "https://example.test/s05",
+          "quote": "Officina Digitale S.r.l. | Sviluppatore Laravel senior in P.IVA | Torino / REMOTO"
+        }
+      ],
+      "contacts": [],
+      "outreach": [
+        {
+          "lang": "it",
+          "subject": "Backend capacity for your team",
+          "body": "Hello team, I build SaaS back ends with Laravel and Vue as an independent engineer and could take a defined part of your roadmap. Would a short call help? [Your name]",
+          "fact_ids": []
+        }
+      ]
+    },
+    {
+      "company_key": "n:harbourline travel",
+      "company_name": "Harbourline Travel",
+      "website": null,
+      "country": "GB",
+      "qualified": true,
+      "rejection_reason": null,
+      "summary": "Asks for outside engineers. Needs engineering capacity. Evidence: Harbourline Travel | external technical partner to modernise our PHP booking platform | UK / REMOTE",
+      "why_match": "Fit strong (94%), level matches (100%); names php, laravel, vue. Level 100%, 3 profile technologies named, work related to software: 100%.",
+      "next_action": "No public contact was found: look for the CTO or a founder on the company site.",
+      "score": {
+        "total": 81.3,
+        "confidence": 0.76,
+        "completeness": 0.29,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 20,
+            "max": 20,
+            "explanation": "Fit strong (94%), level matches (100%); names php, laravel, vue.",
+            "evidence": [
+              "s03"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 23.6,
+            "max": 25,
+            "explanation": "Need: explicit_external (97%); could become a B2B engagement: 92%.",
+            "evidence": [
+              "s03"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 10,
+            "max": 20,
+            "explanation": "Counted: a real business.",
+            "evidence": [
+              "s03"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 8.1,
+            "max": 15,
+            "explanation": "Ongoing work: 70%; a single signal.",
+            "evidence": [
+              "s03"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 9.6,
+            "max": 10,
+            "explanation": "Remote: remote_ok (94%); country GB, a target market.",
+            "evidence": [
+              "s03"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 10,
+            "max": 10,
+            "explanation": "Level 100%, 3 profile technologies named, work related to software: 100%.",
+            "evidence": [
+              "s03"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "s03",
+          "type": "community_post",
+          "source": "hn-hiring",
+          "url": "https://example.test/s03",
+          "title": "Harbourline Travel | external technical partner to modernise our PHP booking platform | UK / REMOTE",
+          "quote": "Harbourline Travel runs a 12 year old PHP booking platform. We are looking for an external technical partner (a senior engineer or a small team) to modernise it step by step towards Laravel and a Vue front end, working remotely with our two",
+          "published_at": "2026-11-18T09:00:00.000Z",
+          "observed_at": "2026-11-24T12:00:00.000Z"
+        }
+      ],
+      "facts": [],
+      "contacts": [],
+      "outreach": [
+        {
+          "lang": "en",
+          "subject": "Backend capacity for your team",
+          "body": "Hello team, I build SaaS back ends with Laravel and Vue as an independent engineer and could take a defined part of your roadmap. Would a short call help? [Your name]",
+          "fact_ids": []
+        }
+      ]
+    },
+    {
+      "company_key": "n:brightloop",
+      "company_name": "Brightloop",
+      "website": null,
+      "country": "NL",
+      "qualified": true,
+      "rejection_reason": null,
+      "summary": "Shows an engineering gap it may not be able to fill alone. Needs engineering capacity. Evidence: Dutch workflow startup Brightloop raises EUR 6m seed to build its first product",
+      "why_match": "Fit strong (83%), level matches (100%); names none of the profile technologies. Level 100%, 0 profile technologies named, work related to software: 100%.",
+      "next_action": "No public contact was found: look for the CTO or a founder on the company site.",
+      "score": {
+        "total": 77.4,
+        "confidence": 0.73,
+        "completeness": 0.43,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 16.5,
+            "max": 20,
+            "explanation": "Fit strong (83%), level matches (100%); names none of the profile technologies.",
+            "evidence": [
+              "s02"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 17,
+            "max": 25,
+            "explanation": "Need: probable_gap (64%); could become a B2B engagement: 72%.",
+            "evidence": [
+              "s02"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 16,
+            "max": 20,
+            "explanation": "Counted: funding, a real business.",
+            "evidence": [
+              "s02"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 13,
+            "max": 15,
+            "explanation": "Ongoing work: 78%; the company is growing or shows several signals.",
+            "evidence": [
+              "s02"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 7.9,
+            "max": 10,
+            "explanation": "Remote: unknown (70%); country NL, a target market.",
+            "evidence": [
+              "s02"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 7,
+            "max": 10,
+            "explanation": "Level 100%, 0 profile technologies named, work related to software: 100%.",
+            "evidence": [
+              "s02"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "s02",
+          "type": "funding",
+          "source": "sifted",
+          "url": "https://example.test/s02",
+          "title": "Dutch workflow startup Brightloop raises EUR 6m seed to build its first product",
+          "quote": "Amsterdam-based Brightloop has raised EUR 6m in a seed round led by Northwind Ventures to build the first version of its workflow automation platform. The team of five plans to hire engineers and has no CTO yet.",
+          "published_at": "2026-11-20T08:00:00.000Z",
+          "observed_at": "2026-11-24T12:00:00.000Z"
+        }
+      ],
+      "facts": [
+        {
+          "field": "funding",
+          "value": "Dutch workflow startup Brightloop raises EUR 6m seed to build its first product",
+          "provenance": "reported",
+          "source_url": "https://example.test/s02",
+          "quote": "Dutch workflow startup Brightloop raises EUR 6m seed to build its first product"
+        },
+        {
+          "field": "funding",
+          "value": "EUR 6m seed round",
+          "provenance": "reported",
+          "source_url": "https://news.test/brightloop-seed",
+          "quote": "raised EUR 6m in a seed round led by Northwind Ventures"
+        }
+      ],
+      "contacts": [],
+      "outreach": [
+        {
+          "lang": "en",
+          "subject": "Backend capacity for your team",
+          "body": "Hello team, I build SaaS back ends with Laravel and Vue as an independent engineer and could take a defined part of your roadmap. Would a short call help? [Your name]",
+          "fact_ids": []
+        }
+      ]
+    },
+    {
+      "company_key": "n:ledgerly",
+      "company_name": "Ledgerly",
+      "website": null,
+      "country": "US",
+      "qualified": true,
+      "rejection_reason": null,
+      "summary": "Shows an engineering gap it may not be able to fill alone. Needs engineering capacity. Evidence: Fintech Ledgerly raises $18M Series A, plans to triple its engineering team and launch in Europe",
+      "why_match": "Fit transferable (77%), level matches (92%); names none of the profile technologies. Level 92%, 0 profile technologies named, work related to software: 100%.",
+      "next_action": "No public contact was found: look for the CTO or a founder on the company site.",
+      "score": {
+        "total": 76.6,
+        "confidence": 0.76,
+        "completeness": 0.57,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 14.2,
+            "max": 20,
+            "explanation": "Fit transferable (77%), level matches (92%); names none of the profile technologies.",
+            "evidence": [
+              "s08"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 15.8,
+            "max": 25,
+            "explanation": "Need: probable_gap (64%); could become a B2B engagement: 62%.",
+            "evidence": [
+              "s08"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 19,
+            "max": 20,
+            "explanation": "Counted: funding, hiring or growth, a real business.",
+            "evidence": [
+              "s08"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 13.4,
+            "max": 15,
+            "explanation": "Ongoing work: 82%; the company is growing or shows several signals.",
+            "evidence": [
+              "s08"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 7.6,
+            "max": 10,
+            "explanation": "Remote: unknown (66%); country US, a target market.",
+            "evidence": [
+              "s08"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 6.6,
+            "max": 10,
+            "explanation": "Level 92%, 0 profile technologies named, work related to software: 100%.",
+            "evidence": [
+              "s08"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "s08",
+          "type": "funding",
+          "source": "techcrunch-startups",
+          "url": "https://example.test/s08",
+          "title": "Fintech Ledgerly raises $18M Series A, plans to triple its engineering team and launch in Europe",
+          "quote": "Ledgerly, a payments-reconciliation startup, closed an $18M Series A to triple its engineering team and launch in Europe next year, the company said. It currently has about 25 employees.",
+          "published_at": "2026-11-19T10:00:00.000Z",
+          "observed_at": "2026-11-24T12:00:00.000Z"
+        }
+      ],
+      "facts": [
+        {
+          "field": "funding",
+          "value": "Fintech Ledgerly raises $18M Series A, plans to triple its engineering team and launch in Europe",
+          "provenance": "reported",
+          "source_url": "https://example.test/s08",
+          "quote": "Fintech Ledgerly raises $18M Series A, plans to triple its engineering team and launch in Europe"
+        },
+        {
+          "field": "funding",
+          "value": "$18M Series A",
+          "provenance": "reported",
+          "source_url": "https://news.test/ledgerly-series-a",
+          "quote": "closed an $18M Series A"
+        },
+        {
+          "field": "growth",
+          "value": "plans to triple its engineering team",
+          "provenance": "reported",
+          "source_url": "https://news.test/ledgerly-series-a",
+          "quote": "triple its engineering team"
+        }
+      ],
+      "contacts": [],
+      "outreach": [
+        {
+          "lang": "en",
+          "subject": "Backend capacity for your team",
+          "body": "Hello team, I build SaaS back ends with Laravel and Vue as an independent engineer and could take a defined part of your roadmap. Would a short call help? [Your name]",
+          "fact_ids": []
+        }
+      ]
+    },
+    {
+      "company_key": "n:alpenstack",
+      "company_name": "Alpenstack AG",
+      "website": "https://alpenstack.test",
+      "country": "CH",
+      "qualified": true,
+      "rejection_reason": null,
+      "summary": "Shows an engineering gap it may not be able to fill alone. Needs engineering capacity. Evidence: Senior Backend / API Architect (contract or permanent)",
+      "why_match": "Fit strong (91%), level matches (92%); names php, node, postgresql, api. Level 92%, 4 profile technologies named, work related to software: 100%.",
+      "next_action": "Write to Marco Bianchi (Head of Engineering) through https://alpenstack.test/contact.",
+      "score": {
+        "total": 74.2,
+        "confidence": 0.71,
+        "completeness": 0.57,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 18.7,
+            "max": 20,
+            "explanation": "Fit strong (91%), level matches (92%); names php, node, postgresql, api.",
+            "evidence": [
+              "s04"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 15.3,
+            "max": 25,
+            "explanation": "Need: probable_gap (54%); could become a B2B engagement: 68%.",
+            "evidence": [
+              "s04"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 13,
+            "max": 20,
+            "explanation": "Counted: hiring or growth, a real business.",
+            "evidence": [
+              "s04"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 8.5,
+            "max": 15,
+            "explanation": "Ongoing work: 75%; a single signal.",
+            "evidence": [
+              "s04"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 9.1,
+            "max": 10,
+            "explanation": "Remote: remote_ok (88%); country CH, a target market.",
+            "evidence": [
+              "s04"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 9.6,
+            "max": 10,
+            "explanation": "Level 92%, 4 profile technologies named, work related to software: 100%.",
+            "evidence": [
+              "s04"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "s04",
+          "type": "job_posting",
+          "source": "workable",
+          "url": "https://example.test/s04",
+          "title": "Senior Backend / API Architect (contract or permanent)",
+          "quote": "Alpenstack AG in Zurich develops a platform for energy utilities. We need a senior backend and API architect to design our public REST API and to guide a team of six. Contract or permanent, fully remote possible within CET plus or minus one",
+          "published_at": "2026-11-18T09:00:00.000Z",
+          "observed_at": "2026-11-24T12:00:00.000Z"
+        }
+      ],
+      "facts": [
+        {
+          "field": "hiring",
+          "value": "Senior Backend / API Architect (contract or permanent)",
+          "provenance": "reported",
+          "source_url": "https://example.test/s04",
+          "quote": "Senior Backend / API Architect (contract or permanent)"
+        }
+      ],
+      "contacts": [
+        {
+          "role": "Head of Engineering",
+          "name": "Marco Bianchi",
+          "channel": "page",
+          "value": "https://alpenstack.test/contact",
+          "source_url": "https://alpenstack.test/contact",
+          "quote": "Head of Engineering Marco Bianchi",
+          "verified": true
+        }
+      ],
+      "outreach": [
+        {
+          "lang": "en",
+          "subject": "Backend capacity for your team",
+          "body": "Hello team, I build SaaS back ends with Laravel and Vue as an independent engineer and could take a defined part of your roadmap. Would a short call help? [Your name]",
+          "fact_ids": []
+        }
+      ]
+    },
+    {
+      "company_key": "n:kestrel commerce",
+      "company_name": "Kestrel Commerce BV",
+      "website": null,
+      "country": "NL",
+      "qualified": true,
+      "rejection_reason": null,
+      "summary": "Hires employees; it could be open to a contractor. Needs engineering capacity. Evidence: Backend Developer (Laravel): hourly contract, six months, remote",
+      "why_match": "Fit strong (95%), level matches (100%); names laravel. Level 100%, 1 profile technologies named, work related to software: 100%.",
+      "next_action": "No public contact was found: look for the CTO or a founder on the company site.",
+      "score": {
+        "total": 74.1,
+        "confidence": 0.74,
+        "completeness": 0.43,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 19.9,
+            "max": 20,
+            "explanation": "Fit strong (95%), level matches (100%); names laravel.",
+            "evidence": [
+              "s09"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 16.3,
+            "max": 25,
+            "explanation": "Need: employee_only (49%); could become a B2B engagement: 82% (advertised as employment, not ruled out).",
+            "evidence": [
+              "s09"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 13,
+            "max": 20,
+            "explanation": "Counted: hiring or growth, a real business.",
+            "evidence": [
+              "s09"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 7.2,
+            "max": 15,
+            "explanation": "Ongoing work: 60%; a single signal.",
+            "evidence": [
+              "s09"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 9.7,
+            "max": 10,
+            "explanation": "Remote: remote_ok (95%); country NL, a target market.",
+            "evidence": [
+              "s09"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 8,
+            "max": 10,
+            "explanation": "Level 100%, 1 profile technologies named, work related to software: 100%.",
+            "evidence": [
+              "s09"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "s09",
+          "type": "job_posting",
+          "source": "recruitee",
+          "url": "https://example.test/s09",
+          "title": "Backend Developer (Laravel): hourly contract, six months, remote",
+          "quote": "Kestrel Commerce runs a B2B marketplace. Hourly contract, 20 to 30 hours a week, six months with a likely extension, remote anywhere in Europe. You will build order and invoicing APIs in Laravel. Rate to be discussed.",
+          "published_at": "2026-11-18T09:00:00.000Z",
+          "observed_at": "2026-11-24T12:00:00.000Z"
+        }
+      ],
+      "facts": [
+        {
+          "field": "hiring",
+          "value": "Backend Developer (Laravel): hourly contract, six months, remote",
+          "provenance": "reported",
+          "source_url": "https://example.test/s09",
+          "quote": "Backend Developer (Laravel): hourly contract, six months, remote"
+        }
+      ],
+      "contacts": [],
+      "outreach": [
+        {
+          "lang": "en",
+          "subject": "Backend capacity for your team",
+          "body": "Hello team, I build SaaS back ends with Laravel and Vue as an independent engineer and could take a defined part of your roadmap. Would a short call help? [Your name]",
+          "fact_ids": []
+        }
+      ]
+    },
+    {
+      "company_key": "n:verdant health",
+      "company_name": "Verdant Health",
+      "website": null,
+      "country": "DE",
+      "qualified": true,
+      "rejection_reason": null,
+      "summary": "Asks for outside engineers. Needs engineering capacity. Evidence: Verdant Health | Fractional CTO / senior technical consultant | REMOTE (EU)",
+      "why_match": "Fit transferable (74%), level matches (75%); names none of the profile technologies. Level 75%, 0 profile technologies named, work related to software: 100%.",
+      "next_action": "No public contact was found: look for the CTO or a founder on the company site.",
+      "score": {
+        "total": 67.8,
+        "confidence": 0.69,
+        "completeness": 0.29,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 11,
+            "max": 20,
+            "explanation": "Fit transferable (74%), level matches (75%); names none of the profile technologies.",
+            "evidence": [
+              "s07"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 23.1,
+            "max": 25,
+            "explanation": "Need: explicit_external (95%); could become a B2B engagement: 90%.",
+            "evidence": [
+              "s07"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 10,
+            "max": 20,
+            "explanation": "Counted: a real business.",
+            "evidence": [
+              "s07"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 8.3,
+            "max": 15,
+            "explanation": "Ongoing work: 72%; a single signal.",
+            "evidence": [
+              "s07"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 9.7,
+            "max": 10,
+            "explanation": "Remote: remote_ok (95%); country DE, a target market.",
+            "evidence": [
+              "s07"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 5.7,
+            "max": 10,
+            "explanation": "Level 75%, 0 profile technologies named, work related to software: 100%.",
+            "evidence": [
+              "s07"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "s07",
+          "type": "leadership_vacancy",
+          "source": "hn-hiring",
+          "url": "https://example.test/s07",
+          "title": "Verdant Health | Fractional CTO / senior technical consultant | REMOTE (EU)",
+          "quote": "Verdant Health is a seed-stage telehealth SaaS with a three-person product team and no technical lead. We are looking for a fractional CTO or senior technical consultant, two to three days a week, to review our architecture, lead hiring and",
+          "published_at": "2026-11-18T09:00:00.000Z",
+          "observed_at": "2026-11-24T12:00:00.000Z"
+        }
+      ],
+      "facts": [],
+      "contacts": [],
+      "outreach": [
+        {
+          "lang": "en",
+          "subject": "Backend capacity for your team",
+          "body": "Hello team, I build SaaS back ends with Laravel and Vue as an independent engineer and could take a defined part of your roadmap. Would a short call help? [Your name]",
+          "fact_ids": []
+        }
+      ]
+    },
+    {
+      "company_key": "n:northbeam labs",
+      "company_name": "Northbeam Labs Inc.",
+      "website": null,
+      "country": "US",
+      "qualified": true,
+      "rejection_reason": null,
+      "summary": "Shows an engineering gap it may not be able to fill alone. Needs engineering capacity. Evidence: Senior AI Engineer: LLM integrations (contract-to-hire)",
+      "why_match": "Fit transferable (70%), level matches (79%); names typescript. Level 79%, 1 profile technologies named, work related to software: 100%.",
+      "next_action": "No public contact was found: look for the CTO or a founder on the company site.",
+      "score": {
+        "total": 66.5,
+        "confidence": 0.67,
+        "completeness": 0.43,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 12.1,
+            "max": 20,
+            "explanation": "Fit transferable (70%), level matches (79%); names typescript.",
+            "evidence": [
+              "s06"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 17,
+            "max": 25,
+            "explanation": "Need: probable_gap (74%); could become a B2B engagement: 62%.",
+            "evidence": [
+              "s06"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 13,
+            "max": 20,
+            "explanation": "Counted: hiring or growth, a real business.",
+            "evidence": [
+              "s06"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 8.1,
+            "max": 15,
+            "explanation": "Ongoing work: 70%; a single signal.",
+            "evidence": [
+              "s06"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 9.3,
+            "max": 10,
+            "explanation": "Remote: remote_ok (90%); country US, a target market.",
+            "evidence": [
+              "s06"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 7,
+            "max": 10,
+            "explanation": "Level 79%, 1 profile technologies named, work related to software: 100%.",
+            "evidence": [
+              "s06"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "s06",
+          "type": "job_posting",
+          "source": "ashby",
+          "url": "https://example.test/s06",
+          "title": "Senior AI Engineer: LLM integrations (contract-to-hire)",
+          "quote": "Northbeam Labs builds an assistant for customer support teams. We need a senior engineer to integrate LLM APIs into our product: tool calling, retrieval, evaluation and cost control. Contract-to-hire, fully remote, overlap with US Eastern a",
+          "published_at": "2026-11-18T09:00:00.000Z",
+          "observed_at": "2026-11-24T12:00:00.000Z"
+        }
+      ],
+      "facts": [
+        {
+          "field": "hiring",
+          "value": "Senior AI Engineer: LLM integrations (contract-to-hire)",
+          "provenance": "reported",
+          "source_url": "https://example.test/s06",
+          "quote": "Senior AI Engineer: LLM integrations (contract-to-hire)"
+        }
+      ],
+      "contacts": [],
+      "outreach": [
+        {
+          "lang": "en",
+          "subject": "Backend capacity for your team",
+          "body": "Hello team, I build SaaS back ends with Laravel and Vue as an independent engineer and could take a defined part of your roadmap. Would a short call help? [Your name]",
+          "fact_ids": []
+        }
+      ]
+    },
+    {
+      "company_key": "n:globaltalent network",
+      "company_name": "GlobalTalent Network",
+      "website": null,
+      "country": null,
+      "qualified": false,
+      "rejection_reason": "looks like a scheme or vague bait; not about a company that needs software engineering; score 29.5 is below 60",
+      "summary": "Hires employees; it could be open to a contractor. Evidence: Earn 5000 USD per week as a remote developer: no experience needed",
+      "why_match": "Fit weak (16%), level junior_role (44%); names none of the profile technologies. Level 44%, 0 profile technologies named, work related to software: 40%.",
+      "next_action": "No public contact was found: look for the CTO or a founder on the company site.",
+      "score": {
+        "total": 29.5,
+        "confidence": 0.46,
+        "completeness": 0.14,
+        "dimensions": [
+          {
+            "name": "technical_relevance",
+            "points": 1.4,
+            "max": 20,
+            "explanation": "Fit weak (16%), level junior_role (44%); names none of the profile technologies.",
+            "evidence": [
+              "s11"
+            ]
+          },
+          {
+            "name": "b2b_potential",
+            "points": 2.3,
+            "max": 25,
+            "explanation": "Need: unrelated (8%); could become a B2B engagement: 10%.",
+            "evidence": [
+              "s11"
+            ]
+          },
+          {
+            "name": "company_capacity",
+            "points": 11,
+            "max": 20,
+            "explanation": "Counted: hiring or growth.",
+            "evidence": [
+              "s11"
+            ]
+          },
+          {
+            "name": "long_term_potential",
+            "points": 2.7,
+            "max": 15,
+            "explanation": "Ongoing work: 10%; a single signal.",
+            "evidence": [
+              "s11"
+            ]
+          },
+          {
+            "name": "remote_international",
+            "points": 9.1,
+            "max": 10,
+            "explanation": "Remote: remote_ok (100%); country unknown.",
+            "evidence": [
+              "s11"
+            ]
+          },
+          {
+            "name": "profile_relevance",
+            "points": 3,
+            "max": 10,
+            "explanation": "Level 44%, 0 profile technologies named, work related to software: 40%.",
+            "evidence": [
+              "s11"
+            ]
+          }
+        ]
+      },
+      "signals": [
+        {
+          "id": "s11",
+          "type": "job_posting",
+          "source": "weworkremotely",
+          "url": "https://example.test/s11",
+          "title": "Earn 5000 USD per week as a remote developer: no experience needed",
+          "quote": "Join our global talent network and earn 5000 USD a week working from home with no experience. Pay a small one-time onboarding fee to unlock premium projects. Limited places, apply today and refer friends for a bonus.",
+          "published_at": "2026-11-18T09:00:00.000Z",
+          "observed_at": "2026-11-24T12:00:00.000Z"
+        }
+      ],
+      "facts": [
+        {
+          "field": "hiring",
+          "value": "Earn 5000 USD per week as a remote developer: no experience needed",
+          "provenance": "reported",
+          "source_url": "https://example.test/s11",
+          "quote": "Earn 5000 USD per week as a remote developer: no experience needed"
+        }
+      ],
+      "contacts": [],
+      "outreach": []
+    }
+  ]
+}
