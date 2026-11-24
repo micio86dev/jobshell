@@ -7,6 +7,8 @@
  * public page.
  */
 
+import { z } from 'zod';
+
 /** What kind of evidence a signal is. */
 export const SIGNAL_TYPES = [
   'job_posting',
@@ -22,6 +24,23 @@ export const SIGNAL_TYPES = [
   'manual_import',
 ] as const;
 export type SignalType = (typeof SIGNAL_TYPES)[number];
+
+/** The shape of a signal read back from a file: nothing from disk is trusted until it passes this. */
+export const signalSchema = z.object({
+  id: z.string().min(1),
+  type: z.enum(SIGNAL_TYPES),
+  source: z.string().min(1),
+  sources: z.array(z.string()).min(1),
+  url: z.string().min(1),
+  title: z.string().min(1),
+  text: z.string().nullable(),
+  company_name: z.string().nullable(),
+  location: z.string().nullable(),
+  remote_hint: z.boolean().nullable(),
+  salary: z.string().nullable(),
+  published_at: z.string().nullable(),
+  observed_at: z.string().min(1),
+});
 
 /** One piece of evidence, as a source published it. */
 export type Signal = {
