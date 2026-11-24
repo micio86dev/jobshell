@@ -7,10 +7,12 @@
 
 mod agent;
 mod key_check;
+mod leads;
 mod settings;
 mod profile;
 mod ziprecruiter;
 
+use leads::{lead_detail, lead_event, lead_forget, lead_list, lead_purge, lead_runs};
 use profile::{
     cv_extract, cv_read_pdf, draft_get, draft_save, portfolio_check, profile_validate, identity_get, identity_save, onboarding_complete, onboarding_status, search_create, search_duplicate,
     search_history, search_list, search_save, search_set_status,
@@ -567,7 +569,13 @@ fn main() {
             search_duplicate,
             search_set_status,
             search_history,
-            agent_run_search
+            agent_run_search,
+            lead_list,
+            lead_detail,
+            lead_event,
+            lead_forget,
+            lead_purge,
+            lead_runs
         ])
         .build(tauri::generate_context!())
         .expect("error while building the Tauri application")

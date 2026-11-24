@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use sqlx::{Pool, Sqlite};
 
+pub mod lead_store;
 pub mod profile_store;
 pub mod secrets;
 
