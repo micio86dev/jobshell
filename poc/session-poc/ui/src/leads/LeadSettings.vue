@@ -5,6 +5,8 @@ import { onMounted, ref } from 'vue';
 import { z } from 'zod';
 
 import { t } from '../i18n/store';
+import ConfirmAction from './ConfirmAction.vue';
+import { learningEffect, parseLearning, type Learning } from './leads-model';
 
 const strategy = z.object({
   threshold: z.number(),
@@ -30,12 +32,30 @@ const scheduleSchema = z.object({ every_hours: z.number(), last_attempt: z.numbe
 const everyHours = ref<number>(0);
 const lastAttempt = ref<number | null>(null);
 const scheduleMessage = ref('');
+const learning = ref<Learning | null>(null);
+const learningMessage = ref('');
+const loadLearning = async (): Promise<void> => {
+  try {
+    learning.value = parseLearning(await invoke<unknown>('lead_learning_get'));
+  } catch {
+    learning.value = null;
+  }
+};
+const setLearning = async (enabled: boolean): Promise<void> => {
+  learningMessage.value = '';
+  try {
+    await invoke('lead_learning_set', { enabled });
+    await loadLearning();
+  } catch (error) {
+    learningMessage.value = t('settings.leads.failed', { reason: String(error) });
+  }
+};
 const purgeDays = ref(180);
 const purgeMessage = ref('');
+const purgeDaysChosen = (): number => Math.max(30, Math.round(purgeDays.value));
 const purge = async (): Promise<void> => {
   purgeMessage.value = '';
-  const days = Math.max(30, Math.round(purgeDays.value));
-  if (!window.confirm(t('settings.leads.purge.confirm', { days }))) return;
+  const days = purgeDaysChosen();
   try {
     const count = await invoke<number>('lead_purge', { days });
     purgeMessage.value = t('settings.leads.purge.done', { count });
@@ -94,6 +114,7 @@ const saveSchedule = async (): Promise<void> => {
 };
 
 onMounted(async () => {
+  void loadLearning();
   try {
     const parsed = scheduleSchema.parse(await invoke<unknown>('lead_schedule_get'));
     everyHours.value = parsed.every_hours;
@@ -137,10 +158,25 @@ onMounted(async () => {
     <p v-if="lastError !== ''" class="bad">{{ t('settings.leads.lastError', { reason: lastError }) }}</p>
     <p v-if="scheduleMessage !== ''" class="ok">{{ scheduleMessage }}</p>
 
+    <h3>{{ t('settings.leads.learn.title') }}</h3>
+    <p v-if="learning !== null" class="hint">{{ t('settings.leads.learn.hint', { min: learning.min_decided }) }}</p>
+    <label v-if="learning !== null" class="check">
+      <input type="checkbox" :checked="learning.enabled" @change="setLearning(($event.target as HTMLInputElement).checked)" />
+      {{ t('settings.leads.learn.enabled') }}
+    </label>
+    <p v-if="learning !== null && learning.sources.length === 0" class="hint">{{ t('settings.leads.learn.none') }}</p>
+    <ul v-if="learning !== null" class="learned">
+      <li v-for="item in learning.sources" :key="item.source">
+        {{ t('settings.leads.learn.row', { source: item.source, wanted: item.wanted, decided: item.decided }) }}
+        <span class="hint">· {{ learningEffect(item) === 'waiting' ? t('settings.leads.learn.waiting') : t(('settings.leads.learn.' + learningEffect(item)) as 'settings.leads.learn.same', { weight: item.weight }) }}</span>
+      </li>
+    </ul>
+    <p v-if="learningMessage !== ''" class="bad">{{ learningMessage }}</p>
+
     <h3>{{ t('settings.leads.purge.title') }}</h3>
     <p class="hint">{{ t('settings.leads.purge.hint') }}</p>
     <label>{{ t('settings.leads.purge.days') }}<input v-model.number="purgeDays" type="number" min="30" max="3650" step="10" /></label>
-    <button type="button" @click="purge">{{ t('settings.leads.purge.button') }}</button>
+    <ConfirmAction :label="t('settings.leads.purge.button')" :question="t('settings.leads.purge.confirm', { days: purgeDaysChosen() })" @confirm="purge" />
     <p v-if="purgeMessage !== ''" class="ok">{{ purgeMessage }}</p>
   </section>
 </template>
@@ -153,6 +189,9 @@ h3 { font-size: 0.88rem; margin: 1.3rem 0 0.2rem; }
 select { display: block; width: 100%; box-sizing: border-box; font: inherit; margin-top: 0.2rem; background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; padding: 0.35rem 0.5rem; }
 input { display: block; width: 100%; box-sizing: border-box; font: inherit; margin-top: 0.2rem; background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; padding: 0.35rem 0.5rem; }
 button { font: inherit; font-size: 0.85rem; padding: 0.3rem 0.9rem; border-radius: 6px; border: 1px solid var(--cta); background: var(--cta); color: var(--cta-fg); cursor: pointer; margin-top: 0.4rem; }
+.check { display: flex; gap: 0.5rem; align-items: baseline; }
+.check input { display: inline-block; width: auto; margin: 0; }
+.learned { font-size: 0.82rem; padding-left: 1.1rem; margin: 0.3rem 0; }
 .ok { color: var(--accent); font-size: 0.85rem; }
 .bad { color: oklch(0.7 0.15 30); font-size: 0.85rem; }
 </style>

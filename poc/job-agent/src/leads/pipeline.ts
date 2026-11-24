@@ -12,6 +12,7 @@ import type { FetchLike, JeDeps } from '../jev.ts';
 import type { AskDeps } from '../llm-call.ts';
 import type { UserProfile } from '../profile.ts';
 import { contentKey, type LeadCache } from './cache.ts';
+import { type SourceWeights } from './preferences.ts';
 import { candidateContext, classificationSchema, classifySignal, isSuspicious, QUESTIONS_VERSION, type Classification } from './classify.ts';
 import { collectSignals } from './collect.ts';
 import { dedupeSignals, groupByCompany, type CompanyGroup } from './company.ts';
@@ -42,12 +43,17 @@ const BUYING_SIGNAL_SHARE = 0.3;
  * best of everything else. Companies with no advertisement are part of the product, and a cheap score
  * that favours vacancies would otherwise never reach them.
  */
-export const chooseForJudgment = <T extends { fromImport: boolean; primary: { pre_score: number; signal: { type: string } } }>(
+export const chooseForJudgment = <T extends { fromImport: boolean; primary: { pre_score: number; signal: { type: string; source: string } } }>(
   cases: readonly T[],
   budget: number,
+  weights: SourceWeights = {},
 ): T[] => {
   const imports = cases.filter((item) => item.fromImport);
-  const rest = cases.filter((item) => !item.fromImport);
+  const unordered = cases.filter((item) => !item.fromImport);
+  // The user's past decisions only reorder: a source they usually want is judged first when the budget is short.
+  const rest = Object.keys(weights).length === 0
+    ? unordered
+    : [...unordered].sort((a, b) => b.primary.pre_score * (weights[b.primary.signal.source] ?? 1) - a.primary.pre_score * (weights[a.primary.signal.source] ?? 1));
   const reserved = budget >= 3 ? Math.max(1, Math.round(budget * BUYING_SIGNAL_SHARE)) : 0;
   const news = rest.filter((item) => BUYING_SIGNALS.includes(item.primary.signal.type)).slice(0, reserved);
   const chosen = new Set<T>(news);
@@ -77,6 +83,8 @@ export type LeadRunDeps = {
   now: Date;
   sleep?: (ms: number) => Promise<void>;
   onProgress?: (message: string) => void;
+  /** Weights per source from the user's own decisions; absent or empty means the order is by score alone. */
+  preferences?: SourceWeights;
 };
 
 export type LeadDocument = {
@@ -194,10 +202,17 @@ export const runLeads = async (deps: LeadRunDeps): Promise<LeadDocument> => {
   if (deps.llm !== null && signals.some((signal) => signal.company_name === null)) {
     const doneIdentify = stamp('identify');
     progress('naming companies');
-    const identified = await identifyCompanies(signals, deps.llm);
+    // A request names twelve signals, and a subscription program takes seconds per request: ask only about the
+    // signals the free filters keep (a junior or on-site post is dropped whatever its company is), and never about
+    // more than a few times the judgment budget.
+    const identified = await identifyCompanies(signals, deps.llm, {
+      only: (signal) => prefilter([signal], strategy, now).kept.length > 0,
+      limit: Math.max(60, strategy.classify_budget * 4),
+    });
     meter.llm(identified.usage);
     signals = identified.signals;
     metrics.signals.identified_by_model = identified.identified;
+    metrics.signals.naming_skipped = identified.skipped;
     if (identified.failure !== null) metrics.errors.push({ stage: 'identify', message: identified.failure });
     doneIdentify();
   }
@@ -239,13 +254,14 @@ export const runLeads = async (deps: LeadRunDeps): Promise<LeadDocument> => {
   const judgeId = deps.jev?.via === undefined ? [] : [`${deps.jev.via.provider}:${deps.jev.via.model}`];
   const contextKey = contentKey(context, String(QUESTIONS_VERSION), ...judgeId);
   const doneJudge = stamp('judge');
+  metrics.preferences_sources = Object.keys(deps.preferences ?? {}).length;
   let consecutiveFailures = 0;
   let judged = 0;
   if (deps.jev === null) {
     metrics.judge.available = false;
     metrics.errors.push({ stage: 'judge', message: 'no judgment key is stored' });
   } else {
-    for (const item of chooseForJudgment(cases, strategy.classify_budget)) {
+    for (const item of chooseForJudgment(cases, strategy.classify_budget, deps.preferences)) {
       const signal = item.primary.signal;
       const key = contentKey(signal.id, signal.title, signal.text, contextKey);
       const cached = classificationSchema.safeParse(deps.cache.verdict(key, now, CACHE_TTL_DAYS));

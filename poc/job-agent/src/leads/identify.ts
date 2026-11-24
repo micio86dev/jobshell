@@ -42,15 +42,25 @@ const promptFor = (batch: readonly Signal[]): string =>
 export type IdentifyResult = {
   signals: Signal[];
   identified: number;
+  /** Unnamed signals that were not asked about: dropped by a free filter, or past the limit. */
+  skipped: number;
   /** Set when a batch could not be asked: the signals stay unnamed and the reason is kept. */
   failure: string | null;
   usage: { input_tokens: number; output_tokens: number };
 };
 
 /** Give a company name to the signals that have none, when their own words name it. */
-export const identifyCompanies = async (signals: readonly Signal[], deps: AskDeps): Promise<IdentifyResult> => {
+export const identifyCompanies = async (
+  signals: readonly Signal[],
+  deps: AskDeps,
+  /** `only` keeps a signal out of the request (a free filter already dropped it); `limit` bounds how many are asked about. */
+  options: { only?: (signal: Signal) => boolean; limit?: number } = {},
+): Promise<IdentifyResult> => {
   const result: Signal[] = signals.map((signal) => ({ ...signal }));
-  const pending = result.filter((signal) => signal.company_name === null);
+  const unnamed = result.filter((signal) => signal.company_name === null);
+  const eligible = unnamed.filter((signal) => options.only?.(signal) ?? true);
+  const pending = eligible.slice(0, options.limit ?? Number.MAX_SAFE_INTEGER);
+  const skipped = unnamed.length - pending.length;
   const usage = { input_tokens: 0, output_tokens: 0 };
   let identified = 0;
   let failure: string | null = null;
@@ -80,5 +90,5 @@ export const identifyCompanies = async (signals: readonly Signal[], deps: AskDep
       identified += 1;
     }
   }
-  return { signals: result, identified, failure, usage };
+  return { signals: result, identified, skipped, failure, usage };
 };

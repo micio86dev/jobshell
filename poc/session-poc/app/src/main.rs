@@ -8,6 +8,7 @@
 mod agent;
 mod key_check;
 mod leads;
+mod learning;
 mod settings;
 mod profile;
 mod schedule;
@@ -198,18 +199,14 @@ async fn run_lead_job(
     pool: &Pool<Sqlite>,
     dry_run: bool,
 ) -> Result<(serde_json::Value, session_poc_core::lead_store::IngestSummary), String> {
-    if agent::profile_is_app_owned() {
-        if let Some(identity) = session_poc_core::profile_store::current_identity(pool)
-            .await
-            .map_err(|error| error.to_string())?
-        {
-            agent::write_active_profile(&agent::profile_path(), &identity.payload).map_err(|error| error.to_string())?;
-        }
-    }
+    ensure_active_profile(pool).await?;
     let profile = agent::profile_path();
+    // The user's own decisions weigh in only when they turned that on, and only when some source has
+    // enough of them; otherwise the file is removed so a run never reads a stale one.
+    let preferences = learning_preferences(pool).await?;
     let progress_app = app.clone();
     let stdout = tauri::async_runtime::spawn_blocking(move || {
-        agent::run_leads(&profile, dry_run, &|message| emit_agent_progress(&progress_app, message))
+        agent::run_leads(&profile, dry_run, preferences.as_deref(), &|message| emit_agent_progress(&progress_app, message))
     })
     .await
     .map_err(|error| error.to_string())?
@@ -244,6 +241,43 @@ async fn lead_run(
     let _guard = lock.try_acquire().ok_or_else(|| "a search is already running".to_string())?;
     let (summary, _stored) = run_lead_job(app, &state.pool, dry_run).await?;
     Ok(summary.to_string())
+}
+
+fn learning_flag_path() -> std::path::PathBuf {
+    settings_path().with_file_name("lead-learning.json")
+}
+
+fn preferences_path() -> std::path::PathBuf {
+    agent::evidence_dir().join("lead-preferences.json")
+}
+
+/// The preferences file for this run, or none.
+async fn learning_preferences(pool: &Pool<Sqlite>) -> Result<Option<std::path::PathBuf>, String> {
+    let path = preferences_path();
+    let enabled = learning::load(&learning_flag_path()).map_err(|error| error.to_string())?.enabled;
+    let items = if enabled {
+        let decisions = session_poc_core::lead_store::source_decisions(pool).await.map_err(|error| error.to_string())?;
+        learning::learn(&decisions)
+    } else {
+        Vec::new()
+    };
+    let written = learning::write_preferences(&path, &items).map_err(|error| error.to_string())?;
+    Ok(written.then_some(path))
+}
+
+/// What the user's decisions say about each source, and whether it is switched on. Every number shown
+/// here is what a search would use; nothing else is stored.
+#[tauri::command]
+async fn lead_learning_get(state: State<'_, Arc<AppState>>) -> Result<serde_json::Value, String> {
+    let enabled = learning::load(&learning_flag_path()).map_err(|error| error.to_string())?.enabled;
+    let decisions = session_poc_core::lead_store::source_decisions(&state.pool).await.map_err(|error| error.to_string())?;
+    Ok(serde_json::json!({ "enabled": enabled, "min_decided": learning::MIN_DECIDED, "sources": learning::learn(&decisions) }))
+}
+
+/// Turn the learning on or off. Off puts the order back to the score alone at the next search.
+#[tauri::command]
+fn lead_learning_set(enabled: bool) -> Result<(), String> {
+    learning::save(&learning_flag_path(), &learning::Flag { enabled }).map_err(|error| error.to_string())
 }
 
 /// The automatic search: how often it runs, and when it last started.
@@ -319,9 +353,22 @@ async fn lead_import(text: Option<String>, url: Option<String>) -> Result<String
         .map_err(|error| error.to_string())
 }
 
+/// Write the profile the agent reads from the identity the user saved, when the app owns that file. The
+/// agent needs it for anything that follows the profile, not only for a search: without it the strategy
+/// could not even be read on a fresh install, before the first search.
+async fn ensure_active_profile(pool: &Pool<Sqlite>) -> Result<(), String> {
+    if agent::profile_is_app_owned() {
+        if let Some(identity) = session_poc_core::profile_store::current_identity(pool).await.map_err(|error| error.to_string())? {
+            agent::write_active_profile(&agent::profile_path(), &identity.payload).map_err(|error| error.to_string())?;
+        }
+    }
+    Ok(())
+}
+
 /// The client-search strategy a run would use, as JSON.
 #[tauri::command]
-async fn lead_strategy_get() -> Result<String, String> {
+async fn lead_strategy_get(state: State<'_, Arc<AppState>>) -> Result<String, String> {
+    ensure_active_profile(&state.pool).await?;
     let env = settings::load(&settings_path()).map_err(|error| error.to_string())?.agent_env();
     tauri::async_runtime::spawn_blocking(move || agent::run_strategy(None, &env))
         .await
@@ -331,10 +378,11 @@ async fn lead_strategy_get() -> Result<String, String> {
 
 /// Change some fields of the strategy. The agent validates them and writes only what was set.
 #[tauri::command]
-async fn lead_strategy_set(change: String) -> Result<String, String> {
+async fn lead_strategy_set(state: State<'_, Arc<AppState>>, change: String) -> Result<String, String> {
     if change.len() > 8192 {
         return Err("the change is too long".to_string());
     }
+    ensure_active_profile(&state.pool).await?;
     let env = settings::load(&settings_path()).map_err(|error| error.to_string())?.agent_env();
     tauri::async_runtime::spawn_blocking(move || agent::run_strategy(Some(&change), &env))
         .await
@@ -760,6 +808,8 @@ fn main() {
             lead_purge,
             lead_review,
             lead_effort,
+            lead_learning_get,
+            lead_learning_set,
             lead_runs
         ])
         .build(tauri::generate_context!())

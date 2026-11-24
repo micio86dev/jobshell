@@ -330,17 +330,22 @@ pub fn cli_status() -> Vec<(String, bool)> {
 }
 
 /// The arguments of one lead run: the lead script, the profile, and the flag that buys nothing.
-pub fn lead_run_args(profile: &Path, dry_run: bool) -> Vec<String> {
+pub fn lead_run_args(profile: &Path, dry_run: bool, preferences: Option<&Path>) -> Vec<String> {
     let mut args = vec!["src/leads/cli.ts".to_string(), "--profile".to_string(), profile.display().to_string()];
     if dry_run {
         args.push("--dry-run".to_string());
+    }
+    // The weights the user's own decisions gave (only when they turned that on and something moves).
+    if let Some(path) = preferences {
+        args.push("--preferences".to_string());
+        args.push(path.display().to_string());
     }
     args
 }
 
 /// One lead run. The summary line the script prints last is returned with the rest of its output.
-pub fn run_leads(profile: &Path, dry_run: bool, on_progress: &dyn Fn(&str)) -> Result<String> {
-    run_script(&lead_run_args(profile, dry_run), on_progress)
+pub fn run_leads(profile: &Path, dry_run: bool, preferences: Option<&Path>, on_progress: &dyn Fn(&str)) -> Result<String> {
+    run_script(&lead_run_args(profile, dry_run, preferences), on_progress)
 }
 
 /// The document a lead run wrote, from the summary line it printed. Only a `lead-run-*.json` file
@@ -454,7 +459,9 @@ fn run_script(script: &[String], on_progress: &dyn Fn(&str)) -> Result<String> {
     let status = child.wait().context("waiting for the agent")?;
     if !status.success() {
         // The agent already prints a readable reason; surface it instead of a bare code.
-        anyhow::bail!("{}", if stderr.trim().is_empty() { stdout } else { stderr });
+        // A program that was stopped from outside prints nothing: say so, instead of showing an empty reason.
+        let reason = [stderr.trim(), stdout.trim()].into_iter().find(|text| !text.is_empty()).unwrap_or("the agent was stopped before it finished");
+        anyhow::bail!("{reason}");
     }
     Ok(stdout)
 }
@@ -494,7 +501,9 @@ pub fn source_settings(args: &[&str]) -> Result<String> {
     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
     if !output.status.success() {
-        anyhow::bail!("{}", if stderr.trim().is_empty() { stdout } else { stderr });
+        // A program that was stopped from outside prints nothing: say so, instead of showing an empty reason.
+        let reason = [stderr.trim(), stdout.trim()].into_iter().find(|text| !text.is_empty()).unwrap_or("the agent was stopped before it finished");
+        anyhow::bail!("{reason}");
     }
     Ok(stdout)
 }
@@ -1343,8 +1352,13 @@ mod lead_tests {
     #[test]
     fn a_lead_run_launches_the_lead_script_with_the_profile_and_only_a_dry_run_adds_the_flag() {
         let profile = Path::new("/tmp/profile.json");
-        assert_eq!(lead_run_args(profile, false), vec!["src/leads/cli.ts", "--profile", "/tmp/profile.json"]);
-        assert_eq!(lead_run_args(profile, true), vec!["src/leads/cli.ts", "--profile", "/tmp/profile.json", "--dry-run"]);
+        assert_eq!(lead_run_args(profile, false, None), vec!["src/leads/cli.ts", "--profile", "/tmp/profile.json"]);
+        assert_eq!(lead_run_args(profile, true, None), vec!["src/leads/cli.ts", "--profile", "/tmp/profile.json", "--dry-run"]);
+        assert_eq!(
+            lead_run_args(profile, false, Some(Path::new("/tmp/prefs.json"))),
+            vec!["src/leads/cli.ts", "--profile", "/tmp/profile.json", "--preferences", "/tmp/prefs.json"],
+            "the weights travel as a file path, never as text on the command line"
+        );
     }
 
     #[test]

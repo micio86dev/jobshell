@@ -180,7 +180,7 @@ test('no send path: a run touches only sources, the judge and the provider, neve
 });
 
 test('a share of the judgment budget is kept for companies that are in the news, not only for vacancies', () => {
-  const item = (name: string, type: string, preScore: number, fromImport = false) => ({ name, fromImport, primary: { pre_score: preScore, signal: { type } } });
+  const item = (name: string, type: string, preScore: number, fromImport = false) => ({ name, fromImport, primary: { pre_score: preScore, signal: { type, source: 'hn-hiring' } } });
   const cases = [
     ...['a', 'b', 'c', 'd', 'e', 'f'].map((name, index) => item(name, 'job_posting', 0.9 - index * 0.05)),
     item('funded', 'funding', 0.3),

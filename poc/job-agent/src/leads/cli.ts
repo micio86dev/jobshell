@@ -2,7 +2,7 @@
 /**
  * Run the lead pipeline once.
  *
- *   node src/leads/cli.ts --profile <path> [--config <path>] [--strategy <path>] [--sources a,b] [--dry-run]
+ *   node src/leads/cli.ts --profile <path> [--config <path>] [--strategy <path>] [--preferences <path>] [--sources a,b] [--dry-run]
  *
  * It loads the profile and the strategy, wires the judge and the model from the user's choices,
  * reads the imports the user pasted, runs, and writes one JSON document the desktop app stores.
@@ -19,6 +19,7 @@ import { openCache } from './cache.ts';
 import { defaultLeadSources, wireLead } from './bootstrap.ts';
 import { takeImports } from './import.ts';
 import { runLeads } from './pipeline.ts';
+import { loadPreferences } from './preferences.ts';
 import { defaultStrategyPath, loadStrategy } from './strategy.ts';
 
 const PROGRESS_PREFIX = 'jobshell-progress: ';
@@ -45,6 +46,9 @@ const main = async (): Promise<void> => {
   if (!loaded.ok) die(loaded.error);
   const strategy = loaded.ok ? loaded.strategy : die('unreachable');
   const dryRun = process.argv.includes('--dry-run');
+  // Learning from the user's decisions is off unless the app passes the file it computed.
+  const preferences = loadPreferences(arg('preferences'));
+  if (!preferences.ok) die(preferences.reason);
 
   const wiring = (() => {
     try {
@@ -72,6 +76,7 @@ const main = async (): Promise<void> => {
     llm: wiring.llm,
     research: wiring.research,
     researchUnavailable: wiring.researchUnavailable,
+    ...(preferences.ok ? { preferences: preferences.weights } : {}),
     dryRun,
     cache,
     imports: dryRun ? [] : takeImports(outDir),

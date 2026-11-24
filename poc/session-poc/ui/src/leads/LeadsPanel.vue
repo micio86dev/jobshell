@@ -13,6 +13,7 @@ import LeadDetail from './LeadDetail.vue';
 import {
   actionEvent,
   costLine,
+  isPlanRun,
   lookSeconds,
   parseDetail,
   parseLeads,
@@ -108,7 +109,6 @@ const act = async (lead: Lead, action: Action): Promise<void> => {
 const forget = async (): Promise<void> => {
   const current = detail.value;
   if (current === null) return;
-  if (!window.confirm(t('leads.forgetConfirm', { name: current.lead.company_name }))) return;
   try {
     await invoke('lead_forget', { key: current.lead.company_key });
     looking = null;
@@ -140,7 +140,7 @@ const run = async (dry: boolean): Promise<void> => {
     if (parsed.ok) {
       resultLine.value = dry
         ? parsed.summary.explanation.join(' ')
-        : t('leads.result', { qualified: parsed.summary.qualified, total: parsed.summary.leads, cost: costLine(parsed.summary.cost) });
+        : t('leads.result', { qualified: parsed.summary.qualified, total: parsed.summary.leads, cost: isPlanRun(parsed.summary.cost) ? t('leads.cost.plan') : costLine(parsed.summary.cost, parsed.summary.qualified) });
     } else {
       resultLine.value = t('leads.failed', { reason: parsed.error });
     }
