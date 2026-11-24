@@ -76,7 +76,7 @@ test('an empty run says which sources were unreachable', () => {
 test('an empty run says when the filters removed everything, and with what', () => {
   const m = metrics();
   m.sources = [report('hn-hiring', null, 90)];
-  m.signals = { collected: 90, unique: 90, unidentified: 0, identified_by_model: 0 };
+  m.signals = { collected: 90, unique: 90, unidentified: 0, identified_by_model: 0, naming_skipped: 0 };
   m.companies = { found: 80, with_every_signal_dropped: 80, after_filter: 0, classified: 0, from_cache: 0 };
   m.prefilter_dropped = { stale: 60, onsite_only: 20 };
   assert.match(explain(m).join(' '), /removed every company before judgment: stale \(60\), onsite_only \(20\)/);
@@ -85,7 +85,7 @@ test('an empty run says when the filters removed everything, and with what', () 
 test('an empty run says when the judge or the research was not available, and what that changes', () => {
   const m = metrics();
   m.sources = [report('sifted', null, 5)];
-  m.signals = { collected: 5, unique: 5, unidentified: 3, identified_by_model: 0 };
+  m.signals = { collected: 5, unique: 5, unidentified: 3, identified_by_model: 0, naming_skipped: 0 };
   m.judge = { available: false, calls: 0, suspicious: 0, failed: 0 };
   m.research = { ...m.research, available: false, reason: 'the Anthropic account has no credit left' };
   const text = explain(m).join(' ');
@@ -119,7 +119,7 @@ test('a run with leads still reports what was weak', () => {
 test('a dry run says what it did and that it bought nothing, not that something was unavailable', () => {
   const m = emptyMetrics(60, new CostMeter('none').summary(), true);
   m.sources = [report('hn-hiring', null, 90)];
-  m.signals = { collected: 90, unique: 88, unidentified: 0, identified_by_model: 0 };
+  m.signals = { collected: 90, unique: 88, unidentified: 0, identified_by_model: 0, naming_skipped: 0 };
   m.companies = { found: 80, with_every_signal_dropped: 3, after_filter: 77, classified: 0, from_cache: 0 };
   m.judge.available = false;
   assert.deepEqual(explain(m), ['Dry run: 88 signals from 1 sources, 77 of 80 companies passed the free filters. Nothing was judged or researched.']);
