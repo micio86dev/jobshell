@@ -44,6 +44,12 @@ export const providerChoiceFromEnv = (values: Record<string, string | undefined>
   judgment: judgmentFrom(values),
 });
 
+/** The provider and model a query plan is asked from: what the user chose in Settings. */
+export const plannerTarget = (choice: ProviderChoice): LlmChoice => ({
+  provider: choice.llm.provider,
+  model: choice.llm.model,
+});
+
 /** What the judgment client needs for the chosen service. `null` means its key is missing. */
 export const judgmentDepsFor = (
   judgment: JudgmentChoice,

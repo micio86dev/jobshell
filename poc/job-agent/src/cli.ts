@@ -26,7 +26,7 @@ import { resolvePolicy } from './policy.ts';
 import { runOnce, type RunEvidence } from './run.ts';
 import { loadSeen, saveSeen } from './seen.ts';
 import { readSecret } from './secrets.ts';
-import { judgmentDepsFor, providerChoiceFromEnv, type ProviderChoice } from './provider-choice.ts';
+import { judgmentDepsFor, plannerTarget, providerChoiceFromEnv, type ProviderChoice } from './provider-choice.ts';
 import { thresholdOverride } from './match-threshold.ts';
 import { listSources } from './sources/registry.ts';
 
@@ -104,17 +104,20 @@ const main = async (): Promise<void> => {
   if (judgment === null && !dryRun) die(missingKeyMessage(choice.judgment.service));
   const jevKey = judgment?.apiKey ?? 'dry-run-no-judgment';
 
-  const providerKey = readSecret(config.provider);
+  // The planner follows the provider and model chosen in Settings, like the report and the CV do.
+  const target = plannerTarget(choice);
+  const providerKey = readSecret(target.provider);
   // A dry run buys nothing: no judgment and no planner call, so the profile never
   // leaves the machine. That is what the README promises and what this enforces.
   const plannerDeps = providerKey === null || dryRun
     ? null
     : {
-        provider: config.provider,
+        provider: target.provider,
         apiKey: providerKey,
-        model: config.model,
+        model: target.model,
         fetchImpl: defaultFetch,
-        ...(config.base_url === undefined ? {} : { baseUrl: config.base_url }),
+        // A custom address belongs to the provider the config names; another provider's key never goes there.
+        ...(config.base_url === undefined || target.provider !== config.provider ? {} : { baseUrl: config.base_url }),
       };
 
   const queries = plannerDeps === null

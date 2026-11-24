@@ -7,10 +7,13 @@
 
 mod agent;
 mod key_check;
+mod leads;
 mod settings;
 mod profile;
+mod schedule;
 mod ziprecruiter;
 
+use leads::{lead_detail, lead_event, lead_forget, lead_list, lead_purge, lead_runs};
 use profile::{
     cv_extract, cv_read_pdf, draft_get, draft_save, portfolio_check, profile_validate, identity_get, identity_save, onboarding_complete, onboarding_status, search_create, search_duplicate,
     search_history, search_list, search_save, search_set_status,
@@ -144,7 +147,21 @@ fn emit_agent_progress(app: &tauri::AppHandle, message: &str) {
 
 /// Run the agent from the window. `dry_run` fetches and filters without buying a judgment.
 #[tauri::command]
-async fn agent_run(app: tauri::AppHandle, dry_run: bool) -> Result<String, String> {
+async fn agent_run(
+    app: tauri::AppHandle,
+    state: State<'_, Arc<AppState>>,
+    dry_run: bool,
+) -> Result<String, String> {
+    // The identity the user saved in the wizard is the profile a run reads.
+    if agent::profile_is_app_owned() {
+        if let Some(identity) = session_poc_core::profile_store::current_identity(&state.pool)
+            .await
+            .map_err(|error| error.to_string())?
+        {
+            agent::write_active_profile(&agent::profile_path(), &identity.payload)
+                .map_err(|error| error.to_string())?;
+        }
+    }
     tauri::async_runtime::spawn_blocking(move || {
         agent::run_once(dry_run, &|message| emit_agent_progress(&app, message))
     })
@@ -171,6 +188,158 @@ async fn agent_run_search(
     .await
     .map_err(|error| error.to_string())?
     .map_err(|error| error.to_string())
+}
+
+/// One lead search: the saved identity becomes the profile, the pipeline runs, and its document is
+/// stored. Shared by the button and the schedule, which hold the same lock. Returns the summary the
+/// pipeline printed, with what the store kept added to it.
+async fn run_lead_job(
+    app: tauri::AppHandle,
+    pool: &Pool<Sqlite>,
+    dry_run: bool,
+) -> Result<(serde_json::Value, session_poc_core::lead_store::IngestSummary), String> {
+    if agent::profile_is_app_owned() {
+        if let Some(identity) = session_poc_core::profile_store::current_identity(pool)
+            .await
+            .map_err(|error| error.to_string())?
+        {
+            agent::write_active_profile(&agent::profile_path(), &identity.payload).map_err(|error| error.to_string())?;
+        }
+    }
+    let profile = agent::profile_path();
+    let progress_app = app.clone();
+    let stdout = tauri::async_runtime::spawn_blocking(move || {
+        agent::run_leads(&profile, dry_run, &|message| emit_agent_progress(&progress_app, message))
+    })
+    .await
+    .map_err(|error| error.to_string())?
+    .map_err(|error| error.to_string())?;
+
+    let path = agent::lead_document_path(&stdout).map_err(|error| error.to_string())?;
+    let document = std::fs::read_to_string(&path).map_err(|error| error.to_string())?;
+    let stored = session_poc_core::lead_store::ingest_run(pool, &document)
+        .await
+        .map_err(|error| error.to_string())?;
+    let mut summary: serde_json::Value = stdout
+        .lines()
+        .rev()
+        .find(|line| !line.trim().is_empty())
+        .and_then(|line| serde_json::from_str(line).ok())
+        .unwrap_or_else(|| serde_json::json!({}));
+    summary["stored_leads"] = stored.leads.into();
+    summary["skipped_unevidenced"] = stored.skipped_unevidenced.into();
+    summary["new_qualified"] = stored.new_qualified.into();
+    Ok((summary, stored))
+}
+
+/// Run the lead pipeline from the window and store what it found. `dry_run` reads the sources and
+/// applies the free filters and buys nothing. Only one search runs at a time.
+#[tauri::command]
+async fn lead_run(
+    app: tauri::AppHandle,
+    state: State<'_, Arc<AppState>>,
+    lock: State<'_, schedule::RunLock>,
+    dry_run: bool,
+) -> Result<String, String> {
+    let _guard = lock.try_acquire().ok_or_else(|| "a search is already running".to_string())?;
+    let (summary, _stored) = run_lead_job(app, &state.pool, dry_run).await?;
+    Ok(summary.to_string())
+}
+
+/// The automatic search: how often it runs, and when it last started.
+#[tauri::command]
+fn lead_schedule_get() -> Result<schedule::Schedule, String> {
+    schedule::load(&schedule_path()).map_err(|error| error.to_string())
+}
+
+/// Change how often the automatic search runs. Zero turns it off.
+#[tauri::command]
+fn lead_schedule_set(every_hours: u32) -> Result<schedule::Schedule, String> {
+    let current = schedule::load(&schedule_path()).map_err(|error| error.to_string())?;
+    let next = schedule::with_hours(&current, every_hours, epoch_seconds());
+    schedule::save(&schedule_path(), &next).map_err(|error| error.to_string())?;
+    Ok(next)
+}
+
+fn schedule_path() -> std::path::PathBuf {
+    settings_path().with_file_name("lead-schedule.json")
+}
+
+fn epoch_seconds() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|elapsed| i64::try_from(elapsed.as_secs()).unwrap_or(i64::MAX))
+        .unwrap_or(0)
+}
+
+/// One look at the clock: start a search when the schedule says it is due and none is running, and
+/// tell the user when it found someone new. The attempt is written before the search starts.
+async fn scheduler_tick(app: &tauri::AppHandle, pool: &Pool<Sqlite>, lock: &schedule::RunLock) {
+    use tauri_plugin_notification::NotificationExt;
+
+    let Ok(mut current) = schedule::load(&schedule_path()) else { return };
+    let now = epoch_seconds();
+    if !schedule::due(&current, now) {
+        return;
+    }
+    let Some(_guard) = lock.try_acquire() else { return };
+    current.last_attempt = Some(now);
+    if schedule::save(&schedule_path(), &current).is_err() {
+        return;
+    }
+    match run_lead_job(app.clone(), pool, false).await {
+        Ok((_summary, stored)) => {
+            // The next search that works clears an earlier failure from the settings page.
+            if current.last_error.is_some() {
+                current.last_error = None;
+                let _ = schedule::save(&schedule_path(), &current);
+            }
+            if stored.new_qualified > 0 {
+                let body = format!("{} new client(s) to review", stored.new_qualified);
+                // A refused permission only loses the banner: the leads are on the page.
+                let _ = app.notification().builder().title("Jobshell").body(body).show();
+            }
+        }
+        Err(reason) => {
+            // A failed scheduled search leaves its reason where the user will look, not nowhere.
+            current.last_error = Some(reason.chars().take(300).collect());
+            let _ = schedule::save(&schedule_path(), &current);
+        }
+    }
+}
+
+/// Queue a pasted post or a public link for the next lead run. A link behind a login is refused
+/// with the instruction to paste the text instead.
+#[tauri::command]
+async fn lead_import(text: Option<String>, url: Option<String>) -> Result<String, String> {
+    let env = settings::load(&settings_path()).map_err(|error| error.to_string())?.agent_env();
+    tauri::async_runtime::spawn_blocking(move || agent::run_import(text.as_deref(), url.as_deref(), &env))
+        .await
+        .map_err(|error| error.to_string())?
+        .map_err(|error| error.to_string())
+}
+
+/// The client-search strategy a run would use, as JSON.
+#[tauri::command]
+async fn lead_strategy_get() -> Result<String, String> {
+    let env = settings::load(&settings_path()).map_err(|error| error.to_string())?.agent_env();
+    tauri::async_runtime::spawn_blocking(move || agent::run_strategy(None, &env))
+        .await
+        .map_err(|error| error.to_string())?
+        .map_err(|error| error.to_string())
+}
+
+/// Change some fields of the strategy. The agent validates them and writes only what was set.
+#[tauri::command]
+async fn lead_strategy_set(change: String) -> Result<String, String> {
+    if change.len() > 8192 {
+        return Err("the change is too long".to_string());
+    }
+    let env = settings::load(&settings_path()).map_err(|error| error.to_string())?.agent_env();
+    tauri::async_runtime::spawn_blocking(move || agent::run_strategy(Some(&change), &env))
+        .await
+        .map_err(|error| error.to_string())?
+        .map_err(|error| error.to_string())
 }
 
 /// Connect ZipRecruiter: open the consent page, wait for the loopback redirect, exchange
@@ -502,12 +671,29 @@ fn main() {
 
     tracing_hint(&data_dir);
     let state = Arc::new(AppState { pool });
+    let run_lock = schedule::RunLock::default();
     let sources: Arc<Mutex<Sources>> = Arc::new(Mutex::new(Sources::default()));
 
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
-        .manage(state)
+        .manage(Arc::clone(&state))
+        .manage(run_lock.clone())
         .manage(Arc::clone(&sources))
+        .setup(move |app| {
+            // Once a minute the schedule is asked whether a search is due; it is off until the user turns it on.
+            let handle = app.handle().clone();
+            let pool = state.pool.clone();
+            let lock = run_lock.clone();
+            tauri::async_runtime::spawn(async move {
+                loop {
+                    tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+                    // Each look is its own task, so a panic in one ends that look and not the schedule.
+                    let (handle, pool, lock) = (handle.clone(), pool.clone(), lock.clone());
+                    let _ = tauri::async_runtime::spawn(async move { scheduler_tick(&handle, &pool, &lock).await }).await;
+                }
+            });
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             enqueue_probe,
             list_tasks,
@@ -553,7 +739,19 @@ fn main() {
             search_duplicate,
             search_set_status,
             search_history,
-            agent_run_search
+            agent_run_search,
+            lead_run,
+            lead_import,
+            lead_schedule_get,
+            lead_schedule_set,
+            lead_strategy_get,
+            lead_strategy_set,
+            lead_list,
+            lead_detail,
+            lead_event,
+            lead_forget,
+            lead_purge,
+            lead_runs
         ])
         .build(tauri::generate_context!())
         .expect("error while building the Tauri application")

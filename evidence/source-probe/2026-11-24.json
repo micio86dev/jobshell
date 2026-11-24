@@ -1,0 +1,2049 @@
+{
+  "generated_at": "2026-11-24T11:46:52.584Z",
+  "method": "read-only GET, self-identifying user agent, one request every 1200 ms, robots.txt read first per origin; a URL refused by robots.txt is not requested; no credential, no cookie, no browser",
+  "user_agent": "jobshell-job-agent/0.1 (read-only source probe)",
+  "per_source": [
+    {
+      "source": "arbeitnow",
+      "targets": 1,
+      "postings": 300,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "breezy",
+      "targets": 13,
+      "postings": 326,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "cryptocurrencyjobs",
+      "targets": 1,
+      "postings": 41,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "getonbrd",
+      "targets": 1,
+      "postings": 50,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "greenhouse",
+      "targets": 16,
+      "postings": 3822,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "himalayas",
+      "targets": 1,
+      "postings": 20,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "hirehive",
+      "targets": 6,
+      "postings": 106,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "hn",
+      "targets": 1,
+      "postings": 20,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "iprogrammatori",
+      "targets": 1,
+      "postings": 448,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "jobicy",
+      "targets": 1,
+      "postings": 50,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "lever",
+      "targets": 3,
+      "postings": 425,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "personio",
+      "targets": 1,
+      "postings": 3,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "pinpoint",
+      "targets": 3,
+      "postings": 65,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "platsbanken",
+      "targets": 1,
+      "postings": 100,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "recruitee",
+      "targets": 1,
+      "postings": 9,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "remoteok",
+      "targets": 1,
+      "postings": 100,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "rippling",
+      "targets": 4,
+      "postings": 43,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "teamtailor",
+      "targets": 27,
+      "postings": 896,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "weworkremotely",
+      "targets": 1,
+      "postings": 25,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "workable",
+      "targets": 17,
+      "postings": 1965,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    },
+    {
+      "source": "workingnomads",
+      "targets": 1,
+      "postings": 37,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "added"
+    }
+  ],
+  "skipped": [
+    {
+      "source": "ashby",
+      "reason": "policy: prohibited"
+    },
+    {
+      "source": "indeed",
+      "reason": "policy: measurement_only"
+    },
+    {
+      "source": "jobspresso",
+      "reason": "policy: prohibited"
+    },
+    {
+      "source": "linkedin",
+      "reason": "policy: measurement_only"
+    },
+    {
+      "source": "remotive",
+      "reason": "policy: prohibited"
+    }
+  ],
+  "records": [
+    {
+      "source": "arbeitnow",
+      "tenant": null,
+      "url": "https://www.arbeitnow.com/api/job-board-api",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 2281135,
+      "challenge": "none",
+      "postings": 300,
+      "sample_titles": [
+        "AI-Native Software Engineer (Human)",
+        "IT-Allrounder (m/w/d) – Netzwerk & Web Development",
+        "Digital Marketing Manager (w/m/d)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "information-resources-italy",
+      "url": "https://information-resources-italy.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 4432,
+      "challenge": "none",
+      "postings": 8,
+      "sample_titles": [
+        "Business Insight Junior",
+        "Category Expert",
+        "Client Experience Account"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "aspria",
+      "url": "https://aspria.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 4849,
+      "challenge": "none",
+      "postings": 5,
+      "sample_titles": [
+        "Ambassador (receptionist)",
+        "Family Supervisor",
+        "Fitness Trainer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "end",
+      "url": "https://end.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 12133,
+      "challenge": "none",
+      "postings": 16,
+      "sample_titles": [
+        "Department Manager",
+        "Department Manager",
+        "Department Manager"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "marex",
+      "url": "https://marex.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 100778,
+      "challenge": "none",
+      "postings": 90,
+      "sample_titles": [
+        "Accounts Payable / Receivable Analyst",
+        "Agricultural OTC Sales - EMEA - Associate/VP",
+        "Application Support Analyst | Capital Markets"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "vald",
+      "url": "https://vald.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 72278,
+      "challenge": "none",
+      "postings": 80,
+      "sample_titles": [
+        "\"Traveling\" Business Development Manager",
+        "AI Engineer",
+        "Analytics Engineer - Databricks"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "alphabet-racing-italia-srl",
+      "url": "https://alphabet-racing-italia-srl.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 9299,
+      "challenge": "none",
+      "postings": 13,
+      "sample_titles": [
+        "Category Lead Race Engineer",
+        "Data/performance Junior Engineer",
+        "FIA F2 Performance Engineer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "mainstreaming-spa",
+      "url": "https://mainstreaming-spa.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 15125,
+      "challenge": "none",
+      "postings": 7,
+      "sample_titles": [
+        "Customer Support & Operations Engineer",
+        "Senior Backend Engineer/Data Engineer",
+        "Senior Manager – Security & Internal IT."
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "alphanumeric-systems",
+      "url": "https://alphanumeric-systems.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 26551,
+      "challenge": "none",
+      "postings": 22,
+      "sample_titles": [
+        "Associate Medical Director (SERM & Pharmacovigilance - Respiratory, Immunology & Inflammation) - Remote - Based in Brazil",
+        "Associate Scientific Director (SERM & Pharmacovigilance - Respiratory, Immunology & Inflammation) - Remote - Based in Brazil",
+        "Bilingual Customer Service Specialist (English/French) - Remote based in Portugal"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "clearly",
+      "url": "https://clearly.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 4952,
+      "challenge": "none",
+      "postings": 7,
+      "sample_titles": [
+        "Country Representative/Manager",
+        "Influencer & Community Manager",
+        "Lifecycle Marketing Manager"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "incubeta-global",
+      "url": "https://incubeta-global.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 73981,
+      "challenge": "none",
+      "postings": 60,
+      "sample_titles": [
+        "Account Director",
+        "Account Manager",
+        "Account Manager _Hybrid"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "critical-software",
+      "url": "https://critical-software.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 15513,
+      "challenge": "none",
+      "postings": 11,
+      "sample_titles": [
+        "Business Development Manager – Medical Devices Software",
+        "Business Development Manager – Railway (Iberia)",
+        "CTD - Technology Director (Energy)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "fx-digital",
+      "url": "https://fx-digital.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 5121,
+      "challenge": "none",
+      "postings": 4,
+      "sample_titles": [
+        "Client Partner",
+        "Mid-weight Quality Engineer Analyst",
+        "Senior Project Manager"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "breezy",
+      "tenant": "cvedia",
+      "url": "https://cvedia.breezy.hr/json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 2821,
+      "challenge": "none",
+      "postings": 3,
+      "sample_titles": [
+        "Agentic AI Engineer (Computer Vision) - Remote",
+        "Business Development Manager, USA/Canada - Remote",
+        "Hardware Product Manager, Global - Remote"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "cryptocurrencyjobs",
+      "tenant": null,
+      "url": "https://cryptocurrencyjobs.co/index.xml",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 21599,
+      "challenge": "none",
+      "postings": 41,
+      "sample_titles": [
+        "ZK Researcher",
+        "Strategic Account Manager",
+        "Staff Backend Engineer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "getonbrd",
+      "tenant": null,
+      "url": "https://www.getonbrd.com/api/v0/categories/programming/jobs?per_page=50&expand[]=company",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 360483,
+      "challenge": "none",
+      "postings": 50,
+      "sample_titles": [
+        "Software Engineer Technical Lead Data Acquisition",
+        "Engineering Manager, Data Acquisition Livecheck",
+        "Desarrollador Full-Stack Junior (Python, Django, React)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "cabify",
+      "url": "https://boards-api.greenhouse.io/v1/boards/cabify/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 331123,
+      "challenge": "none",
+      "postings": 44,
+      "sample_titles": [
+        "Accounting Analyst",
+        "Agente de Contact Center en condición de discapacidad",
+        "Analista contable"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "wallapop",
+      "url": "https://boards-api.greenhouse.io/v1/boards/wallapop/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 73195,
+      "challenge": "none",
+      "postings": 4,
+      "sample_titles": [
+        "Principal Growth Product Manager",
+        "Principal Product Manager",
+        "Senior Product Manager"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "typeform",
+      "url": "https://boards-api.greenhouse.io/v1/boards/typeform/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 64617,
+      "challenge": "none",
+      "postings": 6,
+      "sample_titles": [
+        "AI Product Operations Lead",
+        "Senior Account Executive ",
+        "Senior Account Executive "
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "n26",
+      "url": "https://boards-api.greenhouse.io/v1/boards/n26/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 228685,
+      "challenge": "none",
+      "postings": 23,
+      "sample_titles": [
+        "AFC Operations Team Lead (Italian Speaker)",
+        "Business Audit Manager",
+        "Complaints Project Manager - Fluent German"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "celonis",
+      "url": "https://boards-api.greenhouse.io/v1/boards/celonis/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 4725750,
+      "challenge": "none",
+      "postings": 261,
+      "sample_titles": [
+        "Account Executive - Cross Industries",
+        "Account Executive - Cross Industries",
+        "Account Executive - Energy"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "adyen",
+      "url": "https://boards-api.greenhouse.io/v1/boards/adyen/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 2302669,
+      "challenge": "none",
+      "postings": 240,
+      "sample_titles": [
+        " Account Manager",
+        "Account Manager",
+        "Account Manager"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "sumup",
+      "url": "https://boards-api.greenhouse.io/v1/boards/sumup/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 3457651,
+      "challenge": "none",
+      "postings": 321,
+      "sample_titles": [
+        "Account Executive",
+        "Account Manager (HVM) - German",
+        "Account Sales Executive "
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "contentful",
+      "url": "https://boards-api.greenhouse.io/v1/boards/contentful/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 603343,
+      "challenge": "none",
+      "postings": 50,
+      "sample_titles": [
+        "Customer Success Manager ",
+        "Customer Success Manager ",
+        "Customer Success Manager, LATAM"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "wise",
+      "url": "https://boards-api.greenhouse.io/v1/boards/wise/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 89342,
+      "challenge": "none",
+      "postings": 18,
+      "sample_titles": [
+        "Area Sales Leader  - Memphis, TN",
+        "Supplemental Sales Agent - Cleveland, Ohio",
+        "Supplemental Sales Agent - Dallas - Fort Worth, TX"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "elastic",
+      "url": "https://boards-api.greenhouse.io/v1/boards/elastic/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 7331002,
+      "challenge": "none",
+      "postings": 384,
+      "sample_titles": [
+        "ABM Manager, Global Public Sector",
+        "ABM Regional Manager, AMER",
+        "ABM Regional Manager, EMEA"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "datadog",
+      "url": "https://boards-api.greenhouse.io/v1/boards/datadog/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 4753753,
+      "challenge": "none",
+      "postings": 384,
+      "sample_titles": [
+        "Accounts Payable Analyst",
+        "AI Research Engineer - Datadog AI Research",
+        "AI Research Scientist - Datadog AI Research"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "mongodb",
+      "url": "https://boards-api.greenhouse.io/v1/boards/mongodb/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 4858059,
+      "challenge": "none",
+      "postings": 419,
+      "sample_titles": [
+        "2027 - AI and People Transformation Intern, NYC",
+        "2027 - Finance Intern, San Francisco",
+        "2027 - Software Engineering Intern, AMER"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "gitlab",
+      "url": "https://boards-api.greenhouse.io/v1/boards/gitlab/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 3934893,
+      "challenge": "none",
+      "postings": 252,
+      "sample_titles": [
+        "AI Transformation Owner, CRO",
+        "Applied AI Engineer, Enterprise AI",
+        "Backend Engineer, GitLab Orbit"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "cloudflare",
+      "url": "https://boards-api.greenhouse.io/v1/boards/cloudflare/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 8965815,
+      "challenge": "none",
+      "postings": 502,
+      "sample_titles": [
+        "Account Executive, FedCiv",
+        "Account Executive, Start Ups",
+        "AI Security Research & Red Team Engineer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "stripe",
+      "url": "https://boards-api.greenhouse.io/v1/boards/stripe/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 6041069,
+      "challenge": "none",
+      "postings": 769,
+      "sample_titles": [
+        "Abuse Investigator",
+        "Account Executive, AI Sales",
+        "Account Executive, AI Sales"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "greenhouse",
+      "tenant": "figma",
+      "url": "https://boards-api.greenhouse.io/v1/boards/figma/jobs?content=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 1684022,
+      "challenge": "none",
+      "postings": 145,
+      "sample_titles": [
+        "Account Executive, Enterprise",
+        "Account Executive, Enterprise (Bengaluru, India)",
+        "Account Executive, Enterprise (Berlin, Germany)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "himalayas",
+      "tenant": null,
+      "url": "https://himalayas.app/jobs/api?limit=100",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 141400,
+      "challenge": "none",
+      "postings": 20,
+      "sample_titles": [
+        "Patient Consent Coordinator",
+        "Clinical Pharmacist, Utilization Management (Part B Drugs)",
+        "Head of Software Engineering (Hands-on)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "hirehive",
+      "tenant": "kia-italy",
+      "url": "https://kia-italy.hirehive.com/api/v2/jobs",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 52155,
+      "challenge": "none",
+      "postings": 5,
+      "sample_titles": [
+        "Sales Planning Intern (All Genders Welcome)",
+        "Freelance Support: Brand Experience Project Manager (All genders welcome)",
+        "Product Intern (All Genders Welcome)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "hirehive",
+      "tenant": "the-level-group",
+      "url": "https://the-level-group.hirehive.com/api/v2/jobs",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 216737,
+      "challenge": "none",
+      "postings": 25,
+      "sample_titles": [
+        "PR & Communications intern",
+        "PR & Communications Manager",
+        "Planning and Allocation Specialist"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "hirehive",
+      "tenant": "patagonia",
+      "url": "https://patagonia.hirehive.com/api/v2/jobs",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 261281,
+      "challenge": "none",
+      "postings": 15,
+      "sample_titles": [
+        "Sales Associate (f/m/d) - 14 working hours",
+        "Customer Service Representative, Italian Speaking (f/m/d) - 6 months contract",
+        "Customer Service Representative,  German Speaking (f/m/d) - 3 months contract"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "hirehive",
+      "tenant": "vanguard",
+      "url": "https://vanguard.hirehive.com/api/v2/jobs",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 2249,
+      "challenge": "none",
+      "postings": 1,
+      "sample_titles": [
+        "Java-developer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "hirehive",
+      "tenant": "kia-in-europe",
+      "url": "https://kia-in-europe.hirehive.com/api/v2/jobs",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 533609,
+      "challenge": "none",
+      "postings": 30,
+      "sample_titles": [
+        "Manager Connected Car Data Business (all genders welcome)",
+        "(Senior) Specialist PBV Marketing (m/w/d)",
+        "Intern Finance & Accounting (all genders welcome)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "hirehive",
+      "tenant": "amcsgroup",
+      "url": "https://amcsgroup.hirehive.com/api/v2/jobs",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 401094,
+      "challenge": "none",
+      "postings": 30,
+      "sample_titles": [
+        "Senior Software Engineer | 12-month FTC",
+        "Software Engineer – AI Agents",
+        "EMEA Field Marketing Lead"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "hn",
+      "tenant": null,
+      "url": "https://hn.algolia.com/api/v1/search?query=who%20is%20hiring&tags=comment",
+      "robots_status": 404,
+      "status": 200,
+      "bytes": 43025,
+      "challenge": "none",
+      "postings": 20,
+      "sample_titles": [
+        "Scribd (YC &#x27;06, \"Netflix for eBooks\", top 100 website, 50 people) is hiring talented devs in a variety of flavors t",
+        "Agree! Usually there are a couple of Swedish (mostly Stockholm) companies each month I check.",
+        "I&#x27;m about to start looking for work on tomorrow&#x27;s whoishiring threads -- either freelance or full time, we&#x2"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "iprogrammatori",
+      "tenant": null,
+      "url": "https://www.iprogrammatori.it/rss/offerte-di-lavoro.xml",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 946138,
+      "challenge": "none",
+      "postings": 448,
+      "sample_titles": [
+        "Full Stack Developer Middle",
+        "AI Engineer - Data Scientist",
+        "Sistemista IT (Microsoft & Cloud)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "jobicy",
+      "tenant": null,
+      "url": "https://jobicy.com/api/v2/remote-jobs?count=50",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 459352,
+      "challenge": "none",
+      "postings": 50,
+      "sample_titles": [
+        "Accounting Assistant",
+        "Customer Success Manager",
+        "Large Enterprise Sales Director, France"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "lever",
+      "tenant": "jobandtalent",
+      "url": "https://api.lever.co/v0/postings/jobandtalent?mode=json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 601093,
+      "challenge": "none",
+      "postings": 31,
+      "sample_titles": [
+        "Co -  on Site Account Coordinator",
+        "Co - On Site Recruitment Coordinator",
+        "CO - Remote Legalization Coordinator"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "lever",
+      "tenant": "spotify",
+      "url": "https://api.lever.co/v0/postings/spotify?mode=json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 822707,
+      "challenge": "none",
+      "postings": 88,
+      "sample_titles": [
+        "Account Executive - Commercial, Spotify Technology",
+        "Account Executive - Commercial, Spotify Technology",
+        "Account Executive - Commercial, Spotify Technology"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "lever",
+      "tenant": "palantir",
+      "url": "https://api.lever.co/v0/postings/palantir?mode=json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 5894881,
+      "challenge": "none",
+      "postings": 306,
+      "sample_titles": [
+        "Administrative Business Partner",
+        "Administrative Business Partner",
+        "American Tech Fellowship"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "personio",
+      "tenant": "personio",
+      "url": "https://personio.jobs.personio.de/xml",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 1535,
+      "challenge": "none",
+      "postings": 3,
+      "sample_titles": [
+        "Business Development Representative (d/f/m)",
+        "Test Job",
+        "Test Offer Approval Flow"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "pinpoint",
+      "tenant": "field",
+      "url": "https://field.pinpointhq.com/postings.json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 251787,
+      "challenge": "none",
+      "postings": 17,
+      "sample_titles": [
+        "BESS Engineer",
+        "Talent Acquisition Partner  (12 month Fixed-Term Contract)",
+        "Construction Lead - Italy"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "pinpoint",
+      "tenant": "anthesisgroup",
+      "url": "https://anthesisgroup.pinpointhq.com/postings.json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 331013,
+      "challenge": "none",
+      "postings": 41,
+      "sample_titles": [
+        "Enterprise Architect",
+        "Senior Azure Cloud Engineer",
+        "Principal Consultant – Strategy & Transformation"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "pinpoint",
+      "tenant": "ebiquity",
+      "url": "https://ebiquity.pinpointhq.com/postings.json",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 45428,
+      "challenge": "none",
+      "postings": 7,
+      "sample_titles": [
+        "Senior Consultant",
+        "Senior Consultant",
+        "Data Scientist"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "platsbanken",
+      "tenant": null,
+      "url": "https://jobsearch.api.jobtechdev.se/search?q=utvecklare&limit=100",
+      "robots_status": 404,
+      "status": 200,
+      "bytes": 1168957,
+      "challenge": "none",
+      "postings": 100,
+      "sample_titles": [
+        "Senior Utvecklare",
+        "Senior Utvecklare  Observability",
+        "Bakend .Net Utvecklare"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "recruitee",
+      "tenant": "channable",
+      "url": "https://channable.recruitee.com/api/offers/",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 206603,
+      "challenge": "none",
+      "postings": 9,
+      "sample_titles": [
+        "Senior Engineering Manager - Core",
+        "Haskell Software Engineer - Creatives Team",
+        "Senior Customer Success Manager Benelux"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "remoteok",
+      "tenant": null,
+      "url": "https://remoteok.com/api",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 963128,
+      "challenge": "none",
+      "postings": 100,
+      "sample_titles": [
+        "Senior Software Engineer, Agentic AI",
+        "Senior Software Developer, Agentic AI - Canada",
+        "Threat Research Engineer, Security Factory: Threat Research"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "rippling",
+      "tenant": "camlin-careers",
+      "url": "https://ats.rippling.com/api/v2/board/camlin-careers/jobs",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 8671,
+      "challenge": "none",
+      "postings": 20,
+      "sample_titles": [
+        "Engineering Technician – Applied Engineering",
+        "Senior R&D Scientist",
+        "Data & ML Engineer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "rippling",
+      "tenant": "zynap",
+      "url": "https://ats.rippling.com/api/v2/board/zynap/jobs",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 939,
+      "challenge": "none",
+      "postings": 2,
+      "sample_titles": [
+        "Senior Full-Stack Engineer",
+        "Senior Sales Engineer (Pre-sales)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "rippling",
+      "tenant": "copado",
+      "url": "https://ats.rippling.com/api/v2/board/copado/jobs",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 8245,
+      "challenge": "none",
+      "postings": 20,
+      "sample_titles": [
+        "Senior Full-Stack Engineer",
+        "Sr. Full Stack Technical Architect",
+        "Sr Campaign Manager, Enterprise"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "rippling",
+      "tenant": "capacity",
+      "url": "https://ats.rippling.com/api/v2/board/capacity/jobs",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 475,
+      "challenge": "none",
+      "postings": 1,
+      "sample_titles": [
+        "Technical Support Agent (Tier 2)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "wspitaly",
+      "url": "https://wspitaly.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 102096,
+      "challenge": "none",
+      "postings": 8,
+      "sample_titles": [
+        "Senior Project Manager - Corporate Real Estate (EMEA)",
+        "Coordinatore della Sicurezza - Varese, Italia",
+        "Junior Process Engineer – Milano, Italia"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "coldculture",
+      "url": "https://coldculture.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 231779,
+      "challenge": "none",
+      "postings": 48,
+      "sample_titles": [
+        "Senior Buyer",
+        "Doorman / Control de Acceso (40h) - Las Rozas Village - Temporal Navidad",
+        "Sales Specialist - Colón Woman Store (24h) - Temporal Navidad"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "unobravointernational",
+      "url": "https://unobravointernational.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 132754,
+      "challenge": "none",
+      "postings": 11,
+      "sample_titles": [
+        "(Part-time) Customer Support Specialist",
+        "Strategic Finance Associate",
+        "Customer Support Specialist | Art. 18, L. 68/99"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "roccofortehotelsitaly",
+      "url": "https://roccofortehotelsitaly.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 88826,
+      "challenge": "none",
+      "postings": 14,
+      "sample_titles": [
+        "Assistant F&B Operation Manager",
+        "Host/ess",
+        "Marketing Manager"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "swanio",
+      "url": "https://swanio.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 390538,
+      "challenge": "none",
+      "postings": 33,
+      "sample_titles": [
+        "KYC Supervisor - French Market - Freelance",
+        "Strategic Customer Success Manager",
+        "Payment Product Manager - Banking Platform"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "grailtalent-1730296269",
+      "url": "https://grailtalent-1730296269.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 50861,
+      "challenge": "none",
+      "postings": 9,
+      "sample_titles": [
+        "Creator Manager - Milan",
+        "Creator Manager - Belgium",
+        "Creator Manager - Amsterdam"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "tailorfox",
+      "url": "https://tailorfox.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 428375,
+      "challenge": "none",
+      "postings": 81,
+      "sample_titles": [
+        "INDIRECT PROCUREMENT & FACILITY MANAGEMENT",
+        "CONSTRUCTION MANAGER - RENEWABLE ENERGY",
+        "MANUTENTORE JUNIOR Settore Alimentare"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "huaweitechnologiesitalia",
+      "url": "https://huaweitechnologiesitalia.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 144070,
+      "challenge": "none",
+      "postings": 15,
+      "sample_titles": [
+        "Senior expert - Embedded AI operating system architect",
+        "Operating System Software Engineer",
+        "Senior Engineer – Silicon-to-System Power Delivery & Integrity"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "tsgitalia",
+      "url": "https://tsgitalia.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 200283,
+      "challenge": "none",
+      "postings": 32,
+      "sample_titles": [
+        "Addetto/a back office",
+        "Tecnico/a addetto/a alla manutenzione elettrica senior",
+        "Operaio edile area manutenzione senior"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "kosmos",
+      "url": "https://kosmos.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 49219,
+      "challenge": "none",
+      "postings": 8,
+      "sample_titles": [
+        "Managing Director - Kings League Americas",
+        "Global Head of Marketing - Kings League",
+        "Finance Manager - Kings League Brazil"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "letuelezioni",
+      "url": "https://letuelezioni.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 439967,
+      "challenge": "none",
+      "postings": 100,
+      "sample_titles": [
+        "Insegnante di Inglese - Part Time",
+        "Insegnante di Letteratura Italiana - Part Time",
+        "Insegnante per Aiuto Compiti e Dopo Scuola | Scuole Medie"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "agilelab",
+      "url": "https://agilelab.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 113924,
+      "challenge": "none",
+      "postings": 10,
+      "sample_titles": [
+        "Data Engineer IV (Remote)",
+        "Senior Technical Success Manager",
+        "Spontaneous Application – Protected Categories (L. 68/99)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "alfadocs",
+      "url": "https://alfadocs.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 64114,
+      "challenge": "none",
+      "postings": 7,
+      "sample_titles": [
+        "Office Manager and PA (m/w/d/all genders)",
+        "Sales Team Lead",
+        "Senior Full Stack/Backend Engineer (PHP + React)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "baconsultingsrl-1749809296",
+      "url": "https://baconsultingsrl-1749809296.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 101854,
+      "challenge": "none",
+      "postings": 15,
+      "sample_titles": [
+        "Senior Front-end Developer",
+        "Senior Backend Developer Java",
+        "Full Stack Developer C#/.NET & React"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "strategicmanagementpartners",
+      "url": "https://strategicmanagementpartners.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 34371,
+      "challenge": "none",
+      "postings": 4,
+      "sample_titles": [
+        "Specialista Junior in Salute e Sicurezza sul Lavoro - Gesta srl",
+        "Responsabile Ufficio Gare",
+        "IT APPLICATION SPECIALIST"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "winid",
+      "url": "https://winid.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 651111,
+      "challenge": "none",
+      "postings": 100,
+      "sample_titles": [
+        "Tech&Digital Sr. Consultant (Recruitment Consultancy)",
+        "Engineering & Industry Sr. Consultant (Recruitment Consultancy)",
+        "Delegado/a Comercial – Canal Farmacia (Alicante)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "hiire",
+      "url": "https://hiire.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 170219,
+      "challenge": "none",
+      "postings": 26,
+      "sample_titles": [
+        "DevOps Engineer - Paynest",
+        "Senior AI Backend Engineer - Siemens Mobility",
+        "Business Manager | Financial Services & IT Consulting"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "inhaus",
+      "url": "https://inhaus.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 86650,
+      "challenge": "none",
+      "postings": 20,
+      "sample_titles": [
+        "Immigration Legal Advisor | Importante Empresa Internacional",
+        "Financial Controller | Compañía Multinacional Líder",
+        "Trade Support Coordinator | Importante Multinacional de Commodities"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "qida",
+      "url": "https://qida.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 268906,
+      "challenge": "none",
+      "postings": 28,
+      "sample_titles": [
+        "Team Lead Comercial (Asesoría Familiar) Cataluña",
+        "People Operations Specialist",
+        "Ayudante de Coordinador SAD - Cuenca"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "adsmurai",
+      "url": "https://adsmurai.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 197794,
+      "challenge": "none",
+      "postings": 20,
+      "sample_titles": [
+        "SEM Specialist",
+        "Paid Media Specialist - Madrid (They/She/He)",
+        "Marketing Measurement Analyst"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "changegroupspain",
+      "url": "https://changegroupspain.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 11343,
+      "challenge": "none",
+      "postings": 4,
+      "sample_titles": [
+        "Foreign Exchange Sales Consultant - Spain",
+        "Foreign Exchange Sales Consultant - Spain",
+        "Foreign Exchange Sales Consultant - Spain"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "cataloniahotels",
+      "url": "https://cataloniahotels.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 334185,
+      "challenge": "none",
+      "postings": 93,
+      "sample_titles": [
+        "Subgobernanta/e",
+        "Subdirector/a Hotel",
+        "Ayudante Recepción"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "knowmadmood",
+      "url": "https://knowmadmood.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 696302,
+      "challenge": "none",
+      "postings": 100,
+      "sample_titles": [
+        "Atlassian Developer",
+        "Atlassian Consultant",
+        "Atlassian Business Senior Consultant"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "nextlane",
+      "url": "https://nextlane.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 243664,
+      "challenge": "none",
+      "postings": 21,
+      "sample_titles": [
+        "Inside Sales Representative (French Speaker)",
+        "Application Support Consultant (Dutch Speaker) Relocation to Porto, Portugal",
+        "Database Support Consultant (french speaker - Oracle, SQL, Linux, Windows)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "kapres",
+      "url": "https://kapres.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 281742,
+      "challenge": "none",
+      "postings": 75,
+      "sample_titles": [
+        "Senior Data Center Director",
+        "Cloud Operations Manager / Remote – France or Morocco",
+        "Efficient IP Engineer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "multiversecomputing",
+      "url": "https://multiversecomputing.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 109652,
+      "challenge": "none",
+      "postings": 11,
+      "sample_titles": [
+        "Engineering Manager (Product)",
+        "Strategy and Business Planning Manager",
+        "Dev Ops Engineer (Mid)"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "teamtailor",
+      "tenant": "templafy",
+      "url": "https://templafy.teamtailor.com/jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 28774,
+      "challenge": "none",
+      "postings": 3,
+      "sample_titles": [
+        "Business Developmnet Rep",
+        "Executive Sales, EMEA",
+        "Senior Software Engineer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "weworkremotely",
+      "tenant": null,
+      "url": "https://weworkremotely.com/categories/remote-programming-jobs.rss",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 229800,
+      "challenge": "none",
+      "postings": 25,
+      "sample_titles": [
+        "Senior Applied AI Engineer, Document Intelligence",
+        "Cryptography Specialist for AI lab",
+        "Senior Software Engineer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "impactastrategy",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/impactastrategy?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 44095,
+      "challenge": "none",
+      "postings": 8,
+      "sample_titles": [
+        "Associate Consultant",
+        "Associate Consultant",
+        "Consultant"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "aliprofessional",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/aliprofessional?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 3108467,
+      "challenge": "none",
+      "postings": 884,
+      "sample_titles": [
+        "Accettatore / Accettatrice | Officina Auto",
+        "Account Manager - ICT & Telco",
+        "Account Payables & Digital Specialist"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "dentons-europe",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/dentons-europe?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 420060,
+      "challenge": "none",
+      "postings": 86,
+      "sample_titles": [
+        "Associate - Litigation and Dispute Resolution Team - Rome",
+        "Associate - Project, Energy & Infrastructure (Banking & Finance)",
+        "Associate w Zespole Energetyki"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "erg-media",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/erg-media?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 34483,
+      "challenge": "none",
+      "postings": 10,
+      "sample_titles": [
+        "Bookkeeper & Junior FP&A Analyst",
+        "Financial Controller (Inventory-Based Business)",
+        "Junior Sales & Operations Account - B2B Wholesale"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "dmates",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/dmates?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 4378,
+      "challenge": "none",
+      "postings": 1,
+      "sample_titles": [
+        "Fleet Manager"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "alispa",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/alispa?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 268074,
+      "challenge": "none",
+      "postings": 57,
+      "sample_titles": [
+        "Business Developer",
+        "Candidatura Spontanea - Alias Executive Search & Consulting",
+        "Candidatura Spontanea Ali Professional"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "allnet-dot-italia-spa",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/allnet-dot-italia-spa?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 20300,
+      "challenge": "none",
+      "postings": 5,
+      "sample_titles": [
+        "Brand Specialist Data Center",
+        "Brand Specialist ICT - Stage",
+        "Inside Sales Account - Stage"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "webranking",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/webranking?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 164900,
+      "challenge": "none",
+      "postings": 29,
+      "sample_titles": [
+        "Cloud & Data Engineer",
+        "Cloud & Data Engineer",
+        "Cloud & Data Engineer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "moneyfarm",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/moneyfarm?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 147364,
+      "challenge": "none",
+      "postings": 22,
+      "sample_titles": [
+        "Copywriter UK",
+        "Customer Relationship Manager, Moneyfarm",
+        "Investment Consultant"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "ukio",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/ukio?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 41350,
+      "challenge": "none",
+      "postings": 6,
+      "sample_titles": [
+        "B2C Sales (French/Portuguese speaker)",
+        "B2C Sales Intern - Barcelona",
+        "Facilities Coordinator"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "fernandez",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/fernandez?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 64837,
+      "challenge": "none",
+      "postings": 13,
+      "sample_titles": [
+        "AI Solutions Specialist",
+        "Aux. Administrativo/a Mercamadrid",
+        "Comercial Junior"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "oppizi",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/oppizi?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 67703,
+      "challenge": "none",
+      "postings": 12,
+      "sample_titles": [
+        "Brand Activation Manager - Miami, FL",
+        "Brand Ambassador (Street Marketing) - NYC ($69 / 3hrs)",
+        "Business Development Manager - Australia & New Zealand"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "crossbordertalents",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/crossbordertalents?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 1929616,
+      "challenge": "none",
+      "postings": 631,
+      "sample_titles": [
+        "1st Level Technical Support with German and English",
+        "Account Executive - ES10",
+        "Action service coordinator - Romanian+Bulgarian+German"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "teleperformance-spain",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/teleperformance-spain?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 829137,
+      "challenge": "none",
+      "postings": 146,
+      "sample_titles": [
+        "Abogado/a Corporativo/a",
+        "Abogado/a Especialista en Relaciones Laborales",
+        "Abogado/a Especialista en Relaciones Laborales"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "huggingface",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/huggingface?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 62520,
+      "challenge": "none",
+      "postings": 10,
+      "sample_titles": [
+        "Open-Source Machine Learning Engineer - EMEA Remote",
+        "Open-Source Machine Learning Engineer - US Remote",
+        "Senior Machine Learning Engineer, Voice Agents - EMEA Remote"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "semios",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/semios?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 162760,
+      "challenge": "none",
+      "postings": 22,
+      "sample_titles": [
+        "Data Engineer",
+        "Junior Accountant",
+        "Junior Accountant"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workable",
+      "tenant": "platzi",
+      "url": "https://apply.workable.com/api/v1/widget/accounts/platzi?details=true",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 131911,
+      "challenge": "none",
+      "postings": 23,
+      "sample_titles": [
+        "Account Specialist (Government / B2G)",
+        "Account Specialist (Government / B2G)",
+        "B2B Growth Marketer"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "workingnomads",
+      "tenant": null,
+      "url": "https://www.workingnomads.com/api/exposed_jobs/",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 181574,
+      "challenge": "none",
+      "postings": 37,
+      "sample_titles": [
+        "Looking For Online ESL Teachers - Remote- Joining Rewards of up to USD $100",
+        "Case Manager (Philippines)",
+        "Content Reviewer - United States"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    }
+  ]
+}

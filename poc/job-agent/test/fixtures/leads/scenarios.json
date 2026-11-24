@@ -1,0 +1,673 @@
+[
+  {
+    "id": "s01-de-saas-laravel",
+    "title": "A German SaaS company seeking a senior Laravel/Vue developer for a long-term remote collaboration",
+    "expected": {
+      "qualified": true,
+      "country": "DE",
+      "lang": "en",
+      "minTech": 15,
+      "minRemote": 8,
+      "minB2b": 17
+    },
+    "signal": {
+      "id": "s01",
+      "type": "job_posting",
+      "source": "lever",
+      "sources": [
+        "lever"
+      ],
+      "url": "https://example.test/s01",
+      "title": "Senior Laravel / Vue Developer (long-term, remote)",
+      "text": "Lindenwerk builds a B2B logistics SaaS used by 400 carriers. We need a senior Laravel and Vue engineer to own our invoicing module. Long-term collaboration, remote within the EU, contractors welcome (freelance or B2B through your own company). Stack: PHP 8, Laravel, Vue 3, MySQL.",
+      "company_name": "Lindenwerk Software GmbH",
+      "location": "Berlin / Remote EU",
+      "remote_hint": true,
+      "salary": null,
+      "published_at": "2026-11-18T09:00:00.000Z",
+      "observed_at": "2026-11-24T12:00:00.000Z"
+    },
+    "judge": {
+      "need": {
+        "explicit_external": 0.82,
+        "probable_gap": 0.15
+      },
+      "b2b": 0.9,
+      "longterm": 0.8,
+      "fit": {
+        "strong": 0.85,
+        "transferable": 0.12
+      },
+      "level": {
+        "matches": 0.95
+      },
+      "remote": {
+        "remote_ok": 0.92,
+        "unknown": 0.08
+      },
+      "quality": "genuine"
+    },
+    "research": {
+      "country": "DE",
+      "website": "https://lindenwerk.test",
+      "legitimacy": "real",
+      "pages": [
+        {
+          "url": "https://lindenwerk.test/about",
+          "text": "Lindenwerk Software GmbH is a logistics software company in Berlin with about 60 employees. Write to engineering@lindenwerk.test or see https://lindenwerk.test/team. Our CTO Katrin Vogel leads engineering."
+        }
+      ],
+      "facts": [
+        {
+          "field": "company_size",
+          "value": "about 60 employees",
+          "provenance": "verified",
+          "url": "https://lindenwerk.test/about",
+          "quote": "about 60 employees"
+        }
+      ],
+      "contacts": [
+        {
+          "role": "CTO",
+          "name": "Katrin Vogel",
+          "channel": "page",
+          "value": "https://lindenwerk.test/team",
+          "url": "https://lindenwerk.test/about",
+          "quote": "Our CTO Katrin Vogel leads engineering"
+        },
+        {
+          "role": "Engineering",
+          "name": null,
+          "channel": "email",
+          "value": "engineering@lindenwerk.test",
+          "url": "https://lindenwerk.test/about",
+          "quote": "Write to engineering@lindenwerk.test"
+        }
+      ]
+    }
+  },
+  {
+    "id": "s02-nl-funded-startup",
+    "title": "A Dutch startup that recently received funding and needs help building its first product",
+    "expected": {
+      "qualified": true,
+      "country": "NL",
+      "lang": "en",
+      "funding": true
+    },
+    "signal": {
+      "id": "s02",
+      "type": "funding",
+      "source": "sifted",
+      "sources": [
+        "sifted"
+      ],
+      "url": "https://example.test/s02",
+      "title": "Dutch workflow startup Brightloop raises EUR 6m seed to build its first product",
+      "text": "Amsterdam-based Brightloop has raised EUR 6m in a seed round led by Northwind Ventures to build the first version of its workflow automation platform. The team of five plans to hire engineers and has no CTO yet.",
+      "company_name": "Brightloop",
+      "location": null,
+      "remote_hint": null,
+      "salary": null,
+      "published_at": "2026-11-20T08:00:00.000Z",
+      "observed_at": "2026-11-24T12:00:00.000Z"
+    },
+    "judge": {
+      "need": {
+        "probable_gap": 0.85,
+        "explicit_external": 0.1
+      },
+      "b2b": 0.72,
+      "longterm": 0.78,
+      "fit": {
+        "strong": 0.45,
+        "transferable": 0.45
+      },
+      "level": {
+        "matches": 0.9
+      },
+      "remote": {
+        "unknown": 0.6,
+        "remote_ok": 0.4
+      },
+      "quality": "genuine"
+    },
+    "research": {
+      "country": "NL",
+      "website": "https://brightloop.test",
+      "legitimacy": "real",
+      "pages": [
+        {
+          "url": "https://news.test/brightloop-seed",
+          "text": "Brightloop has raised EUR 6m in a seed round led by Northwind Ventures, the company said on Tuesday."
+        }
+      ],
+      "facts": [
+        {
+          "field": "funding",
+          "value": "EUR 6m seed round",
+          "provenance": "reported",
+          "url": "https://news.test/brightloop-seed",
+          "quote": "raised EUR 6m in a seed round led by Northwind Ventures"
+        }
+      ],
+      "contacts": []
+    }
+  },
+  {
+    "id": "s03-uk-modernise-platform",
+    "title": "A UK company looking for an external technical partner to modernise an existing platform",
+    "expected": {
+      "qualified": true,
+      "country": "GB",
+      "lang": "en"
+    },
+    "signal": {
+      "id": "s03",
+      "type": "community_post",
+      "source": "hn-hiring",
+      "sources": [
+        "hn-hiring"
+      ],
+      "url": "https://example.test/s03",
+      "title": "Harbourline Travel | external technical partner to modernise our PHP booking platform | UK / REMOTE",
+      "text": "Harbourline Travel runs a 12 year old PHP booking platform. We are looking for an external technical partner (a senior engineer or a small team) to modernise it step by step towards Laravel and a Vue front end, working remotely with our two in-house developers. Initial engagement of six months, likely to continue.",
+      "company_name": "Harbourline Travel",
+      "location": null,
+      "remote_hint": true,
+      "salary": null,
+      "published_at": "2026-11-18T09:00:00.000Z",
+      "observed_at": "2026-11-24T12:00:00.000Z"
+    },
+    "judge": {
+      "need": {
+        "explicit_external": 0.9,
+        "probable_gap": 0.08
+      },
+      "b2b": 0.92,
+      "longterm": 0.7,
+      "fit": {
+        "strong": 0.8,
+        "transferable": 0.18
+      },
+      "level": {
+        "matches": 0.93
+      },
+      "remote": {
+        "remote_ok": 0.88,
+        "unknown": 0.12
+      },
+      "quality": "genuine"
+    },
+    "research": {
+      "country": "GB",
+      "website": null,
+      "legitimacy": "real",
+      "pages": [],
+      "facts": [],
+      "contacts": []
+    }
+  },
+  {
+    "id": "s04-ch-backend-api",
+    "title": "A Swiss company seeking senior backend and API architecture expertise",
+    "expected": {
+      "qualified": true,
+      "country": "CH",
+      "lang": "en"
+    },
+    "signal": {
+      "id": "s04",
+      "type": "job_posting",
+      "source": "workable",
+      "sources": [
+        "workable"
+      ],
+      "url": "https://example.test/s04",
+      "title": "Senior Backend / API Architect (contract or permanent)",
+      "text": "Alpenstack AG in Zurich develops a platform for energy utilities. We need a senior backend and API architect to design our public REST API and to guide a team of six. Contract or permanent, fully remote possible within CET plus or minus one hour. PHP, Node.js, PostgreSQL.",
+      "company_name": "Alpenstack AG",
+      "location": "Zurich / Remote CET",
+      "remote_hint": true,
+      "salary": null,
+      "published_at": "2026-11-18T09:00:00.000Z",
+      "observed_at": "2026-11-24T12:00:00.000Z"
+    },
+    "judge": {
+      "need": {
+        "probable_gap": 0.55,
+        "employee_only": 0.3,
+        "explicit_external": 0.12
+      },
+      "b2b": 0.68,
+      "longterm": 0.75,
+      "fit": {
+        "strong": 0.7,
+        "transferable": 0.25
+      },
+      "level": {
+        "matches": 0.88,
+        "beyond_profile": 0.1
+      },
+      "remote": {
+        "remote_ok": 0.75,
+        "unknown": 0.25
+      },
+      "quality": "genuine"
+    },
+    "research": {
+      "country": "CH",
+      "website": "https://alpenstack.test",
+      "legitimacy": "real",
+      "pages": [
+        {
+          "url": "https://alpenstack.test/contact",
+          "text": "Alpenstack AG, Zurich. Press and partnerships: partners@alpenstack.test. Head of Engineering Marco Bianchi."
+        }
+      ],
+      "facts": [],
+      "contacts": [
+        {
+          "role": "Head of Engineering",
+          "name": "Marco Bianchi",
+          "channel": "page",
+          "value": "https://alpenstack.test/contact",
+          "url": "https://alpenstack.test/contact",
+          "quote": "Head of Engineering Marco Bianchi"
+        }
+      ]
+    }
+  },
+  {
+    "id": "s05-it-extra-capacity",
+    "title": "An Italian software company needing additional engineering capacity",
+    "expected": {
+      "qualified": true,
+      "country": "IT",
+      "lang": "it"
+    },
+    "signal": {
+      "id": "s05",
+      "type": "freelance_request",
+      "source": "hn-hiring",
+      "sources": [
+        "hn-hiring"
+      ],
+      "url": "https://example.test/s05",
+      "title": "Officina Digitale S.r.l. | Sviluppatore Laravel senior in P.IVA | Torino / REMOTO",
+      "text": "Officina Digitale sviluppa gestionali per PMI. Cerchiamo un o una sviluppatore Laravel senior in partita IVA per ampliare la capacita del team: nuovi moduli, API e integrazioni. Collaborazione continuativa, lavoro da remoto, fatturazione mensile.",
+      "company_name": "Officina Digitale S.r.l.",
+      "location": null,
+      "remote_hint": true,
+      "salary": null,
+      "published_at": "2026-11-18T09:00:00.000Z",
+      "observed_at": "2026-11-24T12:00:00.000Z"
+    },
+    "judge": {
+      "need": {
+        "explicit_external": 0.88,
+        "probable_gap": 0.1
+      },
+      "b2b": 0.93,
+      "longterm": 0.78,
+      "fit": {
+        "strong": 0.86,
+        "transferable": 0.1
+      },
+      "level": {
+        "matches": 0.95
+      },
+      "remote": {
+        "remote_ok": 0.9,
+        "unknown": 0.1
+      },
+      "quality": "genuine"
+    },
+    "research": {
+      "country": "IT",
+      "website": null,
+      "legitimacy": "real",
+      "pages": [],
+      "facts": [],
+      "contacts": []
+    }
+  },
+  {
+    "id": "s06-us-ai-llm",
+    "title": "A US startup looking for AI engineering and LLM integration",
+    "expected": {
+      "qualified": true,
+      "country": "US",
+      "lang": "en"
+    },
+    "signal": {
+      "id": "s06",
+      "type": "job_posting",
+      "source": "ashby",
+      "sources": [
+        "ashby"
+      ],
+      "url": "https://example.test/s06",
+      "title": "Senior AI Engineer: LLM integrations (contract-to-hire)",
+      "text": "Northbeam Labs builds an assistant for customer support teams. We need a senior engineer to integrate LLM APIs into our product: tool calling, retrieval, evaluation and cost control. Contract-to-hire, fully remote, overlap with US Eastern afternoons. TypeScript and Python.",
+      "company_name": "Northbeam Labs Inc.",
+      "location": "Remote (US time zones)",
+      "remote_hint": true,
+      "salary": null,
+      "published_at": "2026-11-18T09:00:00.000Z",
+      "observed_at": "2026-11-24T12:00:00.000Z"
+    },
+    "judge": {
+      "need": {
+        "probable_gap": 0.55,
+        "explicit_external": 0.3
+      },
+      "b2b": 0.62,
+      "longterm": 0.7,
+      "fit": {
+        "strong": 0.3,
+        "transferable": 0.5,
+        "weak": 0.15
+      },
+      "level": {
+        "matches": 0.72,
+        "beyond_profile": 0.25
+      },
+      "remote": {
+        "remote_ok": 0.8,
+        "unknown": 0.2
+      },
+      "quality": "genuine"
+    },
+    "research": {
+      "country": "US",
+      "website": null,
+      "legitimacy": "real",
+      "pages": [],
+      "facts": [],
+      "contacts": []
+    }
+  },
+  {
+    "id": "s07-fractional-cto",
+    "title": "A company seeking a fractional CTO or senior technical consultant",
+    "expected": {
+      "qualified": true,
+      "country": "DE",
+      "lang": "en"
+    },
+    "signal": {
+      "id": "s07",
+      "type": "leadership_vacancy",
+      "source": "hn-hiring",
+      "sources": [
+        "hn-hiring"
+      ],
+      "url": "https://example.test/s07",
+      "title": "Verdant Health | Fractional CTO / senior technical consultant | REMOTE (EU)",
+      "text": "Verdant Health is a seed-stage telehealth SaaS with a three-person product team and no technical lead. We are looking for a fractional CTO or senior technical consultant, two to three days a week, to review our architecture, lead hiring and own delivery. Remote, EU time zones.",
+      "company_name": "Verdant Health",
+      "location": null,
+      "remote_hint": true,
+      "salary": null,
+      "published_at": "2026-11-18T09:00:00.000Z",
+      "observed_at": "2026-11-24T12:00:00.000Z"
+    },
+    "judge": {
+      "need": {
+        "explicit_external": 0.85,
+        "probable_gap": 0.12
+      },
+      "b2b": 0.9,
+      "longterm": 0.72,
+      "fit": {
+        "transferable": 0.5,
+        "strong": 0.35,
+        "weak": 0.1
+      },
+      "level": {
+        "matches": 0.65,
+        "beyond_profile": 0.3
+      },
+      "remote": {
+        "remote_ok": 0.9,
+        "unknown": 0.1
+      },
+      "quality": "genuine"
+    },
+    "research": {
+      "country": "DE",
+      "website": null,
+      "legitimacy": "real",
+      "pages": [],
+      "facts": [],
+      "contacts": []
+    }
+  },
+  {
+    "id": "s08-no-vacancy-signals",
+    "title": "A company without a published vacancy but with clear commercial signals suggesting a need for external development",
+    "expected": {
+      "qualified": true,
+      "country": "US",
+      "lang": "en",
+      "noJobPosting": true
+    },
+    "signal": {
+      "id": "s08",
+      "type": "funding",
+      "source": "techcrunch-startups",
+      "sources": [
+        "techcrunch-startups"
+      ],
+      "url": "https://example.test/s08",
+      "title": "Fintech Ledgerly raises $18M Series A, plans to triple its engineering team and launch in Europe",
+      "text": "Ledgerly, a payments-reconciliation startup, closed an $18M Series A to triple its engineering team and launch in Europe next year, the company said. It currently has about 25 employees.",
+      "company_name": "Ledgerly",
+      "location": null,
+      "remote_hint": null,
+      "salary": null,
+      "published_at": "2026-11-19T10:00:00.000Z",
+      "observed_at": "2026-11-24T12:00:00.000Z"
+    },
+    "judge": {
+      "need": {
+        "probable_gap": 0.82,
+        "explicit_external": 0.1
+      },
+      "b2b": 0.62,
+      "longterm": 0.82,
+      "fit": {
+        "transferable": 0.55,
+        "strong": 0.3
+      },
+      "level": {
+        "matches": 0.88,
+        "beyond_profile": 0.1
+      },
+      "remote": {
+        "unknown": 0.65,
+        "remote_ok": 0.3
+      },
+      "quality": "genuine"
+    },
+    "research": {
+      "country": "US",
+      "website": "https://ledgerly.test",
+      "legitimacy": "real",
+      "pages": [
+        {
+          "url": "https://news.test/ledgerly-series-a",
+          "text": "Ledgerly closed an $18M Series A to triple its engineering team and launch in Europe next year. It currently has about 25 employees."
+        }
+      ],
+      "facts": [
+        {
+          "field": "funding",
+          "value": "$18M Series A",
+          "provenance": "reported",
+          "url": "https://news.test/ledgerly-series-a",
+          "quote": "closed an $18M Series A"
+        },
+        {
+          "field": "growth",
+          "value": "plans to triple its engineering team",
+          "provenance": "reported",
+          "url": "https://news.test/ledgerly-series-a",
+          "quote": "triple its engineering team"
+        }
+      ],
+      "contacts": []
+    }
+  },
+  {
+    "id": "s09-hourly-contract",
+    "title": "A company advertising an hourly contract that could realistically become an effort-based B2B collaboration",
+    "expected": {
+      "qualified": true,
+      "country": "NL",
+      "lang": "en",
+      "notEmploymentRejected": true
+    },
+    "signal": {
+      "id": "s09",
+      "type": "job_posting",
+      "source": "recruitee",
+      "sources": [
+        "recruitee"
+      ],
+      "url": "https://example.test/s09",
+      "title": "Backend Developer (Laravel): hourly contract, six months, remote",
+      "text": "Kestrel Commerce runs a B2B marketplace. Hourly contract, 20 to 30 hours a week, six months with a likely extension, remote anywhere in Europe. You will build order and invoicing APIs in Laravel. Rate to be discussed.",
+      "company_name": "Kestrel Commerce BV",
+      "location": null,
+      "remote_hint": true,
+      "salary": null,
+      "published_at": "2026-11-18T09:00:00.000Z",
+      "observed_at": "2026-11-24T12:00:00.000Z"
+    },
+    "judge": {
+      "need": {
+        "employee_only": 0.45,
+        "probable_gap": 0.4,
+        "explicit_external": 0.12
+      },
+      "b2b": 0.82,
+      "longterm": 0.6,
+      "fit": {
+        "strong": 0.82,
+        "transferable": 0.15
+      },
+      "level": {
+        "matches": 0.93
+      },
+      "remote": {
+        "remote_ok": 0.9,
+        "unknown": 0.1
+      },
+      "quality": "genuine"
+    },
+    "research": {
+      "country": "NL",
+      "website": null,
+      "legitimacy": "real",
+      "pages": [],
+      "facts": [],
+      "contacts": []
+    }
+  },
+  {
+    "id": "s10-unpaid-internship",
+    "title": "An irrelevant opportunity: an unpaid internship",
+    "expected": {
+      "qualified": false,
+      "droppedBy": [
+        "unpaid",
+        "internship"
+      ]
+    },
+    "signal": {
+      "id": "s10",
+      "type": "job_posting",
+      "source": "indeed-like",
+      "sources": [
+        "indeed-like"
+      ],
+      "url": "https://example.test/s10",
+      "title": "Software Development Intern (unpaid, summer, on-site)",
+      "text": "Unpaid summer internship for students, on-site in Rome. Great exposure and a certificate of participation. No compensation is offered.",
+      "company_name": "Gradient Studios",
+      "location": null,
+      "remote_hint": false,
+      "salary": null,
+      "published_at": "2026-11-18T09:00:00.000Z",
+      "observed_at": "2026-11-24T12:00:00.000Z"
+    },
+    "judge": {
+      "need": {
+        "employee_only": 0.7,
+        "unrelated": 0.2
+      },
+      "b2b": 0.05,
+      "longterm": 0.1,
+      "fit": {
+        "weak": 0.6,
+        "strong": 0.2
+      },
+      "level": {
+        "junior_role": 0.9
+      },
+      "remote": {
+        "onsite_required": 0.9
+      },
+      "quality": "genuine"
+    },
+    "research": null
+  },
+  {
+    "id": "s11-fake-evergreen",
+    "title": "An irrelevant opportunity: a fake evergreen advertisement",
+    "expected": {
+      "qualified": false,
+      "suspicious": true
+    },
+    "signal": {
+      "id": "s11",
+      "type": "job_posting",
+      "source": "weworkremotely",
+      "sources": [
+        "weworkremotely"
+      ],
+      "url": "https://example.test/s11",
+      "title": "Earn 5000 USD per week as a remote developer: no experience needed",
+      "text": "Join our global talent network and earn 5000 USD a week working from home with no experience. Pay a small one-time onboarding fee to unlock premium projects. Limited places, apply today and refer friends for a bonus.",
+      "company_name": "GlobalTalent Network",
+      "location": null,
+      "remote_hint": true,
+      "salary": null,
+      "published_at": "2026-11-18T09:00:00.000Z",
+      "observed_at": "2026-11-24T12:00:00.000Z"
+    },
+    "judge": {
+      "need": {
+        "unrelated": 0.6,
+        "employee_only": 0.3
+      },
+      "b2b": 0.1,
+      "longterm": 0.1,
+      "fit": {
+        "weak": 0.5,
+        "none": 0.3
+      },
+      "level": {
+        "matches": 0.4,
+        "junior_role": 0.5
+      },
+      "remote": {
+        "remote_ok": 0.7
+      },
+      "quality": "scam"
+    },
+    "research": null
+  }
+]

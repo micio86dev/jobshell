@@ -29,7 +29,7 @@ export const DEFAULT_MODEL = 'jev-latest';
 export type HttpResponse = { status: number; text: string };
 export type FetchLike = (
   url: string,
-  init: { method: string; headers: Record<string, string>; body?: string },
+  init: { method: string; headers: Record<string, string>; body?: string; redirect?: 'follow' | 'manual' | 'error' },
 ) => Promise<HttpResponse>;
 
 export const defaultFetch: FetchLike = async (url, init) => {
@@ -39,6 +39,7 @@ export const defaultFetch: FetchLike = async (url, init) => {
     method: init.method,
     headers: init.headers,
     ...(init.body === undefined ? {} : { body: init.body }),
+    ...(init.redirect === undefined ? {} : { redirect: init.redirect }),
   });
   return { status: response.status, text: await response.text() };
 };

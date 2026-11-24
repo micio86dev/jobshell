@@ -1,0 +1,73 @@
+{
+  "cv": "E S P E R I E N Z A   L A V O R A T I V A  Freelance   Gen 2018 – Presente  Web Developer Full-Stack  [agency A]   Lug 2015 – Nov 2017  Web Developer Full-Stack Sviluppo full-stack di portali web e app ibride (Ionic/AngularJS, React Native). CMS personalizzati con OctoberCMS (Laravel 5.4), e-commerce Prestashop, preventivazione tecnica. Stack abituale: Laravel, Foundation 6, VueJS, MySQL, Sass, Git/Bitbucket.  [agency B]   Feb 2014 – Lug 2015  Web Developer PHP Sviluppo di portali web frontend/backend, specializzato in backoffice e app iOS native (Xcode, Objective-C). Framework utilizzati: CodeIgniter, Laravel 4.2, Bootstrap 3. Fornitore di [client].  [company C]   Ott 2010 – Gen 2014  Programmatore Web PHP Prima esperienza IT: sviluppo LAMP di portali per la Pubblica Amministrazione, gestione progettuale come Project Leader. Sviluppo script Perl per monitoraggio fotovoltaico (portale [portal]) e app iPhone in Objective-C.  P O R T F O L I O     (portfolio link omitted)  I S T R U Z I O N E  2000 – 2005  [technical institute] Diploma di Maturità – Informatica & Elettronica Voto:   85/100  L I N G U E  Italiano  Madrelingua  Spagnolo  Avanzato (C1)  Inglese  Intermedio (B2)  Nel corso degli anni ho lavorato su numerosi progetti per agenzie italiane, in remoto dalle [island]. Attività orientata al back-end (API PHP/Node.js), web-app Vue.js/Nuxt e sistemi ad alte performance. Sono esperto di ottimizzazione e streaming audio/video in tempo reale. Su [product] ho usato Agora.io nella prima versione e Zoom Video SDK nella seconda. Particolare attenzione a codice pulito, leggibile e riutilizzabile. Portfolio completo: (portfolio link omitted)\nC O M P E T E N Z E   T E C N I C H E L I N G U A G G I & R U N T I M E  PHP   JavaScript / TypeScript   Node.js / Bun   HTML5 / CSS3   SQL   Webpack   Vite  F R A M E W O R K & L I B R E R I E  Laravel   Vue 3 / Nuxt 3   QwikJS   Elysia.js   Tailwind CSS   Bulma CSS   Bootstrap   Foundation   Ionic / AngularJS XCode  D A T A B A S E  MySQL / PostgreSQL   MongoDB  P E R F O R M A N C E & I N F R A S T R U T T U R A  Web Performance (Core Web Vitals)   DigitalOcean / Nginx   Linux (Debian/Ubuntu)   macOS   Git / GitHub / Bitbucket CI/CD (GitHub Actions)   Bitbucket Pipelines  A I & W O R K F L O W  Claude Code   Spec-Driven Dev (GSD)   Skills & Subagents   GitHub Copilot   Cursor IDE   Groq API   Google Antigravity Google Stitch   OpenAI API   Git Flow  Q U A L I T À D E L C O D I C E  Clean Code   Codice leggibile & riutilizzabile   Principi SOLID   Best practices DB & Performance   Design patterns Code review  S O F T   S K I L L S  Problem solving & autonomia Stima accurata delle tempistiche Gestione relazioni con agenzie Attenzione alla qualità del codice Aggiornamento continuo  I N T E R E S S I     Chitarra      Musica rock   ✈ Viaggi      UI/UX Design      YouTube – Sviluppo Web  High Performance   Streaming audio/video   Zoom Video SDK   Agora.io",
+  "headline": "Developer",
+  "capabilities": [
+    "Laravel",
+    "Full-stack web development",
+    "Back-end development (PHP/Node.js APIs)",
+    "Vue.js/Nuxt web apps",
+    "Hybrid mobile apps (Ionic, React Native)",
+    "Native iOS development (Objective-C)",
+    "Custom CMS development (OctoberCMS)",
+    "E-commerce development (Prestashop)",
+    "Real-time audio/video streaming (Agora.io, Zoom Video SDK)",
+    "Web performance optimization (Core Web Vitals)",
+    "CI/CD (GitHub Actions, Bitbucket Pipelines)",
+    "Clean code, SOLID, design patterns, code review",
+    "Project leadership",
+    "Technical quoting/estimation"
+  ],
+  "domains": [],
+  "seniority": "senior",
+  "years_experience": 16,
+  "remote_modes": [
+    "remote"
+  ],
+  "onsite_cities": [],
+  "countries": [],
+  "contract_types": [
+    "freelance"
+  ],
+  "languages": [
+    "it",
+    "es",
+    "en"
+  ],
+  "primary_language": "it",
+  "min_salary": null,
+  "timezone_overlap_hours": null,
+  "exclude_companies": [],
+  "exclude_terms": [],
+  "accepted_gaps": [],
+  "portfolio": null,
+  "threshold": 0.9,
+  "daily_cap": 2,
+  "scoring_budget": 120,
+  "strengths": {
+    "remote_modes": "mandatory",
+    "onsite_cities": "mandatory",
+    "countries": "mandatory",
+    "contract_types": "acceptable",
+    "min_salary": "mandatory"
+  },
+  "language_proficiency": {
+    "it": {
+      "level": "native",
+      "usage": "comfortable"
+    },
+    "es": {
+      "level": "fluent",
+      "usage": "comfortable"
+    },
+    "en": {
+      "level": "basic",
+      "usage": "limited"
+    }
+  },
+  "eligibility": {
+    "employee": [],
+    "contractor": [],
+    "residence": null
+  },
+  "remote_scope": "worldwide"
+}

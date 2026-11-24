@@ -1,0 +1,158 @@
+{
+  "generated_at": "2026-11-24T11:47:18.450Z",
+  "method": "read-only GET, self-identifying user agent, one request every 1200 ms, robots.txt read first per origin; a URL refused by robots.txt is not requested; no credential, no cookie, no browser",
+  "user_agent": "jobshell-job-agent/0.1 (read-only source probe)",
+  "per_source": [
+    {
+      "source": "hn-hiring",
+      "label": "Hacker News: Who is hiring",
+      "signals": 92,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "ok"
+    },
+    {
+      "source": "hn-jobs",
+      "label": "Hacker News: YC jobs",
+      "signals": 30,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "ok"
+    },
+    {
+      "source": "techcrunch-startups",
+      "label": "TechCrunch: Startups",
+      "signals": 11,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "ok"
+    },
+    {
+      "source": "sifted",
+      "label": "Sifted: European startups",
+      "signals": 8,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "ok"
+    },
+    {
+      "source": "yc-hiring",
+      "label": "Y Combinator: companies hiring",
+      "signals": 1414,
+      "verdicts": [
+        "ok"
+      ],
+      "outcome": "ok"
+    }
+  ],
+  "records": [
+    {
+      "source": "hn-hiring",
+      "step": "request",
+      "url": "https://hn.algolia.com/api/v1/search_by_date?tags=story,author_whoishiring&query=hiring&hitsPerPage=6",
+      "robots_status": 404,
+      "status": 200,
+      "bytes": 37959,
+      "challenge": "none",
+      "signals": 0,
+      "sample_titles": [],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "hn-hiring",
+      "step": "follow",
+      "url": "https://hn.algolia.com/api/v1/search_by_date?tags=comment,story_50338728&hitsPerPage=200&page=0",
+      "robots_status": 404,
+      "status": 200,
+      "bytes": 399810,
+      "challenge": "none",
+      "signals": 92,
+      "sample_titles": [
+        "outGoing | Software Engineer | Lisbon, Portugal | HYBRID | €25k–€35k + meal allowance + health insurance",
+        "Early-stage Startup | Software Engineer & Data Analyst | Full-Time | REMOTE (US & US Citizen) | $100,000 - $180,000 USD",
+        "Common Prefix | Senior Software Engineer | Athens, Greece / REMOTE | Full-time | $80k to $160k + equity + bonus"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "hn-jobs",
+      "step": "request",
+      "url": "https://hn.algolia.com/api/v1/search_by_date?tags=job&hitsPerPage=30",
+      "robots_status": 404,
+      "status": 200,
+      "bytes": 25994,
+      "challenge": "none",
+      "signals": 30,
+      "sample_titles": [
+        "EasyPost (YC S13) Is Hiring",
+        "CollectWise (YC F24) Is Hiring",
+        "Tasklet (YC P26) Is Hiring Product and Agent Infra Engineers"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "techcrunch-startups",
+      "step": "request",
+      "url": "https://techcrunch.com/category/startups/feed/",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 18321,
+      "challenge": "none",
+      "signals": 11,
+      "sample_titles": [
+        "Supertake raises $20M to let AI agents turn your market predictions into stock portfolios",
+        "Daniel Ek backs AI researcher’s fusion power startup. Here’s what they’re building.",
+        "Former Alibaba exec’s Everful raises $48.5M to connect retailers with Chinese factories"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "sifted",
+      "step": "request",
+      "url": "https://sifted.eu/feed",
+      "robots_status": 200,
+      "status": 200,
+      "bytes": 9681,
+      "challenge": "none",
+      "signals": 8,
+      "sample_titles": [
+        "Defence startup Agon raises $70m backed by Northzone and Lakestar",
+        "Eileen Burbidge backs Monzo alums’ anti-fraud startup in £1.8m pre-seed",
+        "Backed by Nvidia and a16z, Black Forest Labs sets its sights on world models"
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    },
+    {
+      "source": "yc-hiring",
+      "step": "request",
+      "url": "https://yc-oss.github.io/api/companies/hiring.json",
+      "robots_status": 404,
+      "status": 200,
+      "bytes": 2586542,
+      "challenge": "none",
+      "signals": 1414,
+      "sample_titles": [
+        "CircuitHub: On-Demand Electronics Manufacturing",
+        "Rescale: High Performance Computing Built for the Cloud",
+        "Y Combinator: Make something people want."
+      ],
+      "error": null,
+      "robots_allowed": true,
+      "verdict": "ok"
+    }
+  ]
+}

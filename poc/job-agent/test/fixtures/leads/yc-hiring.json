@@ -1,0 +1,104 @@
+[
+  {
+    "id": 5,
+    "name": "CircuitHub",
+    "slug": "circuithub",
+    "website": "https://circuithub.com",
+    "all_locations": "London, England, United Kingdom",
+    "one_liner": "On-Demand Electronics Manufacturing",
+    "long_description": "CircuitHub offers on-demand electronics manufacturing powered by our factory-scale robotics platform, The Grid. This platform delivers a 10x improvement in the speed and cost of small-batch electronics production. Leading customers like Tesla, NASA, and Zipline rely on CircuitHub to cut their time to market in half.",
+    "team_size": 58,
+    "industry": "Industrials",
+    "tags": [
+      "Hard Tech",
+      "Hardware",
+      "Robotics",
+      "Manufacturing",
+      "Automation"
+    ],
+    "isHiring": true,
+    "batch": "Winter 2012",
+    "status": "Active",
+    "stage": "Early",
+    "regions": [
+      "United Kingdom",
+      "Europe",
+      "Remote",
+      "Partly Remote"
+    ],
+    "url": "https://www.ycombinator.com/companies/circuithub",
+    "launched_at": 1322045523
+  },
+  {
+    "id": 82,
+    "name": "Streak",
+    "slug": "streak",
+    "website": "http://streak.com",
+    "all_locations": "San Francisco, CA, USA; Remote",
+    "one_liner": "Streak transforms Gmail into a powerful CRM",
+    "long_description": "Streak is the only CRM integrated entirely within your Gmail inbox, and works alongside all your other G Suite applications. It can be used to track any business process including sales, partnerships, support, hiring, deal flow, and much more. Streak also includes a powerful set of email tools including email tracking, send later, snoozing, mail merge, and more.",
+    "team_size": 35,
+    "industry": "B2B",
+    "tags": [
+      "SaaS"
+    ],
+    "isHiring": true,
+    "batch": "Summer 2011",
+    "status": "Active",
+    "stage": "Early",
+    "regions": [
+      "United States of America",
+      "America / Canada",
+      "Remote",
+      "Fully Remote"
+    ],
+    "url": "https://www.ycombinator.com/companies/streak",
+    "launched_at": 1326789125
+  },
+  {
+    "id": 110,
+    "name": "MixRank",
+    "slug": "mixrank",
+    "website": "https://mixrank.com",
+    "all_locations": "Toronto, ON, Canada; Remote",
+    "one_liner": "Data products for sales, marketing, finance, recruiting, and more.",
+    "long_description": "MixRank processes petabytes of data every month from web crawls, Google Play Store, Apple App Store, social media, and dozens of other sources. We have hundreds of customers using our data products including Google, Amazon, Facebook, Intel, and Adobe, across industries Sales, Marketing, Finance, and Security.",
+    "team_size": 31,
+    "industry": "B2B",
+    "tags": [
+      "SaaS",
+      "B2B"
+    ],
+    "isHiring": true,
+    "batch": "Summer 2011",
+    "status": "Active",
+    "stage": "Early",
+    "regions": [
+      "Canada",
+      "America / Canada",
+      "Remote",
+      "Fully Remote"
+    ],
+    "url": "https://www.ycombinator.com/companies/mixrank",
+    "launched_at": 1326789427
+  },
+  {
+    "id": 999,
+    "name": "Dead Co",
+    "slug": "dead-co",
+    "website": "https://dead.test",
+    "all_locations": "X",
+    "one_liner": "x",
+    "long_description": "x",
+    "team_size": 5,
+    "industry": "B2B",
+    "tags": [],
+    "isHiring": true,
+    "batch": "W20",
+    "status": "Inactive",
+    "stage": "Early",
+    "regions": [],
+    "url": "https://www.ycombinator.com/companies/dead-co",
+    "launched_at": 1
+  }
+]

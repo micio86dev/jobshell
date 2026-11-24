@@ -1,0 +1,23 @@
+{
+  "_comment": "Copy to ~/.config/jobshell/leads.json. Only the fields you set are used; the rest follows your profile. Allowed: threshold, min_confidence, classify_budget, enrich_budget, usd_cap, target_markets, exclude_companies, exclude_terms, offerings, outreach_languages.",
+  "threshold": 60,
+  "min_confidence": 0.4,
+  "classify_budget": 150,
+  "enrich_budget": 25,
+  "usd_cap": 5,
+  "target_markets": [
+    "DE",
+    "NL",
+    "CH",
+    "GB",
+    "US",
+    "IT"
+  ],
+  "exclude_companies": [],
+  "exclude_terms": [],
+  "outreach_languages": [
+    "en",
+    "it",
+    "es"
+  ]
+}

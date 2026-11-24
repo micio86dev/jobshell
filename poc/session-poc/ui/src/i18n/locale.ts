@@ -7,6 +7,8 @@
  * reach the screen silently.
  */
 
+import { LEAD_EN, LEAD_ES, LEAD_IT } from '../leads/lead-messages';
+
 export const LOCALES = ['it', 'en', 'es'] as const;
 export type Locale = (typeof LOCALES)[number];
 
@@ -156,6 +158,7 @@ const EN = {
   'countries.search': 'Type a country name or code',
   'countries.none': 'No country selected: you work everywhere.',
   'countries.noMatch': 'No country matches.',
+  ...LEAD_EN,
 } as const;
 
 export type MessageKey = keyof typeof EN;
@@ -307,6 +310,7 @@ const IT: Record<MessageKey, string> = {
   'countries.search': 'Scrivi il nome o il codice di un paese',
   'countries.none': 'Nessun paese selezionato: lavori ovunque.',
   'countries.noMatch': 'Nessun paese corrisponde.',
+  ...LEAD_IT,
 };
 
 const ES: Record<MessageKey, string> = {
@@ -456,6 +460,7 @@ const ES: Record<MessageKey, string> = {
   'countries.search': 'Escribe el nombre o el código de un país',
   'countries.none': 'Ningún país seleccionado: trabajas en cualquier lugar.',
   'countries.noMatch': 'Ningún país coincide.',
+  ...LEAD_ES,
 };
 
 export const MESSAGES: Record<Locale, Record<MessageKey, string>> = { en: EN, it: IT, es: ES };

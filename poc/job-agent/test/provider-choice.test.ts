@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { judgmentDepsFor, providerChoiceFromEnv } from '../src/provider-choice.ts';
+import { judgmentDepsFor, plannerTarget, providerChoiceFromEnv } from '../src/provider-choice.ts';
 import { TYPESAFE_URL } from '../src/jev.ts';
 
 test('with nothing set, the defaults are Anthropic for the LLM and TypeSafe Jev for judgments', () => {
@@ -60,4 +60,10 @@ test('a local service needs no key, so none is read or sent', () => {
   const deps = judgmentDepsFor(ollama, () => { asked = true; return 'should-not-be-read'; });
   assert.equal(asked, false);
   assert.deepEqual(deps, { apiKey: '', baseUrl: 'http://localhost:11434/v1/systemone', model: 'nimble' });
+});
+
+test('the query planner follows the provider and model chosen in Settings, not the config file default', () => {
+  const choice = providerChoiceFromEnv({ JOBSHELL_LLM_PROVIDER: 'openai', JOBSHELL_LLM_MODEL: 'gpt-x' });
+  assert.deepEqual(plannerTarget(choice), { provider: 'openai', model: 'gpt-x' });
+  assert.deepEqual(plannerTarget(providerChoiceFromEnv({})), { provider: 'anthropic', model: 'claude-sonnet-5-5' });
 });

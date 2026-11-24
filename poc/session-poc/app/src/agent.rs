@@ -210,6 +210,37 @@ pub fn ensure_profile(path: &Path) -> Result<bool> {
     Ok(true)
 }
 
+/// True when the profile file is the app's own copy. A user who points `JOBSHELL_PROFILE` at a
+/// file of their own keeps it: the app never rewrites a file it does not own.
+pub fn profile_is_app_owned() -> bool {
+    std::env::var_os("JOBSHELL_PROFILE").is_none()
+}
+
+/// Make the identity the user saved in the wizard the profile a run reads.
+///
+/// Before this, "Search now" ran on the starter profile the app seeded on first launch, while the
+/// wizard's identity sat in SQLite and reached the agent only through saved searches. The payload
+/// must be a JSON object, and it is written to a temporary file first, so an interrupted write
+/// never leaves a half profile behind.
+pub fn write_active_profile(path: &Path, payload: &str) -> Result<()> {
+    let value: Value = serde_json::from_str(payload).context("the identity is not valid JSON")?;
+    anyhow::ensure!(value.is_object(), "the identity must be a JSON object");
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
+    }
+    // The file the user may have edited by hand is kept once, beside it, before the identity replaces it.
+    if path.exists() {
+        let _ = std::fs::copy(path, path.with_extension("json.bak"));
+    }
+    // A name of its own, so two writers at the same moment never rename each other's file away.
+    static COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    let unique = COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let temporary = path.with_extension(format!("json.{}.{unique}.tmp", std::process::id()));
+    std::fs::write(&temporary, payload).with_context(|| format!("writing {}", temporary.display()))?;
+    std::fs::rename(&temporary, path).with_context(|| format!("replacing {}", path.display()))?;
+    Ok(())
+}
+
 /// The arguments one run needs. Pure, so the shape is tested without spawning anything.
 pub fn run_args(profile: &Path, dry_run: bool) -> Vec<String> {
     let mut args = vec![
@@ -262,6 +293,91 @@ pub fn write_search_profile(id: &str, payload: &str) -> Result<PathBuf> {
 /// One run of the agent from an explicit profile file. Progress lines reach `on_progress` as
 /// they are written; the other stderr output and the stdout are collected for the result.
 pub fn run_with_profile(profile: &Path, dry_run: bool, on_progress: &dyn Fn(&str)) -> Result<String> {
+    run_script(&run_args(profile, dry_run), on_progress)
+}
+
+/// The arguments of one lead run: the lead script, the profile, and the flag that buys nothing.
+pub fn lead_run_args(profile: &Path, dry_run: bool) -> Vec<String> {
+    let mut args = vec!["src/leads/cli.ts".to_string(), "--profile".to_string(), profile.display().to_string()];
+    if dry_run {
+        args.push("--dry-run".to_string());
+    }
+    args
+}
+
+/// One lead run. The summary line the script prints last is returned with the rest of its output.
+pub fn run_leads(profile: &Path, dry_run: bool, on_progress: &dyn Fn(&str)) -> Result<String> {
+    run_script(&lead_run_args(profile, dry_run), on_progress)
+}
+
+/// The document a lead run wrote, from the summary line it printed. Only a `lead-run-*.json` file
+/// directly inside the evidence folder is accepted, so a summary can never make the app read, and
+/// store, some other file.
+pub fn lead_document_path(stdout: &str) -> Result<PathBuf> {
+    let line = stdout.lines().rev().find(|line| !line.trim().is_empty()).context("the lead run printed nothing")?;
+    let summary: Value = serde_json::from_str(line).context("the lead run did not end with a summary")?;
+    let path = PathBuf::from(summary.get("path").and_then(Value::as_str).context("the summary names no document")?);
+    let name = path.file_name().and_then(|name| name.to_str()).unwrap_or_default();
+    let inside = path.parent() == Some(evidence_dir().as_path());
+    anyhow::ensure!(
+        inside && name.starts_with("lead-run-") && name.ends_with(".json"),
+        "the summary names a file that is not a lead run document"
+    );
+    Ok(path)
+}
+
+/// The request that queues one pasted post or public link. It goes on stdin: a post is personal
+/// text and never belongs in a process argument list.
+pub fn import_request_json(text: Option<&str>, url: Option<&str>) -> String {
+    serde_json::json!({ "text": text, "url": url }).to_string()
+}
+
+pub fn import_args() -> Vec<String> {
+    vec!["src/leads/import-cli.ts".to_string()]
+}
+
+/// Exit 0 is the answer on stdout; exit 2 is a refusal whose reason the script printed; anything
+/// else is an error. `what` names the operation in the fallback sentences.
+pub fn interpret_exit(exit_code: Option<i32>, stdout: &str, stderr: &str, what: &str) -> Result<String> {
+    match exit_code {
+        Some(0) => Ok(stdout.trim().to_string()),
+        Some(2) => {
+            let reason = stderr.trim();
+            if reason.is_empty() {
+                anyhow::bail!("the {what} was refused")
+            }
+            anyhow::bail!("{reason}")
+        }
+        _ => anyhow::bail!("the {what} did not finish"),
+    }
+}
+
+/// Exit 0 queued the import; see `interpret_exit`.
+pub fn interpret_import(exit_code: Option<i32>, stdout: &str, stderr: &str) -> Result<String> {
+    interpret_exit(exit_code, stdout, stderr, "import")
+}
+
+/// The strategy command: `get` prints the strategy a run would use, `set` validates and stores a change.
+pub fn strategy_args(command: &str, profile: &Path) -> Result<Vec<String>> {
+    anyhow::ensure!(command == "get" || command == "set", "the strategy command is get or set");
+    Ok(vec!["src/leads/strategy-cli.ts".to_string(), command.to_string(), "--profile".to_string(), profile.display().to_string()])
+}
+
+/// Read the strategy (`change` is None) or store a change from the settings page.
+pub fn run_strategy(change: Option<&str>, env: &[(String, String)]) -> Result<String> {
+    let args = strategy_args(if change.is_some() { "set" } else { "get" }, &profile_path())?;
+    let (code, stdout, stderr) = pipe_to_agent_script(&args, change.unwrap_or(""), env)?;
+    interpret_exit(code, &stdout, &stderr, "strategy change")
+}
+
+/// Queue a pasted post, or a public link, for the next lead run. Nothing is bought here.
+pub fn run_import(text: Option<&str>, url: Option<&str>, env: &[(String, String)]) -> Result<String> {
+    let (code, stdout, stderr) = pipe_to_agent_script(&import_args(), import_request_json(text, url), env)?;
+    interpret_import(code, &stdout, &stderr)
+}
+
+/// Run one agent script that reports progress on stderr, and return its stdout.
+fn run_script(script: &[String], on_progress: &dyn Fn(&str)) -> Result<String> {
     use std::io::{BufRead, BufReader, Read};
     use std::process::Stdio;
 
@@ -270,7 +386,7 @@ pub fn run_with_profile(profile: &Path, dry_run: bool, on_progress: &dyn Fn(&str
     let env = crate::settings::load(&crate::settings_path())?.agent_env();
 
     let mut child = Command::new(node_binary())
-        .args(run_args(profile, dry_run))
+        .args(script)
         .envs(env.iter().map(|(name, value)| (name.as_str(), value.as_str())))
         .current_dir(&dir)
         .stdin(Stdio::null())
@@ -1136,5 +1252,121 @@ mod open_tests {
         assert!(!is_web_address("https://example.test/a b"));
         assert!(!is_web_address("https://example.test/\n"));
         assert!(!is_web_address(""));
+    }
+}
+
+#[cfg(test)]
+mod active_profile_tests {
+    use super::*;
+
+    fn scratch(name: &str) -> PathBuf {
+        let base = std::env::temp_dir().join(format!("jobshell-active-{name}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        std::fs::create_dir_all(&base).unwrap();
+        base
+    }
+
+    #[test]
+    fn the_saved_identity_replaces_the_starter_profile_the_run_reads() {
+        let base = scratch("replace");
+        let path = base.join("evidence").join("profile.json");
+        ensure_profile(&path).unwrap();
+        write_active_profile(&path, r#"{"headline":"Laravel developer","capabilities":["Laravel"]}"#).unwrap();
+        let written: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+        assert_eq!(written["headline"], "Laravel developer");
+        let leftovers: Vec<_> = std::fs::read_dir(path.parent().unwrap()).unwrap().filter_map(|entry| entry.ok()).filter(|entry| entry.file_name().to_string_lossy().ends_with(".tmp")).collect();
+        assert!(leftovers.is_empty(), "no temporary file is left behind");
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    #[test]
+    fn the_file_the_identity_replaces_is_kept_once_beside_it() {
+        let base = scratch("backup");
+        let path = base.join("profile.json");
+        std::fs::write(&path, r#"{"headline":"hand edited"}"#).unwrap();
+        write_active_profile(&path, r#"{"headline":"from the wizard"}"#).unwrap();
+        let kept = std::fs::read_to_string(path.with_extension("json.bak")).unwrap();
+        assert!(kept.contains("hand edited"));
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    #[test]
+    fn a_payload_that_is_not_a_json_object_never_touches_the_profile() {
+        let base = scratch("refuse");
+        let path = base.join("profile.json");
+        std::fs::write(&path, r#"{"headline":"kept"}"#).unwrap();
+        assert!(write_active_profile(&path, "[1,2]").is_err());
+        assert!(write_active_profile(&path, "not json").is_err());
+        let kept: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+        assert_eq!(kept["headline"], "kept");
+        let _ = std::fs::remove_dir_all(&base);
+    }
+}
+
+#[cfg(test)]
+mod lead_tests {
+    use super::*;
+
+    #[test]
+    fn a_lead_run_launches_the_lead_script_with_the_profile_and_only_a_dry_run_adds_the_flag() {
+        let profile = Path::new("/tmp/profile.json");
+        assert_eq!(lead_run_args(profile, false), vec!["src/leads/cli.ts", "--profile", "/tmp/profile.json"]);
+        assert_eq!(lead_run_args(profile, true), vec!["src/leads/cli.ts", "--profile", "/tmp/profile.json", "--dry-run"]);
+    }
+
+    #[test]
+    fn the_run_summary_points_only_at_a_lead_document_inside_the_evidence_folder() {
+        let dir = evidence_dir();
+        let inside = dir.join("lead-run-2026-11-24T10-00-00-000Z.json");
+        let line = |path: &Path| format!("jobshell-progress: x\n{{\"path\":{},\"qualified\":2}}\n", serde_json::to_string(&path.display().to_string()).unwrap());
+        assert_eq!(lead_document_path(&line(&inside)).unwrap(), inside);
+        assert!(lead_document_path(&line(Path::new("/etc/passwd"))).is_err(), "a path outside is refused");
+        assert!(lead_document_path(&line(&dir.join("profile.json"))).is_err(), "another file in the folder is refused");
+        assert!(lead_document_path(&line(&dir.join("../lead-run-x.json"))).is_err(), "a parent segment is refused");
+        assert!(lead_document_path("not json").is_err());
+        assert!(lead_document_path("").is_err());
+    }
+
+    #[test]
+    fn an_import_travels_as_json_on_stdin_never_in_the_arguments() {
+        let request: Value = serde_json::from_str(&import_request_json(Some("a post \"quoted\""), Some("https://x.test/p"))).unwrap();
+        assert_eq!(request["text"], "a post \"quoted\"");
+        assert_eq!(request["url"], "https://x.test/p");
+        let empty: Value = serde_json::from_str(&import_request_json(None, None)).unwrap();
+        assert!(empty["text"].is_null() && empty["url"].is_null());
+        assert_eq!(import_args(), vec!["src/leads/import-cli.ts"]);
+    }
+
+    #[test]
+    fn an_import_that_works_returns_its_summary_and_a_refusal_returns_its_reason() {
+        assert_eq!(interpret_import(Some(0), "{\"id\":\"a\"}\n", "").unwrap(), "{\"id\":\"a\"}");
+        let refused = interpret_import(Some(2), "", "facebook.com needs a login\n").unwrap_err().to_string();
+        assert_eq!(refused, "facebook.com needs a login");
+        assert!(interpret_import(Some(2), "", "").is_err());
+        assert!(interpret_import(None, "", "").is_err());
+        assert!(interpret_import(Some(1), "x", "").is_err());
+    }
+}
+
+#[cfg(test)]
+mod strategy_tests {
+    use super::*;
+
+    #[test]
+    fn the_strategy_command_names_the_profile_and_only_get_and_set_exist() {
+        let profile = Path::new("/tmp/p.json");
+        assert_eq!(strategy_args("get", profile).unwrap(), vec!["src/leads/strategy-cli.ts", "get", "--profile", "/tmp/p.json"]);
+        assert_eq!(strategy_args("set", profile).unwrap()[1], "set");
+        assert!(strategy_args("delete", profile).is_err());
+        assert!(strategy_args("get --profile /etc/passwd", profile).is_err());
+    }
+
+    #[test]
+    fn a_strategy_answer_is_the_json_it_printed_and_a_refusal_is_its_reason() {
+        assert_eq!(interpret_exit(Some(0), "{\"threshold\":60}\n", "", "strategy change").unwrap(), "{\"threshold\":60}");
+        let refused = interpret_exit(Some(2), "", "leads strategy: threshold is invalid\n", "strategy change").unwrap_err().to_string();
+        assert_eq!(refused, "leads strategy: threshold is invalid");
+        assert_eq!(interpret_exit(Some(2), "", "", "strategy change").unwrap_err().to_string(), "the strategy change was refused");
+        assert_eq!(interpret_exit(Some(9), "", "", "strategy change").unwrap_err().to_string(), "the strategy change did not finish");
     }
 }

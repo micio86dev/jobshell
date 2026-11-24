@@ -4,6 +4,9 @@ import { listen } from '@tauri-apps/api/event';
 import { onMounted, ref } from 'vue';
 import OnboardingWizard from './onboarding/OnboardingWizard.vue';
 import SourcesPanel from './sources/SourcesPanel.vue';
+import DiagnosticsPanel from './leads/DiagnosticsPanel.vue';
+import LeadSettings from './leads/LeadSettings.vue';
+import LeadsPanel from './leads/LeadsPanel.vue';
 import { setPrimaryLanguage, t } from './i18n/store';
 import { primaryOf } from './onboarding/schema';
 import { describeKeyCheck, parseKeyCheckReport, type KeyCheckView } from './settings/key-check';
@@ -54,7 +57,9 @@ type TaskView = {
   result: string | null;
 };
 
-const tab = ref<'results' | 'tasks' | 'settings'>('results');
+const tab = ref<'leads' | 'diagnostics' | 'results' | 'tasks' | 'settings'>('leads');
+// Bumped after each lead search, so the diagnostics reload what the run just recorded.
+const leadRuns = ref(0);
 
 // Results view
 const run = ref<AgentRunView | null>(null);
@@ -461,6 +466,8 @@ onMounted(() => {
     <header>
       <h1>Jobshell</h1>
       <nav>
+        <button type="button" :class="{ on: tab === 'leads' }" @click="tab = 'leads'">{{ t('tab.leads') }}</button>
+        <button type="button" :class="{ on: tab === 'diagnostics' }" @click="tab = 'diagnostics'">{{ t('tab.diagnostics') }}</button>
         <button type="button" :class="{ on: tab === 'results' }" @click="tab = 'results'">{{ t('tab.results') }}</button>
         <button type="button" :class="{ on: tab === 'tasks' }" @click="tab = 'tasks'">{{ t('tab.tasks') }}</button>
         <button type="button" :class="{ on: tab === 'settings' }" @click="tab = 'settings'">{{ t('tab.settings') }}</button>
@@ -468,7 +475,10 @@ onMounted(() => {
       <p class="status">{{ status }}</p>
     </header>
 
-    <section v-if="tab === 'results'">
+    <LeadsPanel v-if="tab === 'leads'" @ran="leadRuns += 1" />
+    <DiagnosticsPanel v-else-if="tab === 'diagnostics'" :refresh="leadRuns" />
+
+    <section v-else-if="tab === 'results'">
       <div class="actions">
         <button type="button" :disabled="running !== ''" @click="runAgent(true)">
           {{ running === 'dry' ? 'Dry run in progress…' : 'Dry run' }}
@@ -596,6 +606,7 @@ onMounted(() => {
         @done="editingProfile = false"
         @cancel="editingProfile = false"
       />
+      <LeadSettings />
       <h2>Servizio AI</h2>
       <div v-if="providerChoice !== null" class="choice">
         <label for="llm-provider">modello per leggere il CV e cercare</label>
